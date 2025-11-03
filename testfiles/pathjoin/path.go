@@ -16,4 +16,6 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("dir: ", dir)
+
+	//pkgtest.Send_pkg()
 }
