@@ -13,6 +13,6 @@ func main() {
 
 	hash_hex := fmt.Sprintf("%x", hash[:])
 
-	//fmt.Printf("%x\n", hash)
+	fmt.Printf("%x\n", hash)
 	fmt.Println(hash_hex)
 }
