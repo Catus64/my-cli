@@ -56,7 +56,7 @@ func Repo_File(repo GitRepository, mkdir bool, paths ...string) string {
 
 	_, err := Repo_Dir(repo, mkdir, paths...)
 	if err != nil {
-		panic("Something went wrong")
+		panic(fmt.Sprintf("%v", err))
 	}
 	return Repo_Path(repo, paths...)
 }
@@ -73,7 +73,7 @@ func Repo_Dir(repo GitRepository, mkdir bool, paths ...string) (string, error) {
 			return path, nil
 		}
 		//panic("Not a Directory")
-		return "", fmt.Errorf("not a directory: %v", path)
+		return "", fmt.Errorf("not a directory/file already exist: %v", path)
 	}
 
 	if os.IsNotExist(err) {
