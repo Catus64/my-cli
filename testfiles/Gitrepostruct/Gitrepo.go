@@ -53,11 +53,15 @@ func Repo_Path(repo GitRepository, path ...string) string {
 }
 
 func Repo_File(repo GitRepository, mkdir bool, paths ...string) string {
+	//last file is an object therefore removed from dir path
+	filepaths := paths[:len(paths)-1]
+	//fmt.Println("Current path:", filepaths)
 
-	_, err := Repo_Dir(repo, mkdir, paths...)
+	_, err := Repo_Dir(repo, mkdir, filepaths...)
 	if err != nil {
 		panic(fmt.Sprintf("%v", err))
 	}
+
 	return Repo_Path(repo, paths...)
 }
 
@@ -198,19 +202,3 @@ func Get_Os_Dir() string {
 	}
 	return dir
 }
-
-/*
-func main() {
-	dir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-
-	//force := true
-	repo := Repo_create(dir)
-
-	fmt.Println(repo)
-	//fmt.Println(repo.GitDir)
-	//fmt.Println(repo.WorkTree)
-}
-*/
