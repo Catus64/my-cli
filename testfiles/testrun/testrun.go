@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 	githashread "gocmd/testfiles/GitHashRead"
-	gitobj "gocmd/testfiles/GitObject"
+
+	//gitobj "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 )
 
@@ -21,12 +22,12 @@ func main() {
 
 	//be0fc874cd0cf5c8764f5ffac306f254fdba477f big tree
 
-	obj := githashread.Object_Read(*repo, "b769d70e94410966bcdb314ed77f90d43bc41980")
+	//obj := githashread.Object_Read(*repo, "b672c3cd024a603265df11f330597f38beb2bbf6")
 	//fmt.Println(obj.Get_Format())
 
-	//sha, _ := githashread.Hash_Object("settings", "blob", *repo)
+	sha, _ := githashread.Hash_Object("settings", "blob", *repo)
 
-	//fmt.Printf("SHA: %x \n", sha)
+	fmt.Printf("SHA: %x \n", sha)
 
 	/*
 		temp := make(map[string][]byte)
@@ -39,6 +40,6 @@ func main() {
 		gitobj.Kvlm_Serialize(s)
 	*/
 
-	fmt.Println(obj.Get_Format())
-	gitobj.Tree_Parse_One(obj.Deserialize(), 0)
+	//fmt.Println(obj.Get_Format())
+	//gitobj.Tree_Parse_One(obj.Deserialize(), 0)
 }

@@ -48,16 +48,18 @@ func Object_Write(obj gitobj.GitObject, repo *gitpath.GitRepository) ([]byte, er
 			if err != nil {
 				panic(fmt.Sprintf("%v", err))
 			}
-			defer file.Close()
 
-			writer := zlib.NewWriter(file)
-			defer writer.Close()
+			writer, _ := zlib.NewWriterLevel(file, zlib.BestSpeed)
 
 			_, err = writer.Write(result)
 			if err != nil {
 				panic(fmt.Sprintf("%v", err))
 			}
-			writer.Close()
+			err = writer.Close()
+			if err != nil {
+				fmt.Println(err)
+			}
+			file.Close()
 		}
 
 	}

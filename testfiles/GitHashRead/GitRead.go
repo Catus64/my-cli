@@ -60,7 +60,7 @@ func Object_Read(repo gitpath.GitRepository, sha string) gitobj.GitObject {
 	//reading blob with zlib
 	decompressed := Read_Blob(obj_path)
 
-	fmt.Println("Decompressed: ", decompressed)
+	fmt.Println("Decompressed: ", *decompressed)
 
 	//make obj based on format
 	obj := gitobj.MakeGitObj(*decompressed)
