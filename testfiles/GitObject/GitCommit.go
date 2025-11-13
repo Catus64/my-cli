@@ -15,11 +15,11 @@ type KvlmDict struct {
 	Dict map[string][]byte
 }
 
-func (blob GitCommit) Serialize() *[]byte {
+func (blob *GitCommit) Serialize() *[]byte {
 	return nil
 }
 
-func (commit GitCommit) Deserialize() []byte {
+func (commit *GitCommit) Deserialize() []byte {
 	temp := make(map[string][]byte)
 	kvlm := KvlmDict{
 		Dict: temp,
@@ -29,7 +29,7 @@ func (commit GitCommit) Deserialize() []byte {
 	return nil
 }
 
-func (blob GitCommit) Get_Format() string {
+func (blob *GitCommit) Get_Format() string {
 	return string(blob.format)
 }
 
@@ -65,7 +65,7 @@ func Kvlm_Parse(data []byte, start int, dict KvlmDict) KvlmDict {
 		dict.Dict[string(key)] = value
 	}
 
-	fmt.Println("key: ", string(key), "|value: ", string(value))
+	//fmt.Println("key: ", string(key), "|value: ", string(value))
 	return Kvlm_Parse(data, end+1, dict)
 }
 

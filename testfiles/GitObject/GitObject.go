@@ -47,7 +47,7 @@ func MakeGitObj(Byte_data []byte) GitObject {
 		obj = GitBlob{GitObjectData: GitObjectData{parts[1]}, format: []byte("blob")}
 	case "commit":
 		fmt.Println("returning commit object")
-		obj = GitCommit{GitObjectData: GitObjectData{parts[1]}, format: []byte("commit")}
+		obj = &GitCommit{GitObjectData: GitObjectData{parts[1]}, format: []byte("commit")}
 	case "tag":
 		fmt.Println("returning tag")
 	case "tree":
