@@ -45,7 +45,7 @@ func Log_One(kvlm gitobj.KvlmDict) {
 
 }
 
-func Recurse_Log(commit gitobj.GitCommit, sha string) {
+func Recurse_Log(repo *gitpath.GitRepository, commit gitobj.GitCommit, sha string) {
 	//log one obj
 	fmt.Println("commit ", sha)
 	//fmt.Println("Author:", string(commit.Dict["author"]))
@@ -63,6 +63,13 @@ func Recurse_Log(commit gitobj.GitCommit, sha string) {
 	}
 
 	//recurse
+	Parent_Obj := githashread.Object_Read(*repo, string(commit.Dict["parent"]))
+	Concrete_Parent_Commit, ok := Parent_Obj.(*gitobj.GitCommit)
+	if !ok {
+		panic("not a commit object")
+	}
+	Concrete_Parent_Commit.Deserialize()
+	Recurse_Log(repo, *Concrete_Parent_Commit, string(commit.Dict["parent"]))
 }
 
 func Log(repo gitpath.GitRepository) error {
@@ -74,6 +81,6 @@ func Log(repo gitpath.GitRepository) error {
 		panic("not a commit object")
 	}
 	//fmt.Println(string(Concrete_Commit.Dict["data"]))
-	Recurse_Log(*Concrete_Commit, head)
+	Recurse_Log(&repo, *Concrete_Commit, head)
 	return nil
 }
