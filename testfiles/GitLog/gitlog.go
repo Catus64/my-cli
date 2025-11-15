@@ -41,10 +41,6 @@ func Format_Date_Author(text string) (string, string) {
 	return date, author
 }
 
-func Log_One(kvlm gitobj.KvlmDict) {
-
-}
-
 func Recurse_Log(repo *gitpath.GitRepository, commit gitobj.GitCommit, sha string) {
 	//log one obj
 	fmt.Println("commit ", sha)
@@ -54,10 +50,13 @@ func Recurse_Log(repo *gitpath.GitRepository, commit gitobj.GitCommit, sha strin
 	fmt.Println("Date: ", date)
 	fmt.Println("Author: ", author)
 
+	fmt.Println("\n ", string(commit.Dict["data"]))
+
 	//fmt.Println("\n", string(commit.Dict["data"]))
 
 	//parent = current pbj = end func
-	if string(commit.Dict["parent"]) == sha {
+	//fmt.Println("PARENT: ", commit.Dict["parent"])
+	if commit.Dict["parent"] == nil {
 		println("end")
 		return
 	}
@@ -69,6 +68,7 @@ func Recurse_Log(repo *gitpath.GitRepository, commit gitobj.GitCommit, sha strin
 		panic("not a commit object")
 	}
 	Concrete_Parent_Commit.Deserialize()
+	println("\n")
 	Recurse_Log(repo, *Concrete_Parent_Commit, string(commit.Dict["parent"]))
 }
 

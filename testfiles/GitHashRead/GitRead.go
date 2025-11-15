@@ -23,7 +23,7 @@ func Read_Blob(path string) *[]byte {
 		panic(fmt.Sprintf("%v does not exist/error", path))
 	}
 
-	fmt.Println("File exist")
+	//fmt.Println("File exist")
 
 	//read file
 	filedata, err := os.ReadFile(path)
@@ -55,7 +55,7 @@ func Object_Read(repo gitpath.GitRepository, sha string) gitobj.GitObject {
 
 	//getting obj_path
 	obj_path := gitpath.Repo_Path(repo, "objects", first, rest)
-	fmt.Println("Reading: ", obj_path)
+	//fmt.Println("Reading: ", obj_path)
 
 	//reading blob with zlib
 	decompressed := Read_Blob(obj_path)

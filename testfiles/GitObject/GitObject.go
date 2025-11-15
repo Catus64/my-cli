@@ -43,15 +43,15 @@ func MakeGitObj(Byte_data []byte) GitObject {
 
 	switch string(temp_fmt) {
 	case "blob":
-		fmt.Println("returning blob")
+		//mt.Println("returning blob")
 		obj = GitBlob{GitObjectData: GitObjectData{parts[1]}, format: []byte("blob")}
 	case "commit":
-		fmt.Println("returning commit object")
+		//fmt.Println("returning commit object")
 		obj = &GitCommit{GitObjectData: GitObjectData{parts[1]}, format: []byte("commit")}
 	case "tag":
 		fmt.Println("returning tag")
 	case "tree":
-		fmt.Println("returning tree")
+		//fmt.Println("returning tree")
 		x := bytes.IndexByte(Byte_data[0:], 0x00)
 		GitTreeData := Byte_data[x+1:]
 		obj = GitTreeLeaf{GitObjectData: GitObjectData{GitTreeData}, format: []byte("tree")}

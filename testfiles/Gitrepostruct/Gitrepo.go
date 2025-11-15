@@ -73,7 +73,7 @@ func Repo_Dir(repo GitRepository, mkdir bool, paths ...string) (string, error) {
 	info, err := os.Stat(path)
 	if err == nil {
 		if info.IsDir() {
-			fmt.Println("dir exist")
+			//fmt.Println("dir exist")
 			return path, nil
 		}
 		//panic("Not a Directory")
