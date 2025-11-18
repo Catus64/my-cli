@@ -1,10 +1,10 @@
 package main
 
 import (
-	//githashread "gocmd/testfiles/GitHashRead"
-	gitlog "gocmd/testfiles/GitLog"
+	githashread "gocmd/testfiles/GitHashRead"
+	//gitlog "gocmd/testfiles/GitLog"
 
-	//gitobj "gocmd/testfiles/GitObject"
+	gitobj "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 )
 
@@ -18,11 +18,13 @@ func main() {
 
 	//064a74c46df49ea6afb685b1004433026c81c152 commit
 
-	//b769d70e94410966bcdb314ed77f90d43bc41980 tree
+	//2f4fa26a5a15f2e6f1ea994b3aaebcf664bcf0e5 big tree
 
-	//be0fc874cd0cf5c8764f5ffac306f254fdba477f big tree
+	//f04239944489fd19e785c14a39ee71fc5d0fc66f small tree
 
-	//obj := githashread.Object_Read(*repo, "33ad75b11596dd478ddb5849e23cb4cff21af968")
+	//weird tree b769d70e94410966bcdb314ed77f90d43bc41980
+
+	obj := githashread.Object_Read(*repo, "2f4fa26a5a15f2e6f1ea994b3aaebcf664bcf0e5")
 	//fmt.Println(obj.Get_Format())
 
 	//sha, _ := githashread.Hash_Object("settings", "blob", *repo)
@@ -41,8 +43,8 @@ func main() {
 	*/
 
 	//fmt.Println(obj.Get_Format())
-	//gitobj.Tree_Parse_One(obj.Deserialize(), 0)
+	gitobj.Tree_Parse(obj.Deserialize())
 
 	//log.Log(*repo, obj)
-	gitlog.Log(*repo)
+	//gitlog.Log(*repo)
 }
