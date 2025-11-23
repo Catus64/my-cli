@@ -3,6 +3,7 @@ package GitObjLib
 import (
 	"bytes"
 	"fmt"
+	"sort"
 )
 
 type GitTreeLeaf struct {
@@ -31,6 +32,61 @@ func (leaf GitTreeLeaf) Get_Format() string {
 	return string("leaf")
 }
 
+func (leaf GitTreeLeaf) Tree_Leaf_Sort_Key() []byte {
+	mode := string(leaf.mode[0:2])
+	if mode == "10" {
+		return leaf.path
+	} else {
+		return append(leaf.path, 0x2f) //adding '/' for directories
+	}
+}
+
+func Tree_Serialize(items []GitTreeLeaf) []byte {
+	ret := []byte{}
+
+	sort.Slice(items, func(i, j int) bool {
+
+		modei := string(items[i].mode[0:2])
+		modej := string(items[j].mode[0:2])
+
+		if modej == "04" && modei != "04" {
+			return true
+		}
+
+		return string(items[i].path) < string(items[j].path)
+	})
+
+	for _, item := range items {
+		ret = append(ret, item.mode...)
+		ret = append(ret, ' ')
+		ret = append(ret, item.path...)
+		ret = append(ret, 0x00)
+		sha_bytes := make([]byte, 20)
+		fmt.Sscanf(item.sha, "%040x", &sha_bytes)
+		ret = append(ret, sha_bytes...)
+		//fmt.Println("Serialized item:", item.String())
+	}
+	return ret
+}
+
+type GitTree struct {
+	GitObjectData
+	format []byte
+	//items  []GitTreeLeaf
+}
+
+func (tree GitTree) Get_Format() string {
+	return string(tree.format)
+}
+
+func (tree GitTree) Serialize() *[]byte {
+	return nil
+}
+
+func (tree GitTree) Deserialize() []byte {
+	return tree.data
+}
+
 func Tree_Parse_One(raw []byte, start int) (int, *GitTreeLeaf, error) {
 
 	//fmt.Printf("%x \n", raw)
@@ -47,27 +103,24 @@ func Tree_Parse_One(raw []byte, start int) (int, *GitTreeLeaf, error) {
 		mode = append(temp, mode...)
 	}
 
-	//fmt.Println("x: ", x)
 	y := bytes.IndexByte(raw[x:], 0x00) + x
 
-	//fmt.Println("y: ", y)
-	fmt.Println("mode: ", string(mode))
-
 	path := raw[x+1 : y]
-
-	fmt.Println("path: ", string(path))
 
 	rawsha := raw[y+1 : y+21]
 
 	sha := fmt.Sprintf("%040x", rawsha)
-
-	fmt.Printf("sha: %v \n", sha)
 
 	leaf := GitTreeLeaf{
 		mode: mode,
 		sha:  sha,
 		path: path,
 	}
+
+	//fmt.Println("mode: ", string(mode))
+	//fmt.Println("path: ", string(path))
+	//fmt.Printf("sha: %v \n", sha)
+	//fmt.Println("Parsed item:", leaf.String())
 
 	//y + 21 is when the first entry ends
 	return y + 21, &leaf, nil

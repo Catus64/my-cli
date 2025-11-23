@@ -2,6 +2,7 @@ package main
 
 import (
 	githashread "gocmd/testfiles/GitHashRead"
+
 	//gitlog "gocmd/testfiles/GitLog"
 
 	gitobj "gocmd/testfiles/GitObject"
@@ -43,7 +44,11 @@ func main() {
 	*/
 
 	//fmt.Println(obj.Get_Format())
-	gitobj.Tree_Parse(obj.Deserialize())
+	leafs := gitobj.Tree_Parse(obj.Deserialize())
+	//leaf := leafs[2]
+	//out := leaf.Tree_Leaf_Sort_Key()
+	gitobj.Tree_Serialize(leafs)
+	//fmt.Println(string(out))
 
 	//log.Log(*repo, obj)
 	//gitlog.Log(*repo)
