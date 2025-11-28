@@ -48,7 +48,7 @@ func main() {
 	//leaf := leafs[2]
 	//out := leaf.Tree_Leaf_Sort_Key()
 	gitobj.Tree_Serialize(leafs)
-	//fmt.Println(string(out))
+	// fmt.Printf("%x \n", out)
 
 	//log.Log(*repo, obj)
 	//gitlog.Log(*repo)

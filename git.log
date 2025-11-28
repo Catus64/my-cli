@@ -1,0 +1,80 @@
+DEBUG:root:calling and ending repo_find
+INFO:root:path: {path}
+DEBUG:root:calling Gitrepo constructor
+INFO:root:<libwyag.GitRepository object at 0x785110fb38c0>, /home/rahman/Desktop/Go-cli/my-cli, False
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling and ending repo_find
+INFO:root:path: {path}
+DEBUG:root:calling Gitrepo constructor
+INFO:root:<libwyag.GitRepository object at 0x797b360cc2f0>, /home/rahman/Desktop/Go-cli/my-cli, False
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling and ending repo_find
+INFO:root:path: {path}
+DEBUG:root:calling Gitrepo constructor
+INFO:root:<libwyag.GitRepository object at 0x7e03003538c0>, /home/rahman/Desktop/Go-cli/my-cli, False
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling and ending repo_find
+INFO:root:path: {path}
+DEBUG:root:calling Gitrepo constructor
+INFO:root:<libwyag.GitRepository object at 0x74c8b3d3b8c0>, /home/rahman/Desktop/Go-cli/my-cli, False
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling and ending repo_find
+INFO:root:path: {path}
+DEBUG:root:calling Gitrepo constructor
+INFO:root:<libwyag.GitRepository object at 0x701ca45b38c0>, /home/rahman/Desktop/Go-cli/my-cli, False
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling and ending repo_find
+INFO:root:path: {path}
+DEBUG:root:calling Gitrepo constructor
+INFO:root:<libwyag.GitRepository object at 0x7e92cc233ad0>, /home/rahman/Desktop/Go-cli/my-cli, False
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling and ending repo_find
+INFO:root:path: {path}
+DEBUG:root:calling Gitrepo constructor
+INFO:root:<libwyag.GitRepository object at 0x7c008b633ad0>, /home/rahman/Desktop/Go-cli/my-cli, False
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling and ending repo_find
+INFO:root:path: {path}
+DEBUG:root:calling Gitrepo constructor
+INFO:root:<libwyag.GitRepository object at 0x7fb4781305c0>, /home/rahman/Desktop/Go-cli/my-cli, False
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling and ending repo_find
+INFO:root:path: {path}
+DEBUG:root:calling Gitrepo constructor
+INFO:root:<libwyag.GitRepository object at 0x7bfb8e233ad0>, /home/rahman/Desktop/Go-cli/my-cli, False
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling and ending repo_find
+INFO:root:path: {path}
+DEBUG:root:calling Gitrepo constructor
+INFO:root:<libwyag.GitRepository object at 0x7ef2df5305c0>, /home/rahman/Desktop/Go-cli/my-cli, False
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling and ending repo_find
+INFO:root:path: {path}
+DEBUG:root:calling Gitrepo constructor
+INFO:root:<libwyag.GitRepository object at 0x730f29533ad0>, /home/rahman/Desktop/Go-cli/my-cli, False
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
+DEBUG:root:calling repo_path
