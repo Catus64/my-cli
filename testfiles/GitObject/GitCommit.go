@@ -26,7 +26,7 @@ func (commit *GitCommit) Deserialize() []byte {
 	}
 	start := 0
 	commit.KvlmDict = Kvlm_Parse(commit.data, start, kvlm)
-	return nil
+	return commit.data
 }
 
 func (blob *GitCommit) Get_Format() string {
@@ -38,9 +38,10 @@ func Kvlm_Parse(data []byte, start int, dict KvlmDict) KvlmDict {
 	space := bytes.IndexByte(data[start:], ' ') + start
 	newline := bytes.IndexByte(data[start:], '\n') + start
 
-	if space < 0 || newline < space {
+	// fmt.Println("space:", space, "newline:", newline)
+	if space-start < 0 || newline < space {
 		//end recursion
-		dict.Dict["data"] = data[start+1:]
+		dict.Dict["data"] = data[1:]
 		return dict
 	}
 

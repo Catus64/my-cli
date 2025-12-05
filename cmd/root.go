@@ -6,6 +6,7 @@ package cmd
 import (
 	"gocmd/internal/cli/gitinit"
 	"gocmd/internal/cli/greet"
+	"gocmd/internal/cli/showObject"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -47,4 +48,5 @@ func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	rootCmd.AddCommand(greet.NewCommand())
 	rootCmd.AddCommand(gitinit.NewCommand())
+	rootCmd.AddCommand(showObject.NewCommand())
 }

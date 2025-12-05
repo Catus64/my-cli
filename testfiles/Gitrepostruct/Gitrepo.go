@@ -123,7 +123,7 @@ func Repo_create(path string) *GitRepository {
 	info, err := os.Stat(repo.GitDir)
 	if err == nil {
 		if info.IsDir() {
-			panic(fmt.Sprintf("%v is not empty", path))
+			panic(fmt.Sprintf("%v is not empty - This directory already has a Git Repository(it might be hidden)", path))
 		}
 	}
 
