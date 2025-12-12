@@ -1,1 +1,1 @@
-package gitcheckout
+package gitCheckout

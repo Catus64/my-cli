@@ -41,7 +41,7 @@ func Kvlm_Parse(data []byte, start int, dict KvlmDict) KvlmDict {
 	// fmt.Println("space:", space, "newline:", newline)
 	if space-start < 0 || newline < space {
 		//end recursion
-		dict.Dict["data"] = data[1:]
+		dict.Dict["data"] = data[start:]
 		return dict
 	}
 

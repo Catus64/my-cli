@@ -1,4 +1,4 @@
-package gitlog
+package gitLog
 
 import (
 	"bytes"
@@ -42,15 +42,22 @@ func Format_Date_Author(text string) (string, string) {
 }
 
 func Recurse_Log(repo *gitpath.GitRepository, commit gitobj.GitCommit, sha string) {
+	const (
+		Yellow = "\033[33m"
+		Reset  = "\033[0m"
+	)
+
 	//log one obj
-	fmt.Println("commit ", sha)
+	fmt.Println(Yellow+"Commit: ", sha+Reset)
 	//fmt.Println("Author:", string(commit.Dict["author"]))
 	date, author := Format_Date_Author(string(commit.Dict["author"]))
 
 	fmt.Println("Date: ", date)
 	fmt.Println("Author: ", author)
+	fmt.Println("tree: ", string(commit.Dict["tree"]))
+	fmt.Println("parent: ", string(commit.Dict["parent"]))
 
-	fmt.Println("\n ", string(commit.Dict["data"]))
+	fmt.Println(string(commit.Dict["data"]))
 
 	//fmt.Println("\n", string(commit.Dict["data"]))
 
@@ -68,7 +75,7 @@ func Recurse_Log(repo *gitpath.GitRepository, commit gitobj.GitCommit, sha strin
 		panic("not a commit object")
 	}
 	Concrete_Parent_Commit.Deserialize()
-	println("\n")
+	//println("\n")
 	Recurse_Log(repo, *Concrete_Parent_Commit, string(commit.Dict["parent"]))
 }
 

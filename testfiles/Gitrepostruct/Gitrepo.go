@@ -146,7 +146,7 @@ func Repo_create(path string) *GitRepository {
 		panic("writing file fail")
 	}
 
-	config_file_path := Repo_Path(*repo, " config")
+	config_file_path := Repo_Path(*repo, "config")
 	config := Repo_default_config()
 	config.SaveTo(config_file_path)
 
