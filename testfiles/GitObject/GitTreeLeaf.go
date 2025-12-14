@@ -8,16 +8,16 @@ import (
 
 type GitTreeLeaf struct {
 	GitObjectData
-	format []byte
-	mode   []byte
-	sha    string
-	path   []byte
+	// format []byte
+	Mode []byte
+	Sha  string
+	Path []byte
 }
 
 func (leaf GitTreeLeaf) String() string {
-	mode := string(leaf.mode)
-	sha := string(leaf.sha)
-	return fmt.Sprintf("%s %s %s", mode, leaf.path, sha)
+	mode := string(leaf.Mode)
+	sha := string(leaf.Sha)
+	return fmt.Sprintf("%s %s %s", mode, leaf.Path, sha)
 }
 
 func (leaf GitTreeLeaf) Serialize() *[]byte {
@@ -48,23 +48,23 @@ func Tree_Serialize(items []GitTreeLeaf) []byte {
 
 	sort.Slice(items, func(i, j int) bool {
 
-		modei := string(items[i].mode[0:2])
-		modej := string(items[j].mode[0:2])
+		modei := string(items[i].Mode[0:2])
+		modej := string(items[j].Mode[0:2])
 
 		if modej == "04" && modei != "04" {
 			return true
 		}
 
-		return string(items[i].path) < string(items[j].path)
+		return string(items[i].Path) < string(items[j].Path)
 	})
 
 	for _, item := range items {
-		ret = append(ret, item.mode...)
+		ret = append(ret, item.Mode...)
 		ret = append(ret, ' ')
-		ret = append(ret, item.path...)
+		ret = append(ret, item.Path...)
 		ret = append(ret, 0x00)
 		sha_bytes := make([]byte, 20)
-		fmt.Sscanf(item.sha, "%040x", &sha_bytes)
+		fmt.Sscanf(item.Sha, "%040x", &sha_bytes)
 		ret = append(ret, sha_bytes...)
 		fmt.Println("Serialized item:", item.String())
 	}
@@ -96,9 +96,9 @@ func Tree_Parse_One(raw []byte, start int) (int, *GitTreeLeaf, error) {
 	sha := fmt.Sprintf("%040x", rawsha)
 
 	leaf := GitTreeLeaf{
-		mode: mode,
-		sha:  sha,
-		path: path,
+		Mode: mode,
+		Sha:  sha,
+		Path: path,
 	}
 
 	//fmt.Println("mode: ", string(mode))

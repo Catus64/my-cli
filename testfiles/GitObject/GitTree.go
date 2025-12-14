@@ -7,7 +7,7 @@ import (
 type GitTree struct {
 	GitObjectData
 	format []byte
-	items  []GitTreeLeaf
+	Items  []GitTreeLeaf
 }
 
 func (tree GitTree) Get_Format() string {
@@ -23,7 +23,7 @@ func (tree GitTree) Deserialize() []byte {
 }
 
 func (tree *GitTree) DeserializeData(data []byte) error {
-	tree.items = Tree_Parse(data)
+	tree.Items = Tree_Parse(data)
 	return nil
 }
 

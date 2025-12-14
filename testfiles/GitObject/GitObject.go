@@ -54,7 +54,7 @@ func MakeGitObj(Byte_data []byte) GitObject {
 		//fmt.Println("returning tree")
 		x := bytes.IndexByte(Byte_data[0:], 0x00)
 		GitTreeData := Byte_data[x+1:]
-		obj = GitTreeLeaf{GitObjectData: GitObjectData{GitTreeData}, format: []byte("tree")}
+		obj = GitTree{GitObjectData: GitObjectData{GitTreeData}, format: []byte("tree")}
 	case "ref":
 		fmt.Println("returning ref")
 	default:

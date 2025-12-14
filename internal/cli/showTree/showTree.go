@@ -1,33 +1,36 @@
-package showtree
+package showTree
 
 import (
-	// "fmt"
-	//githashread "gocmd/testfiles/GitHashRead"
-	gitLog "gocmd/testfiles/GitLog"
+	githashread "gocmd/testfiles/GitHashRead"
+	gitobj "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 
 	"github.com/spf13/cobra"
 )
 
-func log(cmd *cobra.Command, args []string) error {
+func LsTree(cmd *cobra.Command, args []string) error {
 	required := true
 	repo, err := gitpath.Repo_find(gitpath.Get_Os_Dir(), required)
 	if err != nil {
 		panic(err)
 	}
-	err = gitLog.Log(*repo)
-	if err != nil {
-		panic(err)
+	obj := githashread.Object_Read(*repo, args[0])
+	leafs := gitobj.Tree_Parse(obj.Deserialize())
+
+	//formatting required later
+
+	for _, leaf := range leafs {
+		println(leaf.String())
 	}
 	return nil
 }
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "log [object-hash]",
-		Short: "Print a friendly greeting",
-		Args:  cobra.MaximumNArgs(0),
-		RunE:  log,
+		Use:   "show-tree [tree-hash]",
+		Short: "Show contents of Tree object",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  LsTree,
 	}
 
 	return cmd

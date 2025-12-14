@@ -4,11 +4,13 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"gocmd/internal/cli/checkout"
 	"gocmd/internal/cli/gitLog"
 	"gocmd/internal/cli/gitinit"
 	"gocmd/internal/cli/greet"
 	"gocmd/internal/cli/hashObject"
 	"gocmd/internal/cli/showObject"
+	"gocmd/internal/cli/showTree"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -53,4 +55,6 @@ func init() {
 	rootCmd.AddCommand(showObject.NewCommand())
 	rootCmd.AddCommand(hashObject.NewCommand())
 	rootCmd.AddCommand(gitLog.NewCommand())
+	rootCmd.AddCommand(showTree.NewCommand())
+	rootCmd.AddCommand(checkout.NewCommand())
 }
