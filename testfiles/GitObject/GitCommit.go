@@ -59,7 +59,7 @@ func Kvlm_Parse(data []byte, start int, dict KvlmDict) KvlmDict {
 	value := data[space+1 : end]
 
 	_, ok := dict.Dict[string(key)]
-	if ok {
+	if ok { //check for two commits here
 		dict.Dict[string(key)] = append(dict.Dict[string(key)], 0x00)
 		dict.Dict[string(key)] = append(dict.Dict[string(key)], value...)
 	} else {

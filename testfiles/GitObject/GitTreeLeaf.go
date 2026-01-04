@@ -46,6 +46,8 @@ func (leaf GitTreeLeaf) Tree_Leaf_Sort_Key() []byte {
 func Tree_Serialize(items []GitTreeLeaf) []byte {
 	ret := []byte{}
 
+	// to sort tree items so that directories come first, then files, both in alphabetical order
+
 	sort.Slice(items, func(i, j int) bool {
 
 		modei := string(items[i].Mode[0:2])

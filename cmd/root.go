@@ -6,9 +6,11 @@ package cmd
 import (
 	"gocmd/internal/cli/checkout"
 	"gocmd/internal/cli/gitLog"
+	gittag "gocmd/internal/cli/gitTag"
 	"gocmd/internal/cli/gitinit"
 	"gocmd/internal/cli/greet"
 	"gocmd/internal/cli/hashObject"
+	showref "gocmd/internal/cli/show-ref"
 	"gocmd/internal/cli/showObject"
 	"gocmd/internal/cli/showTree"
 	"os"
@@ -57,4 +59,7 @@ func init() {
 	rootCmd.AddCommand(gitLog.NewCommand())
 	rootCmd.AddCommand(showTree.NewCommand())
 	rootCmd.AddCommand(checkout.NewCommand())
+	rootCmd.AddCommand(checkout.NewCommand())
+	rootCmd.AddCommand(showref.NewCommand())
+	rootCmd.AddCommand(gittag.NewCommand())
 }

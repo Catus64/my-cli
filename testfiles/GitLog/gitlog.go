@@ -1,28 +1,26 @@
 package gitLog
 
 import (
-	"bytes"
 	"fmt"
 	githashread "gocmd/testfiles/GitHashRead"
 	gitobj "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 )
 
-func Read_Master(repo gitpath.GitRepository) string {
-	head := gitpath.Repo_Path(repo, "refs", "heads", "master")
-	data, err := os.ReadFile(head)
-	if err != nil {
-		panic(err)
-	}
-	data = bytes.ReplaceAll(data, []byte(" "), []byte(""))
-	data = bytes.ReplaceAll(data, []byte("\n"), []byte(""))
+// func Read_Master(repo gitpath.GitRepository) string {
+// 	head := gitpath.Repo_Path(repo, "refs", "heads", "master")
+// 	data, err := os.ReadFile(head)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	data = bytes.ReplaceAll(data, []byte(" "), []byte(""))
+// 	data = bytes.ReplaceAll(data, []byte("\n"), []byte(""))
 
-	return string(data)
-}
+// 	return string(data)
+// }
 
 func Format_Date_Author(text string) (string, string) {
 	temp_string := strings.SplitN(text, " ", -1)
@@ -80,7 +78,9 @@ func Recurse_Log(repo *gitpath.GitRepository, commit gitobj.GitCommit, sha strin
 }
 
 func Log(repo gitpath.GitRepository) error {
-	head := Read_Master(repo)
+	// head := Read_Master(repo)
+	point := gitobj.Ref_Resolve(repo, "HEAD")
+	head := *point
 	Commit_Object := githashread.Object_Read(repo, head)
 	Commit_Object.Deserialize()
 	Concrete_Commit, ok := Commit_Object.(*gitobj.GitCommit)
