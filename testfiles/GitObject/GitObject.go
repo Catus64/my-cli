@@ -69,7 +69,7 @@ func MakeGitObjWithFormat(Byte_data []byte, Obj_format string) GitObject {
 
 	switch string(Obj_format) {
 	case "blob":
-		fmt.Println("returning blob")
+		// fmt.Println("returning blob")
 		obj = GitBlob{GitObjectData: GitObjectData{Byte_data}, format: []byte("blob")}
 	case "commit":
 		fmt.Println("returning commit")

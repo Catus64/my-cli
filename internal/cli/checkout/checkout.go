@@ -50,7 +50,7 @@ func checkout(cmd *cobra.Command, args []string) error {
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "load [commit-object]",
-		Short: "Show contents of Tree object",
+		Short: "Load Version",
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  checkout,
 	}

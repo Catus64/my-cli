@@ -46,21 +46,25 @@ func Recurse_Log(repo *gitpath.GitRepository, commit gitobj.GitCommit, sha strin
 	)
 
 	//log one obj
-	fmt.Println(Yellow+"Commit: ", sha+Reset)
-	//fmt.Println("Author:", string(commit.Dict["author"]))
+	//fmt.Println(Yellow+"Commit: ", sha+Reset)
 	date, author := Format_Date_Author(string(commit.Dict["author"]))
 
-	fmt.Println("Date: ", date)
-	fmt.Println("Author: ", author)
-	fmt.Println("tree: ", string(commit.Dict["tree"]))
-	fmt.Println("parent: ", string(commit.Dict["parent"]))
+	// fmt.Println("Date: ", date)
+	// fmt.Println("Author: ", author)
+	// fmt.Println("tree: ", string(commit.Dict["tree"]))
+	// fmt.Println("parent: ", string(commit.Dict["parent"]))
 
-	fmt.Println(string(commit.Dict["data"]))
+	// fmt.Println(string(commit.Dict["data"]))
 
-	//fmt.Println("\n", string(commit.Dict["data"]))
+	PrintCommit(
+		sha,
+		author,
+		date,
+		string(commit.Dict["tree"]),
+		string(commit.Dict["parent"]),
+		string(commit.Dict["data"]),
+	)
 
-	//parent = current pbj = end func
-	//fmt.Println("PARENT: ", commit.Dict["parent"])
 	if commit.Dict["parent"] == nil {
 		println("end")
 		return
@@ -80,6 +84,7 @@ func Recurse_Log(repo *gitpath.GitRepository, commit gitobj.GitCommit, sha strin
 func Log(repo gitpath.GitRepository) error {
 	// head := Read_Master(repo)
 	point := gitobj.Ref_Resolve(repo, "HEAD")
+	// fmt.Println("HEAD points to:", point)
 	head := *point
 	Commit_Object := githashread.Object_Read(repo, head)
 	Commit_Object.Deserialize()
@@ -90,4 +95,64 @@ func Log(repo gitpath.GitRepository) error {
 	//fmt.Println(string(Concrete_Commit.Dict["data"]))
 	Recurse_Log(&repo, *Concrete_Commit, head)
 	return nil
+}
+
+// AI slop will be rewritten
+func PrintCommit(sha, author, date, tree, parent, message string) {
+	const width = 55
+
+	line := func(left, mid, right string) {
+		fmt.Printf("%s%s%s\n", left, mid, right)
+	}
+
+	row := func(text string) {
+		fmt.Printf("│ %-*s │\n", width-2, text)
+	}
+
+	repeat := func(s string, n int) string {
+		out := ""
+		for i := 0; i < n; i++ {
+			out += s
+		}
+		return out
+	}
+
+	line("┌", repeat("─", width), "┐")
+	row("Version")
+	line("├", repeat("─", width), "┤")
+
+	row("SHA    : " + sha)
+	row("Author : " + author)
+	row("Date   : " + date)
+	row("")
+	row("Tree   : " + tree)
+	row("Parent : " + parent)
+
+	line("├", repeat("─", width), "┤")
+	row("Message")
+	row("")
+
+	for _, line := range splitLines(message) {
+		row(line)
+	}
+
+	line("└", repeat("─", width), "┘")
+}
+
+func splitLines(s string) []string {
+	out := []string{}
+	current := ""
+
+	for _, r := range s {
+		if r == '\n' {
+			out = append(out, current)
+			current = ""
+			continue
+		}
+		current += string(r)
+	}
+	if current != "" {
+		out = append(out, current)
+	}
+	return out
 }

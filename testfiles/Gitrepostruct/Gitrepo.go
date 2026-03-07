@@ -120,12 +120,17 @@ func Repo_create(path string) *GitRepository {
 		panic(fmt.Sprintf("%v is not a directory", path))
 	}
 
-	info, err := os.Stat(repo.GitDir)
+	_, err = Repo_find(path, false)
 	if err == nil {
-		if info.IsDir() {
-			panic(fmt.Sprintf("%v is not empty - This directory already has a Git Repository(it might be hidden)", path))
-		}
+		panic(fmt.Sprintf("%v is not empty - This directory already has a Git Repository(it might be hidden)", path))
 	}
+
+	// info, err := os.Stat(repo.GitDir)
+	// if err == nil {
+	// 	if info.IsDir() {
+	// 		panic(fmt.Sprintf("%v is not empty - This directory already has a Git Repository(it might be hidden)", path))
+	// 	}
+	// }
 
 	if infoTree == nil {
 		os.MkdirAll(repo.WorkTree, 0755)

@@ -24,7 +24,7 @@ func log(cmd *cobra.Command, args []string) error {
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "log [object-hash]",
+		Use:   "history [object-hash]",
 		Short: "Print a friendly greeting",
 		Args:  cobra.MaximumNArgs(0),
 		RunE:  log,

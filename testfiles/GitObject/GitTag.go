@@ -7,14 +7,14 @@ import (
 )
 
 func Ref_Resolve(repo gitpath.GitRepository, ref string) *string {
-	//path := gitpath.Repo_Path(repo, ref)
+	path := gitpath.Repo_Path(repo, ref)
 	//fmt.Println(path)
-	_, err := os.Stat(ref)
+	_, err := os.Stat(path)
 	if err != nil {
 		return nil
 	}
 
-	data, err := os.ReadFile(ref)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}

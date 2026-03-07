@@ -8,7 +8,6 @@ import (
 	"gocmd/internal/cli/gitLog"
 	gittag "gocmd/internal/cli/gitTag"
 	"gocmd/internal/cli/gitinit"
-	"gocmd/internal/cli/greet"
 	"gocmd/internal/cli/hashObject"
 	showref "gocmd/internal/cli/show-ref"
 	"gocmd/internal/cli/showObject"
@@ -21,13 +20,16 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "ezgit",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-	examples and usage of using your application. For example:
+	Short: "Lightweight Versioning Engine",
+	Long: `This is a lightweight versioning engine similar to git.
+	It has a smaller call set and is intended for Single User use.
 
-	Cobra is a CLI library for Go that empowers applications.
-	This application is a tool to generate the needed files
-	to quickly create a Cobra application.`,
+	You can use it to create repositories, add files, commit changes, view logs and tags, and checkout previous versions of your files.
+	This tool is designed to be simple and easy to use, making it ideal for personal projects and small teams.
+	The command line interface is intuitive, allowing users to quickly learn and utilize its features effectively
+	while also being transparent about what happens under the hood.
+	
+	`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -52,13 +54,11 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	rootCmd.AddCommand(greet.NewCommand())
 	rootCmd.AddCommand(gitinit.NewCommand())
 	rootCmd.AddCommand(showObject.NewCommand())
 	rootCmd.AddCommand(hashObject.NewCommand())
 	rootCmd.AddCommand(gitLog.NewCommand())
 	rootCmd.AddCommand(showTree.NewCommand())
-	rootCmd.AddCommand(checkout.NewCommand())
 	rootCmd.AddCommand(checkout.NewCommand())
 	rootCmd.AddCommand(showref.NewCommand())
 	rootCmd.AddCommand(gittag.NewCommand())
