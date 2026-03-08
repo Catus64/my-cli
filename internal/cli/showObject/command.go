@@ -19,10 +19,10 @@ func show(cmd *cobra.Command, args []string) error {
 	// fmt.Println("Object format:", obj.Get_Format())
 
 	if obj.Get_Format() == "tree" || obj.Get_Format() == "leaf" {
-		println("This is a tree object. please use the 'ls-tree' command to view its contents.")
+		println("This is a tree object. please use the 'show-tree' command to view its contents.")
 		return nil
 	}
-	//fmt.Println(string(obj.Deserialize()))
+	// fmt.Println(string(obj.Deserialize()))
 	content := string(obj.Deserialize())
 	PrintObjectContent(args[0], []byte(content))
 	return nil

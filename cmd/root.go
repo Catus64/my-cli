@@ -4,11 +4,11 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"gocmd/internal/cli/checkout"
 	"gocmd/internal/cli/gitLog"
 	gittag "gocmd/internal/cli/gitTag"
 	"gocmd/internal/cli/gitinit"
 	"gocmd/internal/cli/hashObject"
+	"gocmd/internal/cli/load"
 	showref "gocmd/internal/cli/show-ref"
 	"gocmd/internal/cli/showObject"
 	"gocmd/internal/cli/showTree"
@@ -59,7 +59,7 @@ func init() {
 	rootCmd.AddCommand(hashObject.NewCommand())
 	rootCmd.AddCommand(gitLog.NewCommand())
 	rootCmd.AddCommand(showTree.NewCommand())
-	rootCmd.AddCommand(checkout.NewCommand())
+	rootCmd.AddCommand(load.NewCommand())
 	rootCmd.AddCommand(showref.NewCommand())
 	rootCmd.AddCommand(gittag.NewCommand())
 }

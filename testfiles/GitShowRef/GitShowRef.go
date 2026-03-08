@@ -20,19 +20,14 @@ func Ref_list(repo gitpath.GitRepository, path string, temp_path string) map[str
 
 	refs := map[string]string{}
 
-	//fmt.Println("PATH:", path)
-
 	//get entries in directory
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		panic(err)
 	}
-
 	for _, entry := range entries {
 		entry_path := filepath.Join(path, entry.Name())
 		info, _ := os.Stat(entry_path)
-
-		//fmt.Println(entry_path)
 
 		//if directory recurse else add ref
 		if info.IsDir() {
@@ -44,7 +39,12 @@ func Ref_list(repo gitpath.GitRepository, path string, temp_path string) map[str
 			}
 		} else {
 			temp_path := filepath.Join(temp_path, entry.Name())
-			refs[temp_path] = *gitobj.Ref_Resolve(repo, entry_path)
+			ret, err := gitobj.Ref_Resolve(repo, temp_path)
+			if err != nil {
+				panic(err)
+			}
+
+			refs[temp_path] = *ret
 		}
 	}
 

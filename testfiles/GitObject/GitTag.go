@@ -6,27 +6,28 @@ import (
 	"time"
 )
 
-func Ref_Resolve(repo gitpath.GitRepository, ref string) *string {
+// take a ref eg, ".git/HEAD" and resolve it to the sha
+// it points to, if it is a ref to another ref then resolve that one instead
+
+func Ref_Resolve(repo gitpath.GitRepository, ref string) (*string, error) {
 	path := gitpath.Repo_Path(repo, ref)
-	//fmt.Println(path)
+
 	_, err := os.Stat(path)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	data = data[:len(data)-1] // remove newline
-	//fmt.Println(string(data))
+	data = data[:len(data)-1] // remove newline from end of file
 	if string(data[0:4]) == string("ref:") {
 		return Ref_Resolve(repo, string(data[5:]))
 	}
 
 	ret := string(data)
-
-	return &ret
+	return &ret, nil
 }
 
 type GitTag struct {

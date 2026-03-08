@@ -49,6 +49,16 @@ func Read_Blob(path string) *[]byte {
 
 func Object_Read(repo gitpath.GitRepository, sha string) gitobj.GitObject {
 
+	candidate_sha, _ := gitobj.Object_Resolve(repo, sha)
+	if len(candidate_sha) == 0 {
+		panic("object not found")
+	}
+	if len(candidate_sha) > 1 {
+		panic("ambiguity error: multiple objects found (try to use longer sha)")
+	}
+
+	sha = candidate_sha[0]
+
 	//splitting strings for path check
 	first := sha[:2]
 	rest := sha[2:]

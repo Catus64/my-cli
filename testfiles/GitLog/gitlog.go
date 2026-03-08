@@ -83,7 +83,10 @@ func Recurse_Log(repo *gitpath.GitRepository, commit gitobj.GitCommit, sha strin
 
 func Log(repo gitpath.GitRepository) error {
 	// head := Read_Master(repo)
-	point := gitobj.Ref_Resolve(repo, "HEAD")
+	point, err := gitobj.Ref_Resolve(repo, "HEAD")
+	if err != nil {
+		return err
+	}
 	// fmt.Println("HEAD points to:", point)
 	head := *point
 	Commit_Object := githashread.Object_Read(repo, head)

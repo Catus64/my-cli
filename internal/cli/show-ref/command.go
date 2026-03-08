@@ -18,8 +18,10 @@ func show_ref(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}
 
-	_ = gitobj.Ref_Resolve(*repo, "HEAD")
-	//fmt.Println(*s)
+	_, err = gitobj.Ref_Resolve(*repo, "HEAD")
+	if err != nil {
+		panic(err)
+	}
 
 	refs := gitshowref.Ref_list(*repo, "", "")
 	for i, ref := range refs {

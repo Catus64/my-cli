@@ -3,6 +3,11 @@ package GitObjLib
 import (
 	"bytes"
 	"fmt"
+	gitpath "gocmd/testfiles/Gitrepostruct"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
 )
 
 type GitObjectData struct {
@@ -83,4 +88,66 @@ func MakeGitObjWithFormat(Byte_data []byte, Obj_format string) GitObject {
 	}
 
 	return obj
+}
+
+func Object_Resolve(repo gitpath.GitRepository, name string) ([]string, error) {
+
+	var candidates []string
+
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return nil, nil
+	}
+
+	// HEAD
+	if name == "HEAD" {
+		sha, err := Ref_Resolve(repo, "HEAD")
+		if err != nil {
+			return nil, err
+		}
+		return []string{*sha}, nil
+	}
+
+	// compile regex to check if name is a hash
+	hashRegex := regexp.MustCompile(`^[0-9A-Fa-f]{4,40}$`)
+
+	// check whether name is a hash
+	if hashRegex.MatchString(name) {
+
+		name = strings.ToLower(name)
+		prefix := name[:2]
+
+		path := filepath.Join(repo.GitDir, "objects", prefix)
+
+		files, err := os.ReadDir(path)
+		if err == nil {
+
+			rem := name[2:]
+
+			for _, f := range files {
+				if strings.HasPrefix(f.Name(), rem) {
+					candidates = append(candidates, prefix+f.Name())
+				}
+			}
+		}
+	}
+
+	//if input is not a hash then check refs
+
+	// refs/tags
+	if sha, _ := Ref_Resolve(repo, "refs/tags/"+name); sha != nil {
+		candidates = append(candidates, *sha)
+	}
+
+	// refs/heads
+	if sha, _ := Ref_Resolve(repo, "refs/heads/"+name); sha != nil {
+		candidates = append(candidates, *sha)
+	}
+
+	// refs/remotes
+	if sha, _ := Ref_Resolve(repo, "refs/remotes/"+name); sha != nil {
+		candidates = append(candidates, *sha)
+	}
+
+	return candidates, nil
 }
