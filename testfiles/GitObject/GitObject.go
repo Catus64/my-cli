@@ -132,7 +132,7 @@ func Object_Resolve(repo gitpath.GitRepository, name string) ([]string, error) {
 		}
 	}
 
-	//if input is not a hash then check refs
+	//if input is not a hash then check refs folder
 
 	// refs/tags
 	if sha, _ := Ref_Resolve(repo, "refs/tags/"+name); sha != nil {

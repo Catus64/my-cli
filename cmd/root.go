@@ -10,6 +10,7 @@ import (
 	"gocmd/internal/cli/hashObject"
 	"gocmd/internal/cli/load"
 	showref "gocmd/internal/cli/show-ref"
+	showsavelist "gocmd/internal/cli/show-savelist"
 	"gocmd/internal/cli/showObject"
 	"gocmd/internal/cli/showTree"
 	"os"
@@ -62,4 +63,5 @@ func init() {
 	rootCmd.AddCommand(load.NewCommand())
 	rootCmd.AddCommand(showref.NewCommand())
 	rootCmd.AddCommand(gittag.NewCommand())
+	rootCmd.AddCommand(showsavelist.NewCommand())
 }
