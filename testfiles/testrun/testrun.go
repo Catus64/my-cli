@@ -25,7 +25,10 @@ func main() {
 
 	//weird tree b769d70e94410966bcdb314ed77f90d43bc41980
 
-	obj := githashread.Object_Read(*repo, "2f4fa26a5a15f2e6f1ea994b3aaebcf664bcf0e5")
+	obj, err := githashread.Object_Read(*repo, "2f4fa26a5a15f2e6f1ea994b3aaebcf664bcf0e5")
+	if err != nil {
+		panic(err)
+	}
 	//fmt.Println(obj.Get_Format())
 
 	//sha, _ := githashread.Hash_Object("settings", "blob", *repo)

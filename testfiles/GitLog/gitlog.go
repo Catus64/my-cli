@@ -71,7 +71,10 @@ func Recurse_Log(repo *gitpath.GitRepository, commit gitobj.GitCommit, sha strin
 	}
 
 	//recurse
-	Parent_Obj := githashread.Object_Read(*repo, string(commit.Dict["parent"]))
+	Parent_Obj, err := githashread.Object_Read(*repo, string(commit.Dict["parent"]))
+	if err != nil {
+		panic(err)
+	}
 	Concrete_Parent_Commit, ok := Parent_Obj.(*gitobj.GitCommit)
 	if !ok {
 		panic("not a commit object")
@@ -89,7 +92,10 @@ func Log(repo gitpath.GitRepository) error {
 	}
 	// fmt.Println("HEAD points to:", point)
 	head := *point
-	Commit_Object := githashread.Object_Read(repo, head)
+	Commit_Object, err := githashread.Object_Read(repo, head)
+	if err != nil {
+		return err
+	}
 	Commit_Object.Deserialize()
 	Concrete_Commit, ok := Commit_Object.(*gitobj.GitCommit)
 	if !ok {

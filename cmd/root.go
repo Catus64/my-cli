@@ -4,6 +4,7 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	checkignore "gocmd/internal/cli/check-ignore"
 	"gocmd/internal/cli/gitLog"
 	gittag "gocmd/internal/cli/gitTag"
 	"gocmd/internal/cli/gitinit"
@@ -64,4 +65,5 @@ func init() {
 	rootCmd.AddCommand(showref.NewCommand())
 	rootCmd.AddCommand(gittag.NewCommand())
 	rootCmd.AddCommand(showsavelist.NewCommand())
+	rootCmd.AddCommand(checkignore.NewCommand())
 }

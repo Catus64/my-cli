@@ -47,14 +47,14 @@ func Read_Blob(path string) *[]byte {
 	return &decompressed
 }
 
-func Object_Read(repo gitpath.GitRepository, sha string) gitobj.GitObject {
+func Object_Read(repo gitpath.GitRepository, sha string) (gitobj.GitObject, error) {
 
 	candidate_sha, _ := gitobj.Object_Resolve(repo, sha)
 	if len(candidate_sha) == 0 {
-		panic("object not found")
+		return nil, fmt.Errorf("object not found")
 	}
 	if len(candidate_sha) > 1 {
-		panic("ambiguity error: multiple objects found (try to use longer sha)")
+		return nil, fmt.Errorf("ambiguity error: multiple objects found (try to use longer sha)")
 	}
 
 	sha = candidate_sha[0]
@@ -76,5 +76,5 @@ func Object_Read(repo gitpath.GitRepository, sha string) gitobj.GitObject {
 	obj := gitobj.MakeGitObj(*decompressed)
 	//fmt.Println(string(obj.Deserialize()))
 
-	return obj
+	return obj, nil
 }

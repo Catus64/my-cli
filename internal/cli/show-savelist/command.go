@@ -14,10 +14,16 @@ func show_savelist(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}
 
-	_, err = gitobject.Index_Read(*repo)
+	//_, err = gitobject.Index_Read(*repo)
+	index, err := gitobject.Index_Read2(*repo)
 	if err != nil {
 		panic(err)
 	}
+
+	for _, entry := range index.Entries {
+		println("File: ", entry.Name, " Mode: ", entry.ModePerms, " SHA: ", entry.SHA)
+	}
+
 	return nil
 }
 
