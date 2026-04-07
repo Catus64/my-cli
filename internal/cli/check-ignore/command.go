@@ -1,6 +1,7 @@
 package checkignore
 
 import (
+	"fmt"
 	gitcheckignore "gocmd/testfiles/GitCheckIgnore"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 	logger "gocmd/testfiles/Helper"
@@ -23,14 +24,26 @@ func check_ignore(cmd *cobra.Command, args []string) error {
 		"ok", ok,
 	)
 
-	read, err := gitcheckignore.ReadGitIgnore(*repo)
+	rules, err := gitcheckignore.ReadGitIgnore(*repo)
 	if err != nil {
 		return err
 	}
 	logger.L().Debug("GitIgnore read",
-		"absolute", read.Absolute,
-		"scoped", read.Scoped,
+		"absolute", rules.Absolute,
+		"scoped", rules.Scoped,
 	)
+
+	for _, arg := range args {
+		// arg := strings.Map(func(r rune) rune {
+		// 	if unicode.IsSpace(r) {
+		// 		return -1 // Drop the character
+		// 	}
+		// 	return r
+		// }, arg)
+
+		fmt.Println("Checking if", arg, "is ignored...")
+		fmt.Println(gitcheckignore.CheckIgnore(rules, arg))
+	}
 
 	return nil
 }
@@ -39,7 +52,6 @@ func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "check-ignore [object-hash]",
 		Short: "Check if the specified object is ignored by .gitignore",
-		Args:  cobra.MaximumNArgs(1),
 		RunE:  check_ignore,
 	}
 

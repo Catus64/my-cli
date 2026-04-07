@@ -5,6 +5,7 @@ package cmd
 
 import (
 	checkignore "gocmd/internal/cli/check-ignore"
+	getcurrent "gocmd/internal/cli/get-current"
 	"gocmd/internal/cli/gitLog"
 	gittag "gocmd/internal/cli/gitTag"
 	"gocmd/internal/cli/gitinit"
@@ -66,4 +67,5 @@ func init() {
 	rootCmd.AddCommand(gittag.NewCommand())
 	rootCmd.AddCommand(showsavelist.NewCommand())
 	rootCmd.AddCommand(checkignore.NewCommand())
+	rootCmd.AddCommand(getcurrent.NewCommand())
 }

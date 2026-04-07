@@ -10,7 +10,7 @@ import (
 	gitpath "gocmd/testfiles/Gitrepostruct"
 )
 
-// GitIgnore holds all ignore rules
+// GitIgnore holds all ignore rules return rules from all sources of ignore
 type GitIgnore struct {
 	Absolute []string            // local + global ignores
 	Scoped   map[string][]string // directory -> patterns from staged .gitignore
