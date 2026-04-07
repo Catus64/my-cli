@@ -7,7 +7,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 
-	"ezgit/img"
+	"gocmd/img"
 )
 
 func (screen *MyApp) SideRect() fyne.CanvasObject {

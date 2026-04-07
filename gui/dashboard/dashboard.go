@@ -8,7 +8,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 
-	"ezgit/gui"
+	"gocmd/gui"
 )
 
 func DashBoard(screen *gui.MyApp) fyne.CanvasObject {

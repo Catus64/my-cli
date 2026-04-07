@@ -5,8 +5,8 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 
-	"ezgit/gui"
-	"ezgit/gui/dashboard"
+	"gocmd/gui"
+	"gocmd/gui/dashboard"
 )
 
 func main() {

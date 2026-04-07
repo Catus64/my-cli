@@ -8,9 +8,9 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
-	"ezgit/gui"
-    "ezgit/gui/createRepo"
-    "ezgit/gui/openRepo"
+	"gocmd/gui"
+    "gocmd/gui/createRepo"
+    "gocmd/gui/openRepo"
 )
 
 func Action(screen *gui.MyApp) fyne.CanvasObject {

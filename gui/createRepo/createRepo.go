@@ -1,8 +1,8 @@
 package createRepo
 
 import (
-	"ezgit/gui"
-	"ezgit/gui/homepage"
+	"gocmd/gui"
+	"gocmd/gui/homepage"
 	"image/color"
 	"strings"
 

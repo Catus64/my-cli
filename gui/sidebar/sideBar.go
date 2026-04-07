@@ -1,7 +1,7 @@
 package sidebar
 
 import (
-	"ezgit/gui"
+	"gocmd/gui"
 	"image/color"
 	"path/filepath"
 

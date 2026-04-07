@@ -10,8 +10,8 @@ import (
 	"fyne.io/fyne/v2/dialog" // Pop-up windows/file pickers
 	"fyne.io/fyne/v2/widget" // UI components (buttons, text boxes)
 
-	"ezgit/gui"
-	"ezgit/gui/homepage"
+	"gocmd/gui"
+	"gocmd/gui/homepage"
 )
 
 func Show(gui *gui.MyApp) {

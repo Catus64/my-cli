@@ -1,8 +1,8 @@
 package homepage
 
 import (
-	"ezgit/gui"
-	"ezgit/gui/sidebar"
+	"gocmd/gui"
+	"gocmd/gui/sidebar"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
