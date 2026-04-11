@@ -12,7 +12,7 @@ func Show(gui *gui.MyApp, pathName string) {
 	myWindow := gui.App.NewWindow(gui.Window.Title())
 	sidebar := sidebar.SideBar(gui, myWindow, pathName, "home")
 
-	fullContent := container.NewBorder(nil, nil, sidebar, nil, nil)
+	fullContent := container.NewBorder(nil, nil, sidebar, nil, HomePageContent())
 	myWindow.SetContent(fullContent)
 	myWindow.Resize(fyne.NewSize(1000, 600))
 	myWindow.Show()
