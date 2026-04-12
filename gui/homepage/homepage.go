@@ -8,12 +8,14 @@ import (
 	"fyne.io/fyne/v2/container"
 )
 
-func Show(gui *gui.MyApp, pathName string) {
-	myWindow := gui.App.NewWindow(gui.Window.Title())
-	sidebar := sidebar.SideBar(gui, myWindow, pathName, "home")
+func Show(gui *gui.MyApp, pathName string, window fyne.Window, onModified func(), onHistory func(), onHelp func()) {
+	sidebar := sidebar.SideBar(gui, window, pathName, "home", 
+		func() {}, // stay at default page
+		func() { onModified() },
+		func() { onHistory() },
+		func() { onHelp() },
+	)
 
 	fullContent := container.NewBorder(nil, nil, sidebar, nil, HomePageContent())
-	myWindow.SetContent(fullContent)
-	myWindow.Resize(fyne.NewSize(1000, 600))
-	myWindow.Show()
+	window.SetContent(fullContent)
 }

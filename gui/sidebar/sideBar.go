@@ -42,19 +42,11 @@ func NavButton(label string, isActive bool, action func()) fyne.CanvasObject {
 	return container.NewBorder(nil, nil, LRmargin, LRmargin, buttonStack)
 }
 
-func SideBar(gui *gui.MyApp, window fyne.Window, pathName string, activePage string) fyne.CanvasObject {
-	homeButton := NavButton("Home Page", activePage == "home", func()  {
-		
-	})
-	modifiedFileButton := NavButton("Modified File", activePage == "modified", func()  {
-		
-	})
-	historyButton := NavButton("History", activePage == "history", func()  {
-		
-	})
-	helpButton := NavButton("Help", activePage == "help", func()  {
-		
-	})
+func SideBar(gui *gui.MyApp, window fyne.Window, pathName string, activePage string, Home func(), ModifiedFile func(), History func(), Help func()) fyne.CanvasObject {
+	homeButton := NavButton("Home Page", activePage == "home", Home)
+	modifiedFileButton := NavButton("Modified File", activePage == "modified", ModifiedFile)
+	historyButton := NavButton("History", activePage == "history", History)
+	helpButton := NavButton("Help", activePage == "help", Help)
 
 	// Current repository box
 	repoLabel := canvas.NewText("Current Repository", color.Gray{Y: 150})

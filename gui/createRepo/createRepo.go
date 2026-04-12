@@ -2,7 +2,10 @@ package createRepo
 
 import (
 	"gocmd/gui"
+	"gocmd/gui/help"
+	"gocmd/gui/history"
 	"gocmd/gui/homepage"
+	"gocmd/gui/modifiedFile"
 	"image/color"
 	"strings"
 
@@ -57,8 +60,30 @@ func browseButton(window fyne.Window, entry *widget.Entry, selectedPath *string)
 func createButton(entry *widget.Entry, window fyne.Window, gui *gui.MyApp) *widget.Button {
     createButton := widget.NewButton("Create", func() {                
         path := strings.TrimSpace(entry.Text)
+
+        // Window after creating
+        mainWindow := gui.App.NewWindow(gui.Window.Title())
+        mainWindow.Resize(fyne.NewSize(1000, 600))
+       
+        // define all navigation function
+        var showHome, showModified, showHistory, showHelp func()
+
+        showHome = func() {
+            homepage.Show(gui, path, mainWindow, showModified, showHistory, showHelp)
+        }
+        showModified = func() {
+            modifiedFile.Show(gui, path, mainWindow, showHome, showHistory, showHelp)
+        }
+        showHistory = func() {
+            history.Show(gui, path, mainWindow, showHome, showModified, showHelp)
+        }
+        showHelp = func() {
+            help.Show(gui, path, mainWindow, showHome, showModified, showHistory)
+        }
+
         window.Hide()
-        homepage.Show(gui, path)
+        mainWindow.Show()
+        showHome() // show homepage after create
     })
 
     createButton.Disable()

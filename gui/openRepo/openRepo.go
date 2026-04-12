@@ -11,7 +11,10 @@ import (
 	"fyne.io/fyne/v2/widget" // UI components (buttons, text boxes)
 
 	"gocmd/gui"
+	"gocmd/gui/help"
+	"gocmd/gui/history"
 	"gocmd/gui/homepage"
+	"gocmd/gui/modifiedFile"
 )
 
 func Show(gui *gui.MyApp) {
@@ -58,8 +61,30 @@ func browse(window fyne.Window, entry *widget.Entry, selectedPath *string) *fyne
 func openButton(entry *widget.Entry, window fyne.Window, gui *gui.MyApp) *widget.Button {
     openButton := widget.NewButton("Open", func() {
         path := strings.TrimSpace(entry.Text)
+
+        // Window after Open
+        mainWindow := gui.App.NewWindow(gui.Window.Title())
+        mainWindow.Resize(fyne.NewSize(1000, 600))
+        
+        // define all navigation function
+        var showHome, showModified, showHistory, showHelp func()
+
+        showHome = func() {
+            homepage.Show(gui, path, mainWindow, showModified, showHistory, showHelp)
+        }
+        showModified = func() {
+            modifiedFile.Show(gui, path, mainWindow, showHome, showHistory, showHelp)
+        }
+        showHistory = func() {
+            history.Show(gui, path, mainWindow, showHome, showModified, showHelp)
+        }
+        showHelp = func() {
+            help.Show(gui, path, mainWindow, showHome, showModified, showHistory)
+        }
+
         window.Hide()
-        homepage.Show(gui, path)
+        mainWindow.Show()
+        showHome() // show homepage after create
     })
     openButton.Importance = widget.HighImportance // blue
 
