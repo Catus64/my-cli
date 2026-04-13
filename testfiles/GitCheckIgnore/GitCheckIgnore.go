@@ -2,7 +2,6 @@ package gitcheckignore
 
 import (
 	"errors"
-	logger "gocmd/testfiles/Helper"
 	"path/filepath"
 	"strings"
 )
@@ -73,12 +72,12 @@ func Check_Ignore_1(patterns []string, path string) *bool {
 			}
 		}
 
-		logger.L().Debug("Checking pattern",
-			"pattern", pattern,
-			"path", path,
-			"match", match,
-			"isNegation", isNegation,
-		)
+		// logger.L().Debug("Checking pattern",
+		// 	"pattern", pattern,
+		// 	"path", path,
+		// 	"match", match,
+		// 	"isNegation", isNegation,
+		// )
 		if match {
 			val := !isNegation
 			result = &val // last match wins

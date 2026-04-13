@@ -29,8 +29,15 @@ func get_current(cmd *cobra.Command, args []string) error {
 
 	err = gitCurrent.StatusHeadIndex(*repo, *index)
 
-	fmt.Println("head index")
-	fmt.Println("index worktree")
+	untracked, err := gitCurrent.StatusIndexWorktree(*repo, *index)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("\nUntracked files:")
+	for _, f := range untracked {
+		fmt.Println(" ", f)
+	}
 
 	return nil
 }
