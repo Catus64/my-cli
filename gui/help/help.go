@@ -16,6 +16,6 @@ func Show(gui *gui.MyApp, pathName string, window fyne.Window, onHome func(), on
 		func() {}, // stay at default page
 	)
 
-	fullContent := container.NewBorder(nil, nil, sidebar, nil, nil)
+	fullContent := container.NewBorder(nil, nil, sidebar, nil, HelpContent())
 	window.SetContent(fullContent)
 }
