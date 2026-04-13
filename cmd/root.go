@@ -11,6 +11,7 @@ import (
 	"gocmd/internal/cli/gitinit"
 	"gocmd/internal/cli/hashObject"
 	"gocmd/internal/cli/load"
+	"gocmd/internal/cli/remove"
 	showref "gocmd/internal/cli/show-ref"
 	showsavelist "gocmd/internal/cli/show-savelist"
 	"gocmd/internal/cli/showObject"
@@ -68,4 +69,6 @@ func init() {
 	rootCmd.AddCommand(showsavelist.NewCommand())
 	rootCmd.AddCommand(checkignore.NewCommand())
 	rootCmd.AddCommand(getcurrent.NewCommand())
+	rootCmd.AddCommand(remove.NewCommand())
+
 }
