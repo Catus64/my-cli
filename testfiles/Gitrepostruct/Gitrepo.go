@@ -108,7 +108,13 @@ func mustRepo_Dir(repo GitRepository, mkdir bool, paths ...string) {
 	}
 }
 
-func Repo_create(path string) *GitRepository {
+func Repo_create(path string) (*GitRepository, error) {
+
+	_, err := os.Stat(path)
+	if err != nil {
+		return nil, fmt.Errorf("Path does not exist")
+	}
+
 	//create a repository
 
 	force := true
@@ -155,7 +161,7 @@ func Repo_create(path string) *GitRepository {
 	config := Repo_default_config()
 	config.SaveTo(config_file_path)
 
-	return repo
+	return repo, nil
 
 }
 

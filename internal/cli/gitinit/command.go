@@ -10,7 +10,7 @@ import (
 func Git_init(cmd *cobra.Command, args []string) error {
 	// fmt.Println("making repo")
 	rootpath := gitpath.Get_Os_Dir()
-	gitrepo := gitpath.Repo_create(rootpath)
+	gitrepo, _ := gitpath.Repo_create(rootpath)
 	PrintRepoInitialized(gitrepo.GitDir)
 	return nil
 }
