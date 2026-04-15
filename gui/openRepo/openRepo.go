@@ -1,6 +1,7 @@
 package openRepo
 
 import (
+	"fmt"
 	"image/color"
 	"strings"
 
@@ -15,7 +16,16 @@ import (
 	"gocmd/gui/history"
 	"gocmd/gui/homepage"
 	"gocmd/gui/modifiedFile"
+	gitpath "gocmd/testfiles/Gitrepostruct"
 )
+
+func OpenRepo(path string) error{
+    _, err := gitpath.Repo_find(path, false)
+	if err != nil {
+		return fmt.Errorf("Repository doesn't exist!")
+	}
+    return nil
+}
 
 func Show(gui *gui.MyApp) {
 	myWindow := gui.App.NewWindow(gui.Window.Title())
@@ -61,6 +71,14 @@ func browse(window fyne.Window, entry *widget.Entry, selectedPath *string) *fyne
 func openButton(entry *widget.Entry, window fyne.Window, gui *gui.MyApp) *widget.Button {
     openButton := widget.NewButton("Open", func() {
         path := strings.TrimSpace(entry.Text)
+
+        err := OpenRepo(path)
+        if err != nil{
+            dialog.ShowError(err, window)
+            entry.SetText("")
+
+            return
+        }
 
         // Window after Open
         mainWindow := gui.App.NewWindow(gui.Window.Title())

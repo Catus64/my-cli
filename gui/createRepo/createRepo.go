@@ -18,8 +18,12 @@ import (
 	"fyne.io/fyne/v2/widget" // UI components (buttons, text boxes)
 )
 
-func RepoInit(path string) {
-	_ = gitpath.Repo_create(path)
+func RepoInit(path string) error {
+	_, err := gitpath.Repo_create(path)
+	if err != nil {
+		return fmt.Errorf("Path does not exist or already exist!")
+	}
+    return nil
 }
 
 func Show(gui *gui.MyApp) {
@@ -67,8 +71,13 @@ func createButton(entry *widget.Entry, window fyne.Window, gui *gui.MyApp) *widg
 	createButton := widget.NewButton("Create", func() {
 		path := strings.TrimSpace(entry.Text)
 
-		fmt.Println(path)
-		RepoInit(path)
+		err := RepoInit(path)
+        if err != nil{
+            dialog.ShowError(err, window)
+            entry.SetText("")
+
+            return
+        }
 
 		// Window after creating
 		mainWindow := gui.App.NewWindow(gui.Window.Title())

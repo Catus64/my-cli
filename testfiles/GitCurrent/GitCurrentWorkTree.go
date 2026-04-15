@@ -54,7 +54,7 @@ func StatusIndexWorktree(repo gitpath.GitRepository, index gitobj.GitIndex) ([]s
 			fmt.Println("  deleted:  ", entry.Name)
 		} else {
 			// File exists — check timestamps first
-			info, _ := os.Stat(fullPath)
+			info, _ := os.Stat(fullPath)``
 			stat := info.Sys().(*syscall.Stat_t)
 
 			entryMtime := int64(entry.MtimeSec)*1e9 + int64(entry.MtimeNano)

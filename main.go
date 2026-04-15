@@ -10,5 +10,17 @@ import (
 )
 
 func main() {
-	cmd.Execute()
+	ezgit := app.New()
+	ezgit.Settings().SetTheme(&gui.MyDarkTheme{})
+
+	gui := &gui.MyApp{
+		App: ezgit,
+		Window: ezgit.NewWindow("Ezgit (Single-User Version Control System)"),
+	}
+
+	fullcontent := container.NewBorder(gui.Header(), nil, gui.SideRect(), nil, dashboard.DashBoard(gui))
+
+	gui.Window.SetContent(fullcontent)
+	gui.Window.Resize(fyne.NewSize(1000, 600))
+	gui.Window.ShowAndRun()
 }
