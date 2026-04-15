@@ -53,7 +53,10 @@ func PrepareCheckoutDir(repo gitpath.GitRepository, path string) (string, error)
 func Load(arg string, name string, repo gitpath.GitRepository) (string, error) {
 
 	//upcasting to commit object to access its fields
-	commit := githashread.Object_Read(repo, arg)
+	commit, err := githashread.Object_Read(repo, arg)
+	if err != nil {
+		return "", err
+	}
 	concreteCommit, ok := commit.(*gitobj.GitCommit)
 	if !ok {
 		panic("not a commit object")
@@ -61,7 +64,10 @@ func Load(arg string, name string, repo gitpath.GitRepository) (string, error) {
 	concreteCommit.Deserialize()
 	commit_tree := concreteCommit.KvlmDict.Dict["tree"]
 
-	tree := githashread.Object_Read(repo, string(commit_tree))
+	tree, err := githashread.Object_Read(repo, string(commit_tree))
+	if err != nil {
+		return "", err
+	}
 	tree.Deserialize()
 
 	//upcasting to tree object to access its fields
@@ -91,7 +97,10 @@ func TreeCheckout(repo gitpath.GitRepository, tree gitobj.GitTree, path string) 
 
 	for _, item := range tree.Items {
 
-		obj := githashread.Object_Read(repo, item.Sha)
+		obj, err := githashread.Object_Read(repo, item.Sha)
+		if err != nil {
+			return err
+		}
 
 		dest := filepath.Join(path, string(item.Path))
 

@@ -67,6 +67,17 @@ func Object_Write(obj gitobj.GitObject, repo *gitpath.GitRepository) ([]byte, er
 	return sha[:], nil
 }
 
+func Hash_Object_NoWrite(file_path string, format string) ([]byte, error) {
+	data, err := os.ReadFile(file_path)
+	if err != nil {
+		return nil, fmt.Errorf("error opening file %v", file_path)
+	}
+	obj := gitobj.MakeGitObjWithFormat(data, format)
+	result := BuildGitObjectToWrite(obj)
+	sha := sha1.Sum(result)
+	return sha[:], nil
+}
+
 // wrapper command to call the hashing and writing function
 func Hash_Object(file_path string, format string, repo gitpath.GitRepository) ([]byte, error) {
 

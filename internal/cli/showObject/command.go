@@ -14,7 +14,10 @@ func show(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		panic(err)
 	}
-	obj := githashread.Object_Read(*repo, args[0])
+	obj, err := githashread.Object_Read(*repo, args[0])
+	if err != nil {
+		panic(err)
+	}
 
 	// fmt.Println("Object format:", obj.Get_Format())
 

@@ -103,12 +103,6 @@ func Tree_Parse_One(raw []byte, start int) (int, *GitTreeLeaf, error) {
 		Path: path,
 	}
 
-	//fmt.Println("mode: ", string(mode))
-	//fmt.Println("path: ", string(path))
-	//fmt.Printf("sha: %v \n", sha)
-	//fmt.Println("Parsed item:", leaf.String())
-
-	//y + 21 is when the first entry ends
 	return y + 21, &leaf, nil
 }
 

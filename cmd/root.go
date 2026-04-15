@@ -4,12 +4,16 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	checkignore "gocmd/internal/cli/check-ignore"
+	getcurrent "gocmd/internal/cli/get-current"
 	"gocmd/internal/cli/gitLog"
 	gittag "gocmd/internal/cli/gitTag"
 	"gocmd/internal/cli/gitinit"
 	"gocmd/internal/cli/hashObject"
 	"gocmd/internal/cli/load"
+	"gocmd/internal/cli/remove"
 	showref "gocmd/internal/cli/show-ref"
+	showsavelist "gocmd/internal/cli/show-savelist"
 	"gocmd/internal/cli/showObject"
 	"gocmd/internal/cli/showTree"
 	"os"
@@ -62,4 +66,9 @@ func init() {
 	rootCmd.AddCommand(load.NewCommand())
 	rootCmd.AddCommand(showref.NewCommand())
 	rootCmd.AddCommand(gittag.NewCommand())
+	rootCmd.AddCommand(showsavelist.NewCommand())
+	rootCmd.AddCommand(checkignore.NewCommand())
+	rootCmd.AddCommand(getcurrent.NewCommand())
+	rootCmd.AddCommand(remove.NewCommand())
+
 }
