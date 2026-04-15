@@ -3,6 +3,7 @@ package remove
 import (
 	"bytes"
 	"fmt"
+	removeAdd "gocmd/testfiles/GitAddRemove"
 	gitobject "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 	logger "gocmd/testfiles/Helper"
@@ -11,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func remove(cmd *cobra.Command, args []string) error {
+func Remove_test(cmd *cobra.Command, args []string) error {
 	required := true
 	repo, err := gitpath.Repo_find(gitpath.Get_Os_Dir(), required)
 	if err != nil {
@@ -33,6 +34,19 @@ func remove(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("match:", bytes.Equal(result, original))
 	return nil
+}
+
+func remove(cmd *cobra.Command, args []string) error {
+	required := true
+	repo, err := gitpath.Repo_find(gitpath.Get_Os_Dir(), required)
+	if err != nil {
+		return err
+	}
+	words := []string{"1", "2", "3"}
+	_ = removeAdd.Remove_entry(*repo, words, false, false)
+
+	return nil
+
 }
 
 func NewCommand() *cobra.Command {
