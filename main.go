@@ -5,6 +5,7 @@ package main
 
 import (
 	"gocmd/cmd"
+	extractor "gocmd/testfiles/GitPacketExtractor"
 	helper "gocmd/testfiles/Helper"
 	"log/slog"
 )
@@ -14,7 +15,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	//testcomment
-	//testmorethings
+
+	if err := extractor.Extract(); err != nil {
+		slog.Error("failed to extract packfiles", "error", err)
+	}
+
 	cmd.Execute()
 }
