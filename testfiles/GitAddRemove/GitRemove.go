@@ -4,6 +4,7 @@ import (
 	"fmt"
 	gitobj "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
+	log "gocmd/testfiles/Helper"
 	"os"
 	"path/filepath"
 	"strings"
@@ -49,6 +50,47 @@ func Remove(repo *gitpath.GitRepository, paths []string, options RemoveOptions) 
 
 		absolutePaths[absolutePath] = struct{}{}
 
+	}
+
+	var keptEntries []gitobj.GitIndexEntry
+	var toRemove []string
+
+	for _, entry := range index.Entries {
+		fullpath := filepath.Join(repo.WorkTree, entry.Name)
+
+		if _, found := absolutePaths[fullpath]; found {
+			toRemove = append(toRemove, fullpath)
+			delete(absolutePaths, fullpath)
+		} else {
+			keptEntries = append(keptEntries, entry)
+		}
+	}
+
+	if len(absolutePaths) > 0 && !options.SkipMissingFile {
+		missing := make([]string, 0, len(absolutePaths))
+		for path := range absolutePaths {
+			missing = append(missing, path)
+		}
+
+		return fmt.Errorf("Cannot remove paths not in the index: %v", missing)
+	}
+
+	if options.Delete {
+		for _, path := range toRemove {
+			log.L().Debug("deleting file from filesystem", "path", path)
+
+			if err := os.Remove(path); err != nil {
+				return fmt.Errorf("failed to delete file %s, %w", path, err)
+			}
+		}
+	}
+
+	index.Entries = keptEntries
+
+	fmt.Println("Index after remove", len(keptEntries))
+
+	for _, index := range keptEntries {
+		fmt.Println(index.Name)
 	}
 
 	return nil

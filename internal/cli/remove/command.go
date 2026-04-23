@@ -30,8 +30,8 @@ func remove(cmd *cobra.Command, args []string) error {
 	// fmt.Println("match:", bytes.Equal(result, original))
 
 	err = gitaddremove.Remove(repo, []string{"somefile.txt"}, gitaddremove.RemoveOptions{
-		Delete:          true,
-		SkipMissingFile: false,
+		Delete:          false,
+		SkipMissingFile: true,
 	})
 	if err != nil {
 		return err
