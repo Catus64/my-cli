@@ -42,9 +42,11 @@ func NavButton(label string, isActive bool, action func()) fyne.CanvasObject {
 	return container.NewBorder(nil, nil, LRmargin, LRmargin, buttonStack)
 }
 
-func SideBar(gui *gui.MyApp, window fyne.Window, pathName string, activePage string, Home func(), ModifiedFile func(), History func(), Help func()) fyne.CanvasObject {
+func SideBar(gui *gui.MyApp, window fyne.Window, pathName string, activePage string, Home func(), Save func(), ModifiedFile func(), Ignored func(), History func(), Help func()) fyne.CanvasObject {
 	homeButton := NavButton("Home Page", activePage == "home", Home)
-	modifiedFileButton := NavButton("Modified File", activePage == "modified", ModifiedFile)
+	saveFileButton := NavButton("Save File", activePage == "save", Save)
+	modifiedFileButton := NavButton("Modified File", activePage == "modified", ModifiedFile)  
+	ignoredFileButton := NavButton("Ignored File", activePage == "ignored", Ignored)
 	historyButton := NavButton("History", activePage == "history", History)
 	helpButton := NavButton("Help", activePage == "help", Help)
 
@@ -96,14 +98,18 @@ func SideBar(gui *gui.MyApp, window fyne.Window, pathName string, activePage str
 	sideBackground.StrokeWidth = 1
 
 	heightSize := canvas.NewRectangle(color.Transparent)
-	heightSize.SetMinSize(fyne.NewSize(0, 20))
+	heightSize.SetMinSize(fyne.NewSize(0, 10))
 
 	sideBarContent := container.NewVBox(
 		gui.HeaderNoneLine(),
 		heightSize,
 		homeButton,
 		heightSize,
+		saveFileButton,
+		heightSize,
 		modifiedFileButton,
+		heightSize,
+		ignoredFileButton,
 		heightSize,
 		historyButton,
 		heightSize,

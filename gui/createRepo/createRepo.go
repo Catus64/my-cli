@@ -6,7 +6,9 @@ import (
 	"gocmd/gui/help"
 	"gocmd/gui/history"
 	"gocmd/gui/homepage"
+	"gocmd/gui/ignoredFile"
 	"gocmd/gui/modifiedFile"
+	"gocmd/gui/saveFile"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 	"image/color"
 	"strings"
@@ -84,19 +86,25 @@ func createButton(entry *widget.Entry, window fyne.Window, gui *gui.MyApp) *widg
 		mainWindow.Resize(fyne.NewSize(1000, 600))
 
 		// define all navigation function
-		var showHome, showModified, showHistory, showHelp func()
+		var showHome, showSave, showModified, showIgnoredFile, showHistory, showHelp func()
 
 		showHome = func() {
-			homepage.Show(gui, path, mainWindow, showModified, showHistory, showHelp)
+			homepage.Show(gui, path, mainWindow, showSave, showModified, showIgnoredFile, showHistory, showHelp)
+		}
+		showSave = func() {
+			saveFile.Show(gui, path, mainWindow, showHome, showModified, showIgnoredFile, showHistory, showHelp)
 		}
 		showModified = func() {
-			modifiedFile.Show(gui, path, mainWindow, showHome, showHistory, showHelp)
+			modifiedFile.Show(gui, path, mainWindow, showHome, showSave, showIgnoredFile, showHistory, showHelp)
+		}
+		showIgnoredFile = func() {
+			ignoredFile.Show(gui, path, mainWindow, showHome, showSave, showModified, showHistory, showHelp)
 		}
 		showHistory = func() {
-			history.Show(gui, path, mainWindow, showHome, showModified, showHelp)
+			history.Show(gui, path, mainWindow, showHome, showSave, showModified, showIgnoredFile, showHelp)
 		}
 		showHelp = func() {
-			help.Show(gui, path, mainWindow, showHome, showModified, showHistory)
+			help.Show(gui, path, mainWindow, showHome, showSave, showModified, showIgnoredFile, showHistory)
 		}
 
 		window.Hide()
