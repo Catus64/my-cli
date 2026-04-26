@@ -29,7 +29,7 @@ func remove(cmd *cobra.Command, args []string) error {
 
 	// fmt.Println("match:", bytes.Equal(result, original))
 
-	err = gitaddremove.Remove(repo, []string{"somefile.txt"}, gitaddremove.RemoveOptions{
+	_, err = gitaddremove.Remove(repo, args, gitaddremove.RemoveOptions{
 		Delete:          false,
 		SkipMissingFile: true,
 	})
@@ -44,7 +44,6 @@ func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove [object-hash]",
 		Short: "Remove the specified object from the save list",
-		Args:  cobra.MaximumNArgs(1),
 		RunE:  remove,
 	}
 

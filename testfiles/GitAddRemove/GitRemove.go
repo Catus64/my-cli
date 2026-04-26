@@ -19,20 +19,17 @@ type RemoveOptions struct {
 	SkipMissingFile bool
 }
 
-func Remove(repo *gitpath.GitRepository, paths []string, options RemoveOptions) error {
+func Remove(repo *gitpath.GitRepository, paths []string, options RemoveOptions) (*gitobj.GitIndex, error) {
 
 	// read index
 	index, err := gitobj.Index_Read2(*repo)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	worktree := repo.WorkTree + string(os.PathSeparator)
 
-	fmt.Println("index entries before remove:", len(index.Entries))
 	// fmt.Println("index: ", index)
-
-	fmt.Println("worktree: ", worktree)
 
 	// make absolute path
 
@@ -41,11 +38,11 @@ func Remove(repo *gitpath.GitRepository, paths []string, options RemoveOptions) 
 	for _, path := range paths {
 		absolutePath, err := filepath.Abs(path)
 		if err != nil {
-			return fmt.Errorf("unable to resolve path %s: %w", path, err)
+			return nil, fmt.Errorf("unable to resolve path %s: %w", path, err)
 		}
 
 		if !strings.HasPrefix(absolutePath, worktree) {
-			return fmt.Errorf("path %s is outside the repository worktree", path)
+			return nil, fmt.Errorf("path %s is outside the repository worktree", path)
 		}
 
 		absolutePaths[absolutePath] = struct{}{}
@@ -58,8 +55,14 @@ func Remove(repo *gitpath.GitRepository, paths []string, options RemoveOptions) 
 	for _, entry := range index.Entries {
 		fullpath := filepath.Join(repo.WorkTree, entry.Name)
 
+		// for ap := range absolutePaths {
+		// 	fmt.Printf("absolutePath   : %q\n", ap)
+		// 	fmt.Printf("match?         : %v\n", fullpath == ap)
+		// }
+
 		if _, found := absolutePaths[fullpath]; found {
 			toRemove = append(toRemove, fullpath)
+			fmt.Printf("%s has been removed from the Savelist \n\n", fullpath)
 			delete(absolutePaths, fullpath)
 		} else {
 			keptEntries = append(keptEntries, entry)
@@ -72,26 +75,29 @@ func Remove(repo *gitpath.GitRepository, paths []string, options RemoveOptions) 
 			missing = append(missing, path)
 		}
 
-		return fmt.Errorf("Cannot remove paths not in the index: %v", missing)
+		return nil, fmt.Errorf("Cannot remove paths not in the index: %v", missing)
 	}
 
 	if options.Delete {
 		for _, path := range toRemove {
 			log.L().Debug("deleting file from filesystem", "path", path)
-
+			fmt.Printf("%s has been deleted from the filesystem\n\n", path)
 			if err := os.Remove(path); err != nil {
-				return fmt.Errorf("failed to delete file %s, %w", path, err)
+				return nil, fmt.Errorf("failed to delete file %s, %w", path, err)
 			}
 		}
 	}
 
 	index.Entries = keptEntries
 
-	fmt.Println("Index after remove", len(keptEntries))
+	// for _, index := range keptEntries {
+	// 	fmt.Println(index.Name)
+	// }
 
-	for _, index := range keptEntries {
-		fmt.Println(index.Name)
+	index.Entries = keptEntries
+	if err := gitobj.Index_Write(*repo, *index); err != nil {
+		return nil, fmt.Errorf("failed to write index: %w", err)
 	}
 
-	return nil
+	return index, nil
 }
