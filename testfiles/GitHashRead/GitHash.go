@@ -83,7 +83,7 @@ func Hash_Object(file_path string, format string, repo gitpath.GitRepository) ([
 
 	data, err := os.ReadFile(file_path)
 	if err != nil {
-		panic(fmt.Sprintf("error opening file %v", file_path))
+		panic(fmt.Sprintf("error opening file %v: %v", file_path, err))
 	}
 
 	obj := gitobj.MakeGitObjWithFormat(data, format)

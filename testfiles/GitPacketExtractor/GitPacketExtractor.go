@@ -1,4 +1,4 @@
-package gitpacketextractor
+package packextractor
 
 import (
 	"fmt"
@@ -7,37 +7,34 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	gitpath "gocmd/testfiles/Gitrepostruct"
 )
 
-const sentinelFile = ".git/objects/pack/.unpacked"
 const backupDir = "/tmp/pack_backup"
 
-//First run - moves packgiles out of .git/objects/pack,
-// unpacks them, and writes a sentinel file
+func sentinelPath(repo gitpath.GitRepository) string {
+	return gitpath.Repo_Path(repo, "objects", "pack", ".unpacked")
+}
 
-// Subsequent runs - checks for sentinel file,
-// if exists, skip extraction
+func packDirPath(repo gitpath.GitRepository) string {
+	return gitpath.Repo_Path(repo, "objects", "pack")
+}
 
-// This is a one-time extraction process to unpack Git packfiles into loose objects.
-
-// AlreadyExtracted checks if the sentinel file exists,
-// meaning extraction has already been done before.
-func AlreadyExtracted() bool {
-	_, err := os.Stat(sentinelFile)
+func AlreadyExtracted(repo gitpath.GitRepository) bool {
+	_, err := os.Stat(sentinelPath(repo))
 	return err == nil
 }
 
-// Extract moves all packfiles out, unpacks them into loose objects,
-// and writes a sentinel file so it won't run again next time.
-func Extract() error {
-	packDir := ".git/objects/pack"
-
-	if AlreadyExtracted() {
+func Extract(repo gitpath.GitRepository) error {
+	if AlreadyExtracted(repo) {
 		slog.Info("packfile extraction already done, skipping")
 		return nil
 	}
 
 	slog.Info("starting packfile extraction")
+
+	packDir := packDirPath(repo)
 
 	// 1. Create backup dir
 	if err := os.MkdirAll(backupDir, 0755); err != nil {
@@ -47,9 +44,8 @@ func Extract() error {
 	// 2. Move all pack files out
 	entries, err := os.ReadDir(packDir)
 	if err != nil {
-		// No pack dir means nothing to extract, write sentinel and return
 		slog.Info("no pack directory found, nothing to extract")
-		return writeSentinel()
+		return writeSentinel(repo)
 	}
 
 	var packFiles []string
@@ -73,22 +69,20 @@ func Extract() error {
 
 	if len(packFiles) == 0 {
 		slog.Info("no .pack files found, nothing to unpack")
-		return writeSentinel()
+		return writeSentinel(repo)
 	}
 
 	// 3. Unpack each .pack file
 	for _, pack := range packFiles {
 		slog.Info("unpacking", "file", pack)
-
 		if err := unpackFile(pack); err != nil {
 			return fmt.Errorf("failed to unpack %s: %w", pack, err)
 		}
-
 		slog.Info("successfully unpacked", "file", pack)
 	}
 
-	// 4. Write sentinel so we skip next time
-	if err := writeSentinel(); err != nil {
+	// 4. Write sentinel
+	if err := writeSentinel(repo); err != nil {
 		return fmt.Errorf("failed to write sentinel: %w", err)
 	}
 
@@ -96,7 +90,6 @@ func Extract() error {
 	return nil
 }
 
-// unpackFile pipes a single .pack file into git unpack-objects
 func unpackFile(packPath string) error {
 	f, err := os.Open(packPath)
 	if err != nil {
@@ -108,26 +101,23 @@ func unpackFile(packPath string) error {
 	cmd.Stdin = f
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
 	return cmd.Run()
 }
 
-// writeSentinel creates the marker file that signals extraction is done
-func writeSentinel() error {
-	// Ensure pack dir still exists (it may be empty now)
-	if err := os.MkdirAll(".git/objects/pack", 0755); err != nil {
+func writeSentinel(repo gitpath.GitRepository) error {
+	packDir := packDirPath(repo)
+	if err := os.MkdirAll(packDir, 0755); err != nil {
 		return err
 	}
-	f, err := os.Create(sentinelFile)
+	f, err := os.Create(sentinelPath(repo))
 	if err != nil {
 		return err
 	}
 	f.Close()
-	slog.Debug("sentinel file written", "path", sentinelFile)
+	slog.Debug("sentinel file written", "path", sentinelPath(repo))
 	return nil
 }
 
-// moveFile handles cross-device moves by falling back to copy+delete
 func moveFile(src, dst string) error {
 	if err := os.Rename(src, dst); err == nil {
 		return nil
