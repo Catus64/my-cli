@@ -5,6 +5,7 @@ import (
 	//githashread "gocmd/testfiles/GitHashRead"
 	gitLog "gocmd/testfiles/GitLog"
 	gitpath "gocmd/testfiles/Gitrepostruct"
+	unpack "gocmd/testfiles/Unpack"
 
 	"github.com/spf13/cobra"
 )
@@ -15,6 +16,7 @@ func log(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		panic(err)
 	}
+	unpack.UnpackPackfiles(*repo)
 	err = gitLog.Log(*repo)
 	if err != nil {
 		panic(err)

@@ -11,6 +11,7 @@ something.txt
 bin/
 dist/
 build/
+pack_backup/
 
 # Logs
 *.log

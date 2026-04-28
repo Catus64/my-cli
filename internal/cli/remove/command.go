@@ -1,12 +1,8 @@
 package remove
 
 import (
-	"bytes"
-	"fmt"
-	gitobject "gocmd/testfiles/GitObject"
+	gitaddremove "gocmd/testfiles/GitAddRemove"
 	gitpath "gocmd/testfiles/Gitrepostruct"
-	logger "gocmd/testfiles/Helper"
-	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -17,21 +13,30 @@ func remove(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	index, err := gitobject.Index_Read2(*repo)
+	// index, err := gitobject.Index_Read2(*repo)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// original, _ := os.ReadFile(gitpath.Repo_Path(*repo, "index"))
+
+	// gitobject.Index_Write(*repo, *index)
+
+	// result, _ := os.ReadFile(gitpath.Repo_Path(*repo, "index"))
+
+	// logger.L().Debug("Length of bytes",
+	// 	"original", len(original), "result", len(result))
+
+	// fmt.Println("match:", bytes.Equal(result, original))
+
+	_, err = gitaddremove.Remove(repo, args, gitaddremove.RemoveOptions{
+		Delete:          false,
+		SkipMissingFile: true,
+	})
 	if err != nil {
 		return err
 	}
 
-	original, _ := os.ReadFile(gitpath.Repo_Path(*repo, "index"))
-
-	gitobject.Index_Write(*repo, *index)
-
-	result, _ := os.ReadFile(gitpath.Repo_Path(*repo, "index"))
-
-	logger.L().Debug("Length of bytes",
-		"original", len(original), "result", len(result))
-
-	fmt.Println("match:", bytes.Equal(result, original))
 	return nil
 }
 

@@ -2,9 +2,9 @@ package GitObjLib
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"encoding/binary"
 	"encoding/hex"
-	"fmt"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 	"os"
 )
@@ -21,7 +21,7 @@ func Index_Write(repo gitpath.GitRepository, index GitIndex) error {
 
 	// Write each entry
 	for _, e := range index.Entries {
-		entryStart := buf.Len()
+		//entryStart := buf.Len()
 
 		// Timestamp related entry fields (Ctime and Mtime)
 		binary.Write(buf, binary.BigEndian, e.CtimeSec)
@@ -72,18 +72,22 @@ func Index_Write(repo gitpath.GitRepository, index GitIndex) error {
 			buf.Write(make([]byte, pad))
 		}
 
-		nameBytes = []byte(e.Name)
-		entryLen = 62 + len(nameBytes) + 1
-		pad := 0
-		if entryLen%8 != 0 {
-			pad = 8 - (entryLen % 8)
-		}
+		// nameBytes = []byte(e.Name)
+		// entryLen = 62 + len(nameBytes) + 1
 
-		totalEntry := entryLen + pad
+		// pad := 0
+		// if entryLen%8 != 0 {
+		// 	pad = 8 - (entryLen % 8)
+		// }
 
-		fmt.Printf("entry=%-20s  fixedPlusName=%d  pad=%d  total=%d  bufLen=%d\n",
-			e.Name, entryLen, pad, totalEntry, buf.Len()-entryStart)
+		// totalEntry := entryLen + pad
+
+		// fmt.Printf("entry=%-20s  fixedPlusName=%d  pad=%d  total=%d  bufLen=%d\n",
+		// 	e.Name, entryLen, pad, totalEntry, buf.Len()-entryStart)
 	}
+
+	checksum := sha1.Sum(buf.Bytes())
+	buf.Write(checksum[:])
 
 	// Write buffer to file in one shot
 	path := gitpath.Repo_Path(repo, "index")

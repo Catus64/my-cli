@@ -4,6 +4,7 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"gocmd/internal/cli/add"
 	checkignore "gocmd/internal/cli/check-ignore"
 	getcurrent "gocmd/internal/cli/get-current"
 	"gocmd/internal/cli/gitLog"
@@ -70,5 +71,5 @@ func init() {
 	rootCmd.AddCommand(checkignore.NewCommand())
 	rootCmd.AddCommand(getcurrent.NewCommand())
 	rootCmd.AddCommand(remove.NewCommand())
-
+	rootCmd.AddCommand(add.NewCommand())
 }
