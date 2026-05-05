@@ -7,12 +7,14 @@ import (
 	"gocmd/internal/cli/add"
 	checkignore "gocmd/internal/cli/check-ignore"
 	getcurrent "gocmd/internal/cli/get-current"
+	gitsave "gocmd/internal/cli/git-save"
 	"gocmd/internal/cli/gitLog"
 	gittag "gocmd/internal/cli/gitTag"
 	"gocmd/internal/cli/gitinit"
 	"gocmd/internal/cli/hashObject"
 	"gocmd/internal/cli/load"
 	"gocmd/internal/cli/remove"
+	setconfig "gocmd/internal/cli/set-config"
 	showref "gocmd/internal/cli/show-ref"
 	showsavelist "gocmd/internal/cli/show-savelist"
 	"gocmd/internal/cli/showObject"
@@ -72,4 +74,6 @@ func init() {
 	rootCmd.AddCommand(getcurrent.NewCommand())
 	rootCmd.AddCommand(remove.NewCommand())
 	rootCmd.AddCommand(add.NewCommand())
+	rootCmd.AddCommand(setconfig.NewCommand())
+	rootCmd.AddCommand(gitsave.NewCommand())
 }
