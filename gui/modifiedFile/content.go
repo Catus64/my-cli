@@ -53,7 +53,7 @@ func getFileStatuses(repoPath string) (result []FileStatus) {
 }
 
 func FolderDirectory(repoPath string) fyne.CanvasObject {
-	title := canvas.NewText("Folder Directory", color.White)
+	title := canvas.NewText("File Directory", color.White)
 	title.TextSize = 40
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
