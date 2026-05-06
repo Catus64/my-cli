@@ -1,6 +1,7 @@
 package GitHashRead
 
 import (
+	"bytes"
 	"compress/zlib"
 	"crypto/sha1"
 	"fmt"
@@ -72,6 +73,11 @@ func Hash_Object_NoWrite(file_path string, format string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error opening file %v", file_path)
 	}
+
+	// Normalize Windows line endings \r\n to \n before hashing
+	// This matches how Git stores file content
+	data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
+	
 	obj := gitobj.MakeGitObjWithFormat(data, format)
 	result := BuildGitObjectToWrite(obj)
 	sha := sha1.Sum(result)
