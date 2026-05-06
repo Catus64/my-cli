@@ -42,10 +42,10 @@ func NavButton(label string, isActive bool, action func()) fyne.CanvasObject {
 	return container.NewBorder(nil, nil, LRmargin, LRmargin, buttonStack)
 }
 
-func SideBar(gui *gui.MyApp, window fyne.Window, pathName string, activePage string, Home func(), Save func(), ModifiedFile func(), Ignored func(), History func(), Help func()) fyne.CanvasObject {
-	homeButton := NavButton("Home Page", activePage == "home", Home)
+func SideBar(gui *gui.MyApp, window fyne.Window, pathName string, activePage string, Home func(), Save func(), folderDirectory func(), Ignored func(), History func(), Help func()) fyne.CanvasObject {
+	homeButton := NavButton("Repository", activePage == "home", Home)
 	saveFileButton := NavButton("Save File", activePage == "save", Save)
-	modifiedFileButton := NavButton("Modified File", activePage == "modified", ModifiedFile)  
+	modifiedFileButton := NavButton("File Directory", activePage == "file-directory", folderDirectory)  
 	ignoredFileButton := NavButton("Ignored File", activePage == "ignored", Ignored)
 	historyButton := NavButton("History", activePage == "history", History)
 	helpButton := NavButton("Help", activePage == "help", Help)

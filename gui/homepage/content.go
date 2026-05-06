@@ -2,6 +2,7 @@ package homepage
 
 import (
 	"image/color"
+	"path/filepath"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -10,8 +11,8 @@ import (
 	// "fyne.io/fyne/v2/widget"
 )
 
-func HomePageContent() fyne.CanvasObject {
-	title := canvas.NewText("Home Page", color.White)
+func HomePageContent(pathName string) fyne.CanvasObject {
+	title := canvas.NewText(filepath.Base(pathName), color.White)
 	title.TextSize = 40
 	title.TextStyle = fyne.TextStyle{Bold: true}
 

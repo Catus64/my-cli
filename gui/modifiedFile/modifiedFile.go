@@ -9,7 +9,7 @@ import (
 )
 
 func Show(gui *gui.MyApp, pathName string, window fyne.Window, onHome func(), onSave func(), onIgnored func(), onHistory func(), onHelp func()) {
-	sidebar := sidebar.SideBar(gui, window, pathName, "modified", 
+	sidebar := sidebar.SideBar(gui, window, pathName, "file-directory", 
 		func() { onHome() }, 
 		func() { onSave() },
 		func() {}, // stay at default page
@@ -18,6 +18,6 @@ func Show(gui *gui.MyApp, pathName string, window fyne.Window, onHome func(), on
 		func() { onHelp() },
 	)
 
-	fullContent := container.NewBorder(nil, nil, sidebar, nil, ModifiedFileContent())
+	fullContent := container.NewBorder(nil, nil, sidebar, nil, FolderDirectory(pathName))
 	window.SetContent(fullContent)
 }

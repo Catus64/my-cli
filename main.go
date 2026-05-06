@@ -1,15 +1,19 @@
 package main
 
 import (
+	"log/slog"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 
 	"gocmd/gui"
 	"gocmd/gui/dashboard"
+	logger "gocmd/testfiles/Helper"
 )
 
 func main() {
+	logger.Init("ezgit.log", slog.LevelDebug)
+
 	ezgit := app.New()
 	ezgit.Settings().SetTheme(&gui.MyDarkTheme{})
 

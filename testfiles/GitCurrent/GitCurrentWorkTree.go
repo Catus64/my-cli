@@ -10,16 +10,15 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"syscall"
 )
 
-func StatusIndexWorktree(repo gitpath.GitRepository, index gitobj.GitIndex) ([]string, error) {
+func StatusIndexWorktree(repo gitpath.GitRepository, index gitobj.GitIndex) ([]string, []string, error) {
 	fmt.Println("Changes not staged for commit:")
 
 	// Load gitignore rules
 	rules, err := gitcheckignore.ReadGitIgnore(repo)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Walk filesystem and collect all relative file paths
@@ -42,23 +41,34 @@ func StatusIndexWorktree(repo gitpath.GitRepository, index gitobj.GitIndex) ([]s
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+
+	var modifiedFiles []string
 
 	// Compare index entries against real files on disk
 	for _, entry := range index.Entries {
-		fullPath := filepath.Join(repo.WorkTree, entry.Name)
+		normalizedName := filepath.FromSlash(entry.Name)
+		fullPath := filepath.Join(repo.WorkTree, normalizedName)
 
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 			// File in index but gone from disk
 			fmt.Println("  deleted:  ", entry.Name)
 		} else {
 			// File exists — check timestamps first
-			info, _ := os.Stat(fullPath)``
-			stat := info.Sys().(*syscall.Stat_t)
+			info, statErr := os.Stat(fullPath)
+			if statErr != nil || info == nil {
+				for i, f := range allFiles {
+					if f == normalizedName {
+						allFiles = append(allFiles[:i], allFiles[i+1:]...)
+						break
+					}
+				}
+				continue
+			}
 
-			entryMtime := int64(entry.MtimeSec)*1e9 + int64(entry.MtimeNano)
-			actualMtime := stat.Mtim.Sec*1e9 + stat.Mtim.Nsec
+			entryMtime := int64(entry.MtimeSec)
+			actualMtime := info.ModTime().Unix()
 
 			logger.L().Debug("Comparing index entry to disk",
 				"entry", entry.Name,
@@ -69,7 +79,7 @@ func StatusIndexWorktree(repo gitpath.GitRepository, index gitobj.GitIndex) ([]s
 				// Timestamps differ — hash to confirm
 				newSHA, err := githashread.Hash_Object_NoWrite(fullPath, "blob")
 				if err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 				logger.L().Debug("Hashing file to confirm modification",
 					"entry", entry.Name,
@@ -78,13 +88,14 @@ func StatusIndexWorktree(repo gitpath.GitRepository, index gitobj.GitIndex) ([]s
 				)
 				if fmt.Sprintf("%x", newSHA) != entry.SHA {
 					fmt.Println("  modified: ", entry.Name)
+					modifiedFiles = append(modifiedFiles, entry.Name)
 				}
 			}
 		}
 
 		// Remove from allFiles — it's accounted for
 		for i, f := range allFiles {
-			if f == entry.Name {
+			if f == normalizedName {
 				allFiles = append(allFiles[:i], allFiles[i+1:]...)
 				break
 			}
@@ -99,8 +110,9 @@ func StatusIndexWorktree(repo gitpath.GitRepository, index gitobj.GitIndex) ([]s
 		if err != nil || ignored {
 			continue
 		}
+		fmt.Println("  added: ", f)
 		untrackedFiled = append(untrackedFiled, f)
 	}
 
-	return untrackedFiled, nil
+	return modifiedFiles, untrackedFiled, nil
 }

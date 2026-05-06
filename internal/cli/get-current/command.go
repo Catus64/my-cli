@@ -29,7 +29,7 @@ func get_current(cmd *cobra.Command, args []string) error {
 
 	err = gitCurrent.StatusHeadIndex(*repo, *index)
 
-	untracked, err := gitCurrent.StatusIndexWorktree(*repo, *index)
+	_, untracked, err := gitCurrent.StatusIndexWorktree(*repo, *index)
 	if err != nil {
 		return err
 	}
