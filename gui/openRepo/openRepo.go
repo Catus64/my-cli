@@ -90,22 +90,22 @@ func openButton(entry *widget.Entry, window fyne.Window, gui *gui.MyApp) *widget
         var showHome, showSave, showFileDirectory, showIgnoredFile, showHistory, showHelp func()
 
 		showHome = func() {
-			homepage.Show(gui, path, mainWindow, showSave, showFileDirectory, showIgnoredFile, showHistory, showHelp)
+			homepage.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showHistory, showHelp)
 		}
 		showSave = func() {
-			saveFile.Show(gui, path, mainWindow, showHome, showFileDirectory, showIgnoredFile, showHistory, showHelp)
+			saveFile.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showHistory, showHelp)
 		}
 		showFileDirectory = func() {
-			modifiedFile.Show(gui, path, mainWindow, showHome, showSave, showIgnoredFile, showHistory, showHelp)
+			modifiedFile.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showHistory, showHelp)
 		}
 		showIgnoredFile = func() {
-			ignoredFile.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showHistory, showHelp)
+			ignoredFile.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showHistory, showHelp)
 		}
 		showHistory = func() {
-			history.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showHelp)
+			history.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showHistory, showHelp)
 		}
 		showHelp = func() {
-			help.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showHistory)
+			help.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showHistory, showHelp)
 		}
 
         window.Hide()

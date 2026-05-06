@@ -8,11 +8,11 @@ import (
 	"fyne.io/fyne/v2/container"
 )
 
-func Show(gui *gui.MyApp, pathName string, window fyne.Window, onHome func(), onModified func(), onIgnored func(), onHistory func(), onHelp func()) {
+func Show(gui *gui.MyApp, pathName string, window fyne.Window, onHome func(), onSave func(), onModified func(), onIgnored func(), onHistory func(), onHelp func()) {
 	sidebar := sidebar.SideBar(gui, window, pathName, "save", 
-		func() { onHome() },
-		func() {}, // stay at default page
-		func() { onModified() },
+		func() { onHome() }, 
+		func() { onSave() },
+		func() { onModified() }, 
 		func() { onIgnored() }, 
 		func() { onHistory() },
 		func() { onHelp() },
