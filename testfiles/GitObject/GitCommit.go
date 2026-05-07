@@ -15,11 +15,17 @@ type KvlmDict struct {
 	Dict map[string][]byte
 }
 
-func (blob *GitCommit) Serialize() *[]byte {
-	return nil
+func (c *GitCommit) Serialize() *[]byte {
+	ret := Kvlm_Serialize(c.KvlmDict)
+	return &ret
 }
 
 func (commit *GitCommit) Deserialize() []byte {
+
+	if commit.data == nil {
+		return Kvlm_Serialize(commit.KvlmDict)
+	}
+
 	temp := make(map[string][]byte)
 	kvlm := KvlmDict{
 		Dict: temp,
@@ -29,8 +35,8 @@ func (commit *GitCommit) Deserialize() []byte {
 	return commit.data
 }
 
-func (blob *GitCommit) Get_Format() string {
-	return string(blob.format)
+func (c *GitCommit) Get_Format() string {
+	return string(c.format)
 }
 
 func Kvlm_Parse(data []byte, start int, dict KvlmDict) KvlmDict {
@@ -74,18 +80,21 @@ func Kvlm_Serialize(kvlm KvlmDict) []byte {
 
 	var ret []byte
 
-	for key, value := range kvlm.Dict {
-		if key == "data" {
-			continue
+	keys := []string{"tree", "parent", "author", "committer"}
+	for _, key := range keys {
+		value, ok := kvlm.Dict[key]
+		if !ok {
+			continue // skip missing optional fields like parent
 		}
 		ret = append(ret, []byte(key)...)
 		ret = append(ret, ' ')
 		ret = append(ret, value...)
 		ret = append(ret, '\n')
 	}
+	ret = append(ret, '\n')
 	ret = append(ret, kvlm.Dict["data"]...)
 
 	fmt.Println(string(ret))
 
-	return nil
+	return ret
 }

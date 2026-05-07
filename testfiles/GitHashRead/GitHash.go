@@ -13,12 +13,15 @@ import (
 
 // Change rawblob byte to raw blob byte with headings
 func BuildGitObjectToWrite(obj gitobj.GitObject) []byte {
-	size := []byte(strconv.Itoa(len(obj.Deserialize())))
+
+	data := obj.Deserialize()
+
+	size := []byte(strconv.Itoa(len(data)))
 
 	result := append([]byte(obj.Get_Format()), ' ')
 	result = append(result, size...)
 	result = append(result, 0x00)
-	result = append(result, obj.Deserialize()...)
+	result = append(result, data...)
 
 	return result
 }
@@ -75,9 +78,8 @@ func Hash_Object_NoWrite(file_path string, format string) ([]byte, error) {
 	}
 
 	// Normalize Windows line endings \r\n to \n before hashing
-	// This matches how Git stores file content
 	data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
-	
+
 	obj := gitobj.MakeGitObjWithFormat(data, format)
 	result := BuildGitObjectToWrite(obj)
 	sha := sha1.Sum(result)
@@ -91,6 +93,8 @@ func Hash_Object(file_path string, format string, repo gitpath.GitRepository) ([
 	if err != nil {
 		panic(fmt.Sprintf("error opening file %v: %v", file_path, err))
 	}
+
+	data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
 
 	obj := gitobj.MakeGitObjWithFormat(data, format)
 

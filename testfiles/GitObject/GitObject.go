@@ -68,6 +68,13 @@ func MakeGitObj(Byte_data []byte) GitObject {
 	return obj
 }
 
+func MakeGitCommit(dict map[string][]byte) *GitCommit {
+	return &GitCommit{
+		KvlmDict: KvlmDict{Dict: dict},
+		format:   []byte("commit"),
+	}
+}
+
 // return an object from its data and specified format (mostly for writing)
 func MakeGitObjWithFormat(Byte_data []byte, Obj_format string) GitObject {
 	var obj GitObject = nil

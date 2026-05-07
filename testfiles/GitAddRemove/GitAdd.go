@@ -2,6 +2,7 @@ package gitaddremove
 
 import (
 	"fmt"
+	gitcheckignore "gocmd/testfiles/GitCheckIgnore"
 	hashread "gocmd/testfiles/GitHashRead"
 	gitobj "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
@@ -28,7 +29,26 @@ func Add(repo *gitpath.GitRepository, paths []string, opts Options) error {
 		if err != nil {
 			return err
 		}
-		paths = Allpaths
+		// Filter out gitignored files
+		rules, err := gitcheckignore.ReadGitIgnore(*repo)
+		if err != nil {
+			return fmt.Errorf("failed to read gitignore: %w", err)
+		}
+
+		var filtered []string
+		for _, path := range Allpaths {
+			// CheckIgnore needs relative path
+			rel, err := filepath.Rel(repo.WorkTree, path)
+			if err != nil {
+				continue
+			}
+			ignored, err := gitcheckignore.CheckIgnore(rules, rel)
+			if err != nil || ignored {
+				continue
+			}
+			filtered = append(filtered, path)
+		}
+		paths = filtered
 	}
 
 	worktree := repo.WorkTree + string(os.PathSeparator)
