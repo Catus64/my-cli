@@ -1,6 +1,7 @@
 package GitHashRead
 
 import (
+	"bytes"
 	"compress/zlib"
 	"crypto/sha1"
 	"fmt"
@@ -75,6 +76,9 @@ func Hash_Object_NoWrite(file_path string, format string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error opening file %v", file_path)
 	}
+
+	data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
+
 	obj := gitobj.MakeGitObjWithFormat(data, format)
 	result := BuildGitObjectToWrite(obj)
 	sha := sha1.Sum(result)
@@ -88,6 +92,8 @@ func Hash_Object(file_path string, format string, repo gitpath.GitRepository) ([
 	if err != nil {
 		panic(fmt.Sprintf("error opening file %v: %v", file_path, err))
 	}
+
+	data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
 
 	obj := gitobj.MakeGitObjWithFormat(data, format)
 
