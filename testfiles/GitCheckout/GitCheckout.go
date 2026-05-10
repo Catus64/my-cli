@@ -10,6 +10,7 @@ import (
 )
 
 func PrepareCheckoutDir(repo gitpath.GitRepository, path string) (string, error) {
+	var response string
 
 	work_path := repo.WorkTree
 	output_path := filepath.Join(work_path, "..", path)
@@ -33,7 +34,6 @@ func PrepareCheckoutDir(repo gitpath.GitRepository, path string) (string, error)
 	// Ask user for overwrite
 	fmt.Printf("Directory %s already exists. Overwrite? (y/n): ", output_path)
 
-	var response string
 	fmt.Scanln(&response)
 
 	if response != "y" && response != "Y" {
@@ -106,7 +106,7 @@ func TreeCheckout(repo gitpath.GitRepository, tree gitobj.GitTree, path string) 
 
 		if obj.Get_Format() == "tree" {
 
-			err := os.Mkdir(dest, 0o755)
+			err := os.MkdirAll(dest, 0o755)
 			if err != nil {
 				return err
 			}

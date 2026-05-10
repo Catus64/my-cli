@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"gocmd/internal/cli/add"
+	altversion "gocmd/internal/cli/alt-version"
 	checkignore "gocmd/internal/cli/check-ignore"
 	getcurrent "gocmd/internal/cli/get-current"
 	gitsave "gocmd/internal/cli/git-save"
@@ -76,4 +77,5 @@ func init() {
 	rootCmd.AddCommand(add.NewCommand())
 	rootCmd.AddCommand(setconfig.NewCommand())
 	rootCmd.AddCommand(gitsave.NewCommand())
+	rootCmd.AddCommand(altversion.NewCommand())
 }
