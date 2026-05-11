@@ -3,6 +3,7 @@ package alternateversions
 import (
 	"bufio"
 	"fmt"
+	add "gocmd/testfiles/GitAddRemove"
 	loading "gocmd/testfiles/GitCheckout"
 	githashread "gocmd/testfiles/GitHashRead"
 	gitobj "gocmd/testfiles/GitObject"
@@ -13,7 +14,7 @@ import (
 	"strings"
 )
 
-func SwitchAltVer(repo gitpath.GitRepository, name string, addFn func() error) error {
+func SwitchAltVer(repo gitpath.GitRepository, name string) error {
 	// 1. Check branch exists
 	refPath := gitpath.Repo_Path(repo, "refs", "heads", name)
 	if _, err := os.Stat(refPath); os.IsNotExist(err) {
@@ -97,7 +98,7 @@ func SwitchAltVer(repo gitpath.GitRepository, name string, addFn func() error) e
 	}
 
 	// 8. Rebuild index via add --all
-	if err := addFn(); err != nil {
+	if err := add.Add(&repo, nil, add.Options{All: true}); err != nil {
 		return fmt.Errorf("failed to rebuild index: %w", err)
 	}
 
