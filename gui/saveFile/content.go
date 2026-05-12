@@ -2,16 +2,22 @@ package saveFile
 
 import (
 	"fmt"
+	gitaddremove "gocmd/testfiles/GitAddRemove"
+	gitCurrent "gocmd/testfiles/GitCurrent"
+	gitobject "gocmd/testfiles/GitObject"
+	gitpath "gocmd/testfiles/Gitrepostruct"
 	"image/color"
+	"path/filepath"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
-func SaveFileContent() fyne.CanvasObject {
+func SaveFileContent(repoPath string, window fyne.Window) fyne.CanvasObject {
 	title := canvas.NewText("Save File", color.White)
 	title.TextSize = 40
 	title.TextStyle = fyne.TextStyle{Bold: true}
@@ -19,17 +25,30 @@ func SaveFileContent() fyne.CanvasObject {
 	subtitle := canvas.NewText("Manage your save list", color.Gray{Y: 150})
 	subtitle.TextSize = 15
 
-	// Save List and Preview Box
-	files := []string{}
+	repo := gitpath.MakeRepo(repoPath, false)
 
-	saveListBox, updateSaveList := saveListBox(&files)
-	previewBox, updatePreview := saveListPreview(&files)
+	// All index files for save list box
+	allFiles := getSaveListFiles(repoPath)
 
-	onFilesChanged := func() {
-        updateSaveList()
-        updatePreview()
-    }
-    _ = onFilesChanged
+	// Only staged files for staged box
+	stagedFiles := getStagedFiles(repoPath)
+
+	var updateStagedFiles func()
+ 
+	onRemove := func() {
+		// Reload staged files from index and refresh the readySaveBox
+		stagedFiles = getStagedFiles(repoPath)
+		if updateStagedFiles != nil {
+			updateStagedFiles()
+		}
+	}
+
+	saveListBox, updateSaveList := saveListBox(&allFiles, repo, window, onRemove)
+	readySaveBox, updateStagedFile := readySaveList(&stagedFiles)
+	updateStagedFiles = updateStagedFile
+
+	updateSaveList()
+	updateStagedFiles()
 
 	// Commit Box
 	commitBox := commitBox()
@@ -40,7 +59,7 @@ func SaveFileContent() fyne.CanvasObject {
 	rowGap := canvas.NewRectangle(color.Transparent)
 	rowGap.SetMinSize(fyne.NewSize(0, 10))
 
-	rightColumn := container.NewBorder(nil, container.NewVBox(rowGap, previewBox), nil, nil, commitBox)
+	rightColumn := container.NewBorder(nil, container.NewVBox(rowGap, readySaveBox), nil, nil, commitBox)
 
 	paddedRight := container.NewBorder(nil, nil, columnGap, nil, rightColumn)
 
@@ -57,7 +76,95 @@ func SaveFileContent() fyne.CanvasObject {
 	return container.NewBorder(nil, nil, widthMargin, widthMargin, container.NewPadded(homeContent))
 }
 
-func saveListBox(file *[]string) (fyne.CanvasObject, func()) {
+// Helper to get repo and index
+func getRepoAndIndex(repoPath string) (*gitpath.GitRepository, *gitobject.GitIndex) {
+	repo := gitpath.MakeRepo(repoPath, false)
+	if repo == nil {
+		fmt.Println("No repo found at:", repoPath)
+		return nil, nil
+	}
+
+	index, err := gitobject.Index_Read2(*repo)
+	if err != nil || index == nil {
+		fmt.Println("Failed to read index:", err)
+		return repo, nil
+	}
+
+	return repo, index
+}
+
+// Load files from index
+func getSaveListFiles(repoPath string) []string {
+	var result []string
+
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in getSaveListFiles:", r)
+		}
+	}()
+
+	repo, index := getRepoAndIndex(repoPath)
+	if repo == nil || index == nil {
+		return result
+	}
+
+	// Show ALL index entries
+	for _, entry := range index.Entries {
+		result = append(result, entry.Name)
+		println("File: ", entry.Name, " Mode: ", entry.ModePerms, " SHA: ", entry.SHA)
+	}
+
+
+	fmt.Println("Staged files:", len(result))
+	return result
+}
+
+func getStagedFiles(repoPath string) []string {
+	var result []string
+
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in getStagedFiles:", r)
+		}
+	}()
+
+	repo, index := getRepoAndIndex(repoPath)
+	if repo == nil || index == nil {
+		return result
+	}
+
+	// Trigger when zero commit in the repo
+	headResolved, headErr := gitobject.Ref_Resolve(*repo, "HEAD")
+	if headErr != nil || headResolved == nil {
+		for _, entry := range index.Entries {
+			result = append(result, entry.Name)
+		}
+		return result
+	}
+
+	// Compare index vs HEAD
+	head := make(map[string]string)
+	treeSHA, treeErr := gitCurrent.Get_Tree_SHA(*repo, "HEAD")
+	if treeErr == nil {
+		gitCurrent.TreeToMap(*repo, treeSHA, "", head)
+	}
+
+	for _, entry := range index.Entries {
+		normalizedName := filepath.ToSlash(entry.Name)
+		if headSHA, exists := head[normalizedName]; exists {
+			if headSHA != entry.SHA {
+				result = append(result, entry.Name)
+			}
+		} else {
+			result = append(result, entry.Name)
+		}
+	}
+
+	fmt.Println("Files ready to commit:", len(result))
+	return result
+}
+
+func saveListBox(file *[]string, repo *gitpath.GitRepository, window fyne.Window, onRemove func()) (fyne.CanvasObject, func()) {
 	saveListTitle := canvas.NewText(fmt.Sprintf("Save List (%d)", len(*file)), color.RGBA{R: 208, G: 200, B: 200, A: 255})
 	saveListTitle.TextSize = 20
 	saveListTitle.TextStyle = fyne.TextStyle{Bold: true}
@@ -77,10 +184,64 @@ func saveListBox(file *[]string) (fyne.CanvasObject, func()) {
 
 	fileList := container.NewVBox()
 
-	removeButton := widget.NewButton("Remove", func() {
+	// Add scroll
+	scrollableFileList := container.NewScroll(fileList)
+	scrollableFileList.Direction = container.ScrollBoth
 
+	// Track checked files
+	checkedFiles := map[string]bool{}
+
+	var updateFunction func()
+
+	removeButton := widget.NewButton("Remove", func() {
+		var selectedFiles []string
+		for name, checked := range checkedFiles {
+			if checked {
+				absolutePath := filepath.Join(repo.WorkTree, name)
+				selectedFiles = append(selectedFiles, absolutePath)
+			}
+		}
+
+		if len(selectedFiles) == 0 {
+			dialog.ShowInformation("No Files Selected", "Please select at least one file to remove.", window)
+			return
+		}
+
+		_, err := gitaddremove.Remove(repo, selectedFiles, gitaddremove.RemoveOptions{
+			Delete:          false, 
+			SkipMissingFile: false,
+		})
+
+		if err != nil {
+			dialog.ShowError(err, window)
+			return
+		}
+
+		dialog.ShowInformation(
+			"Success",
+			fmt.Sprintf("%d file(s) removed from save list!", len(selectedFiles)),
+			window,
+		)
+
+		// Reload files after removing
+		newIndex, err := gitobject.Index_Read2(*repo)
+		if err == nil && newIndex != nil {
+			*file = []string{}
+			for _, entry := range newIndex.Entries {
+				*file = append(*file, entry.Name)
+			}
+		}
+
+		if updateFunction != nil {
+			updateFunction()
+		}
+
+		if onRemove != nil {
+			onRemove()
+		}
 	})
 	removeButton.Importance = widget.DangerImportance
+	
 	removeButtonRow := container.NewHBox(layout.NewSpacer(), removeButton, layout.NewSpacer())
 	removeBtn := container.NewVBox(removeButtonRow, TDMargin)
 
@@ -90,26 +251,38 @@ func saveListBox(file *[]string) (fyne.CanvasObject, func()) {
 	background.CornerRadius = 8
 	background.SetMinSize(fyne.NewSize(0, 350))
 
-	content := container.NewBorder(saveListHeader, removeBtn, nil, nil, fileList)
+	content := container.NewBorder(saveListHeader, removeBtn, nil, nil, scrollableFileList)
 
 	box := container.NewStack(background, container.NewPadded(content))
 
 	// Update file
 	update := func() {
 		saveListTitle.Text = fmt.Sprintf("Save List (%d)", len(*file))
-        saveListTitle.Refresh()
+		saveListTitle.Refresh()
 
 		fileList.Objects = nil
+		checkedFiles = map[string]bool{}
+
 		for _, files:= range *file {
-			fileName := files
-			checkbox := widget.NewCheck(fileName, func(checked bool) {})
-			status := canvas.NewText("ADDED", color.Gray{Y: 150})
-			status.TextSize = 10
-			statusPosition := container.NewBorder(nil, nil, nil, status, checkbox)
-			fileList.Add(statusPosition)
+			checkedFiles[files] = false
+			checkbox := widget.NewCheck("", func(checked bool) {
+				checkedFiles[files] = checked
+			})
+
+			fileName := canvas.NewText(files, color.White)
+			fileName.TextSize = 14
+
+			fileScroll := container.NewHScroll(fileName)
+
+			row := container.NewBorder(nil, nil, checkbox, LRMargin, fileScroll)
+			fileList.Add(row)
 		}
 		fileList.Refresh()
+		scrollableFileList.Refresh()
 	}
+
+	updateFunction = update
+
 	return box, update
 }
 
@@ -162,15 +335,19 @@ func commitBox() fyne.CanvasObject {
     return container.NewStack(background, container.NewPadded(innerContent))
 }
 
-func saveListPreview(file *[]string) (fyne.CanvasObject, func()) {
-	previewTitle := canvas.NewText("Save List Preview", color.White)
+func readySaveList(file *[]string) (fyne.CanvasObject, func()) {
+	previewTitle := canvas.NewText("File to Save", color.White)
 	previewTitle.TextSize = 16
 	previewTitle.TextStyle = fyne.TextStyle{Bold: true}
 
 	previewSubTitle := canvas.NewText(fmt.Sprintf("%d file(s) ready to be saved.", len(*file)), color.Gray{Y: 150})
-	previewSubTitle.TextSize = 12
+	previewSubTitle.TextSize = 13
 
 	previewList := container.NewVBox()
+
+	// Add scroll
+	scrollablePreviewList := container.NewScroll(previewList)
+	scrollablePreviewList.Direction = container.ScrollBoth
 
 	background := canvas.NewRectangle(color.RGBA{R: 3, G: 36, B: 63, A: 255})
 	background.StrokeColor = color.RGBA{R: 208, G: 200, B: 200, A: 255}
@@ -182,24 +359,28 @@ func saveListPreview(file *[]string) (fyne.CanvasObject, func()) {
     leftMargin.SetMinSize(fyne.NewSize(10, 0))
 
 	topMargin := canvas.NewRectangle(color.Transparent)
-    topMargin.SetMinSize(fyne.NewSize(0, 5))
+    topMargin.SetMinSize(fyne.NewSize(0, 5)) 
 
-	content := container.NewVBox(topMargin, previewTitle, previewSubTitle, previewList)
+	downMargin := canvas.NewRectangle(color.Transparent)
+    downMargin.SetMinSize(fyne.NewSize(0, 3))
+
+	content := container.NewVBox(topMargin, previewTitle, previewSubTitle, downMargin)
 	fullcontent := container.NewHBox(leftMargin, content)
-	box := container.NewStack(background, container.NewPadded(fullcontent))
+	box := container.NewStack(background, container.NewPadded(container.NewBorder(fullcontent, nil, nil, nil, scrollablePreviewList)))
 
 	// Update file
 	update := func ()  {
-		previewSubTitle.Text = fmt.Sprintf("Save List (%d)", len(*file))
+		previewSubTitle.Text = fmt.Sprintf("%d file(s) ready to be saved.", len(*file))
         previewSubTitle.Refresh()
 
 		previewList.Objects = nil
 		for _, files:= range *file {
-			bullet := canvas.NewText("• "+files, color.Gray{Y: 200})
+			bullet := canvas.NewText("    •  "+files, color.Gray{Y: 200})
 			bullet.TextSize = 12
 			previewList.Add(bullet)
 		}
 		previewList.Refresh()
+		scrollablePreviewList.Refresh()
 	}
 
 	return box, update

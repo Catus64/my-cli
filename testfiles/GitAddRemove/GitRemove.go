@@ -27,7 +27,7 @@ func Remove(repo *gitpath.GitRepository, paths []string, options RemoveOptions) 
 		return nil, err
 	}
 
-	worktree := repo.WorkTree + string(os.PathSeparator)
+	worktree := filepath.Clean(repo.WorkTree) + string(os.PathSeparator)
 
 	// fmt.Println("index: ", index)
 
@@ -41,6 +41,13 @@ func Remove(repo *gitpath.GitRepository, paths []string, options RemoveOptions) 
 			return nil, fmt.Errorf("unable to resolve path %s: %w", path, err)
 		}
 
+		// Normalize absolute path
+		absolutePath = filepath.Clean(absolutePath)
+
+		fmt.Println("worktree:", worktree)
+		fmt.Println("absolutePath:", absolutePath)
+		fmt.Println("hasPrefix:", strings.HasPrefix(absolutePath, worktree))
+
 		if !strings.HasPrefix(absolutePath, worktree) {
 			return nil, fmt.Errorf("path %s is outside the repository worktree", path)
 		}
@@ -53,7 +60,7 @@ func Remove(repo *gitpath.GitRepository, paths []string, options RemoveOptions) 
 	var toRemove []string
 
 	for _, entry := range index.Entries {
-		fullpath := filepath.Join(repo.WorkTree, entry.Name)
+		fullpath := filepath.Clean(filepath.Join(repo.WorkTree, entry.Name))
 
 		// for ap := range absolutePaths {
 		// 	fmt.Printf("absolutePath   : %q\n", ap)
@@ -88,7 +95,7 @@ func Remove(repo *gitpath.GitRepository, paths []string, options RemoveOptions) 
 		}
 	}
 
-	index.Entries = keptEntries
+	// index.Entries = keptEntries
 
 	// for _, index := range keptEntries {
 	// 	fmt.Println(index.Name)

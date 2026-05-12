@@ -2,10 +2,12 @@ package modifiedFile
 
 import (
 	"fmt"
-	"image/color"
+	gitaddremove "gocmd/testfiles/GitAddRemove"
 	gitCurrent "gocmd/testfiles/GitCurrent"
 	gitobject "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
+	"image/color"
+	"path/filepath"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -19,7 +21,9 @@ type FileStatus struct {
 	Status string // "MODIFIED" or "ADDED"
 }
 
-func getFileStatuses(repoPath string) (result []FileStatus) {
+func getFileStatuses(repoPath string) ([]FileStatus,  *gitpath.GitRepository) {
+	var result []FileStatus
+
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Recovered from panic in getFileStatuses:", r)
@@ -29,13 +33,13 @@ func getFileStatuses(repoPath string) (result []FileStatus) {
 	repo, err := gitpath.Repo_find(repoPath, false)
 	if err != nil || repo == nil {
 		fmt.Println("No repo found at:", repoPath)
-		return
+		return result, nil
 	}
 
 	index, err := gitobject.Index_Read2(*repo)
 	if err != nil {
 		fmt.Println("Failed to read index:", err)
-		return
+		return result, repo
 	}
 
 	// --- MODIFIED: only run if HEAD exists ---
@@ -49,7 +53,7 @@ func getFileStatuses(repoPath string) (result []FileStatus) {
 		}
 	}
 
-	return
+	return result, repo
 }
 
 func FolderDirectory(repoPath string) fyne.CanvasObject {
@@ -61,9 +65,9 @@ func FolderDirectory(repoPath string) fyne.CanvasObject {
 	subtitle.TextSize = 15
 
 	// Load files from git
-	files := getFileStatuses(repoPath)
+	files, repo := getFileStatuses(repoPath)
 
-	modifiedBox, updateModifiedList := modifiedListBox(&files)
+	modifiedBox, updateModifiedList := modifiedListBox(&files, repo)
 	updateModifiedList()
 
 	widthMargin := canvas.NewRectangle(color.Transparent)
@@ -77,7 +81,7 @@ func FolderDirectory(repoPath string) fyne.CanvasObject {
 	return container.NewBorder(nil, nil, widthMargin, widthMargin, container.NewPadded(modifiedFileContent))
 }
 
-func modifiedListBox(files *[]FileStatus) (fyne.CanvasObject, func()) {
+func modifiedListBox(files *[]FileStatus, repo *gitpath.GitRepository) (fyne.CanvasObject, func()) {
 	modifiedListTitle := canvas.NewText(fmt.Sprintf("File List (%d)", len(*files)), color.RGBA{R: 208, G: 200, B: 200, A: 255})
 	modifiedListTitle.TextSize = 20
 	modifiedListTitle.TextStyle = fyne.TextStyle{Bold: true}
@@ -97,9 +101,58 @@ func modifiedListBox(files *[]FileStatus) (fyne.CanvasObject, func()) {
 	fileList := container.NewVBox()
 
 	scrollableFileList := container.NewVScroll(fileList)
-	scrollableFileList.SetMinSize(fyne.NewSize(0, 300))
 
-	addButton := widget.NewButton("Add", func() {})
+	// Checked Files
+	checkedFiles := map[string]bool{}
+
+	var updateFunction func()
+
+	addButton := widget.NewButton("Add", func() {
+		if repo == nil {
+			fmt.Println("No repo available")
+			return
+		}
+
+		var selectedFiles []string
+		for name, checked := range checkedFiles{
+			if checked {
+				absolutePath := filepath.Join(repo.WorkTree, name)
+				selectedFiles = append(selectedFiles, absolutePath)
+			}
+		}
+
+		if len(selectedFiles) == 0 {
+			fmt.Println("No files selected")
+			return
+		}
+
+		err := gitaddremove.Add(repo, selectedFiles, gitaddremove.Options{All: false})
+		if err != nil {
+			fmt.Println("Add error:", err)
+			return
+		}
+
+		fmt.Println("Files added to save list successfully")
+
+		// Reload files after adding
+		index, err := gitobject.Index_Read2(*repo)
+		if err == nil && index != nil {
+			modified, untracked, err := gitCurrent.StatusIndexWorktree(*repo, *index)
+			if err == nil {
+				*files = []FileStatus{}
+				for _, f := range modified {
+					*files = append(*files, FileStatus{Name: f, Status: "MODIFIED"})
+				}
+				for _, f := range untracked {
+					*files = append(*files, FileStatus{Name: f, Status: "ADDED"})
+				}
+			}
+		}
+
+		if updateFunction != nil {
+			updateFunction() // refresh UI
+		}
+	})
 	addButton.Importance = widget.HighImportance
 
 	ignoreButton := widget.NewButton("Ignore", func() {})
@@ -131,15 +184,25 @@ func modifiedListBox(files *[]FileStatus) (fyne.CanvasObject, func()) {
 		modifiedListTitle.Refresh()
 
 		fileList.Objects = nil
+		checkedFiles = map[string]bool{} // reset checked files
+
 		for _, file := range *files {
-			checkbox := widget.NewCheck("", func(checked bool) {})
+			checkedFiles[file.Name] = false
+			checkbox := widget.NewCheck("", func(checked bool) {
+				checkedFiles[file.Name] = checked
+ 			})
 
 			fileName := canvas.NewText(file.Name, color.White)
 			fileName.TextSize = 14
 
-			row := container.NewHBox(
+			fileScroll := container.NewHScroll(fileName)
+
+			row := container.NewBorder(
+				nil,
+				nil,
 				checkbox,
-				fileName,
+				nil,
+				fileScroll,
 			)
 
 			// Different color for ADDED vs MODIFIED
@@ -159,6 +222,8 @@ func modifiedListBox(files *[]FileStatus) (fyne.CanvasObject, func()) {
 		fileList.Refresh()
 		scrollableFileList.Refresh()
 	}
+
+	updateFunction = update
 
 	return box, update
 }
