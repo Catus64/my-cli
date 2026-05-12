@@ -7,26 +7,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func testsomething() error {
-	return nil
-}
-
 func switch_alt_ver(cmd *cobra.Command, args []string) error {
 	required := true
 	repo, err := gitpath.Repo_find(gitpath.Get_Os_Dir(), required)
 	if err != nil {
-		return nil
+		panic(err)
 	}
 
-	alt_ver.SwitchAltVer(*repo, "what")
+	err = alt_ver.SwitchAltVer(*repo, args[0])
+	if err != nil {
+		panic(err)
+	}
 	return nil
 }
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "remove [object-hash]",
-		Short: "Remove the specified object from the save list",
+		Use:   "switch-ver [version-name]",
+		Short: "Switch to the specified alternate version savefile",
 		RunE:  switch_alt_ver,
+		Args:  cobra.ExactArgs(1),
 	}
 
 	return cmd

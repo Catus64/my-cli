@@ -11,8 +11,8 @@ import (
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "alt-ver",
-		Short: "Manage alternate versions",
+		Use:   "savefile",
+		Short: "Manage Savefiles for alternate versions",
 	}
 	cmd.AddCommand(newCreateCommand())
 	cmd.AddCommand(newListCommand())
@@ -25,7 +25,7 @@ func create_alt_ver(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}
 
-	fmt.Printf("creating alt version with name: %s\n", args[0])
+	fmt.Printf("creating savefile with name: %s\n", args[0])
 
 	err = altver.CreateAltVer(*repo, args[0])
 	if err != nil {

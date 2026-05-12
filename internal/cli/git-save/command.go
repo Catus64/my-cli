@@ -101,6 +101,11 @@ func save(cmd *cobra.Command, args []string) error {
 	}
 	fmt.Printf("Saved on branch %s → %s\n", branchName, commitSHA)
 
+	err = gitsave.RefreshIndex(*repo, index)
+	if err != nil {
+		panic(err)
+	}
+
 	return nil
 }
 

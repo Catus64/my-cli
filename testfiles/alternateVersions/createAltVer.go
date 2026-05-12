@@ -24,14 +24,14 @@ func CreateAltVer(repo gitpath.GitRepository, name string) error {
 	}
 
 	if _, err := os.Stat(refPath); err == nil {
-		return fmt.Errorf("alternate version %q already exists", name)
+		return fmt.Errorf("savefile %q already exists", name)
 	}
 
 	if err := os.WriteFile(refPath, []byte(*headSHA+"\n"), 0644); err != nil {
-		return fmt.Errorf("failed to create alternate version: %w", err)
+		return fmt.Errorf("failed to create savefile: %w", err)
 	}
 
-	fmt.Printf("Created alternate version %q from current version (%s)\n", name, (*headSHA)[:7])
+	fmt.Printf("Created savefile %q from current version (%s)\n", name, (*headSHA)[:7])
 	return nil
 }
 
@@ -40,7 +40,7 @@ func ListAltVer(repo gitpath.GitRepository) error {
 
 	headsDir := gitpath.Repo_Path(repo, "refs", "heads")
 
-	fmt.Println("Alternate versions:")
+	fmt.Println("All Savefiles:")
 	// WalkDir handles nested branches like feature/commit
 	err := filepath.WalkDir(headsDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -79,7 +79,7 @@ func ListAltVer(repo gitpath.GitRepository) error {
 		return nil
 	})
 	fmt.Println("")
-	fmt.Println(`If you feel like any Branches/Alternate Versions are missing 
+	fmt.Println(`If you feel like any Branches/Savefiles are missing 
 try pulling from remote first with "git pull"(if you are using git along with this tool)`)
 
 	return err

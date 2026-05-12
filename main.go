@@ -12,13 +12,19 @@ import (
 )
 
 func main() {
-	err := helper.Init("ezgit.log", slog.LevelDebug)
+
+	required := false
+	repo, err := gitpath.Repo_find(gitpath.Get_Os_Dir(), required)
+	if err != nil {
+		slog.Warn("no save data found")
+	}
+	logpath := gitpath.Repo_Path(*repo, "ezgit.log")
+
+	err = helper.Init(logpath, slog.LevelDebug)
 	if err != nil {
 		panic(err)
 	}
 
-	required := false
-	repo, err := gitpath.Repo_find(gitpath.Get_Os_Dir(), required)
 	if repo != nil {
 		if err := extractor.Extract(*repo); err != nil {
 			slog.Error("failed to extract packfiles", "error", err)

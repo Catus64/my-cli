@@ -2,8 +2,8 @@ package packextractor
 
 import (
 	"fmt"
+	logger "gocmd/testfiles/Helper"
 	"io"
-	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,11 +28,11 @@ func AlreadyExtracted(repo gitpath.GitRepository) bool {
 
 func Extract(repo gitpath.GitRepository) error {
 	if AlreadyExtracted(repo) {
-		slog.Info("packfile extraction already done, skipping")
+		logger.L().Debug("extract: packfile extraction already done, skipping")
 		return nil
 	}
 
-	slog.Info("starting packfile extraction")
+	logger.L().Info("extract: starting packfile extraction")
 
 	packDir := packDirPath(repo)
 
@@ -44,7 +44,7 @@ func Extract(repo gitpath.GitRepository) error {
 	// 2. Move all pack files out
 	entries, err := os.ReadDir(packDir)
 	if err != nil {
-		slog.Info("no pack directory found, nothing to extract")
+		logger.L().Info("extract: no pack directory found, nothing to extract")
 		return writeSentinel(repo)
 	}
 
@@ -60,7 +60,7 @@ func Extract(repo gitpath.GitRepository) error {
 		if err := moveFile(src, dst); err != nil {
 			return fmt.Errorf("failed to move %s: %w", src, err)
 		}
-		slog.Debug("moved packfile", "src", src, "dst", dst)
+		logger.L().Debug("extract: moved packfile", "src", src, "dst", dst)
 
 		if filepath.Ext(entry.Name()) == ".pack" {
 			packFiles = append(packFiles, dst)
@@ -68,17 +68,17 @@ func Extract(repo gitpath.GitRepository) error {
 	}
 
 	if len(packFiles) == 0 {
-		slog.Info("no .pack files found, nothing to unpack")
+		logger.L().Info("extract: no .pack files found, nothing to unpack")
 		return writeSentinel(repo)
 	}
 
 	// 3. Unpack each .pack file
 	for _, pack := range packFiles {
-		slog.Info("unpacking", "file", pack)
+		logger.L().Info("extract: unpacking", "file", pack)
 		if err := unpackFile(pack); err != nil {
 			return fmt.Errorf("failed to unpack %s: %w", pack, err)
 		}
-		slog.Info("successfully unpacked", "file", pack)
+		logger.L().Info("extract: successfully unpacked", "file", pack)
 	}
 
 	// 4. Write sentinel
@@ -86,7 +86,7 @@ func Extract(repo gitpath.GitRepository) error {
 		return fmt.Errorf("failed to write sentinel: %w", err)
 	}
 
-	slog.Info("packfile extraction complete")
+	logger.L().Info("extract: packfile extraction complete")
 	return nil
 }
 
@@ -114,7 +114,7 @@ func writeSentinel(repo gitpath.GitRepository) error {
 		return err
 	}
 	f.Close()
-	slog.Debug("sentinel file written", "path", sentinelPath(repo))
+	logger.L().Debug("extract: sentinel file written", "path", sentinelPath(repo))
 	return nil
 }
 

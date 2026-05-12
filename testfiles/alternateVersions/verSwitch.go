@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	add "gocmd/testfiles/GitAddRemove"
+	gitcheckignore "gocmd/testfiles/GitCheckIgnore"
 	loading "gocmd/testfiles/GitCheckout"
+	gitCurrent "gocmd/testfiles/GitCurrent"
 	githashread "gocmd/testfiles/GitHashRead"
 	gitobj "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
@@ -15,22 +17,32 @@ import (
 )
 
 func SwitchAltVer(repo gitpath.GitRepository, name string) error {
-	// 1. Check branch exists
+	//check if Savefile is same as current Savefile, if so do nothing
+	activeBranch, err := gitCurrent.Get_Active_Branch(repo)
+	if err != nil {
+		return fmt.Errorf("failed to get active branch: %w", err)
+	}
+	if activeBranch == name {
+		fmt.Printf("Already on Savefile: %q\n", name)
+		return nil
+	}
+
+	// check Savefile exists
 	refPath := gitpath.Repo_Path(repo, "refs", "heads", name)
 	if _, err := os.Stat(refPath); os.IsNotExist(err) {
-		return fmt.Errorf("alternate version %q does not exist", name)
+		return fmt.Errorf("Savefile %q does not exist", name)
 	}
 
-	// 2. Resolve branch SHA
+	// Resolve Savefile SHA
 	branchSHA, err := gitobj.Ref_Resolve(repo, "refs/heads/"+name)
 	if err != nil || branchSHA == nil {
-		return fmt.Errorf("failed to resolve alternate version %q: %w", name, err)
+		return fmt.Errorf("failed to resolve Savefile %q: %w", name, err)
 	}
 
-	// 3. Dirty check — warn user
+	// Dirty check is to warn user for unsaved changes
 	index, err := gitobj.Index_Read2(repo)
 	if err != nil {
-		return fmt.Errorf("failed to read index: %w", err)
+		return fmt.Errorf("failed to read Savelist: %w", err)
 	}
 	if isDirty(repo, *index) {
 		fmt.Println("WARNING : You have unsaved changes that will be lost if you switch.")
@@ -44,29 +56,37 @@ func SwitchAltVer(repo gitpath.GitRepository, name string) error {
 		}
 	}
 
-	// 4. Backup worktree to ../ezgit_backup
+	// Get rules so we dont delete gitignored stuff
+	// solution is not perfect but will do for now
+	rules, err := gitcheckignore.ReadGitIgnore(repo)
+	if err != nil {
+		return fmt.Errorf("failed to read gitignore: %w", err)
+	}
+
+	// Backup worktree, will restore if error
 	backupPath := filepath.Join(filepath.Dir(repo.WorkTree), "ezgit_backup")
 	fmt.Println("Backing up current worktree to", backupPath)
-	if err := copyDir(repo.WorkTree, backupPath, repo.GitDir); err != nil {
+	err = copyDir(repo.WorkTree, backupPath, repo.GitDir, rules)
+	if err != nil {
 		return fmt.Errorf("failed to backup worktree: %w", err)
 	}
 
-	// 5. Clear worktree (except .git)
-	if err := clearWorktree(repo); err != nil {
-		// restore backup before returning error
-		_ = copyDir(backupPath, repo.WorkTree, "")
+	// Clear worktree (except .git)
+	if err := clearWorktree(repo, rules); err != nil {
+		// restore backup logic
+		_ = copyDir(backupPath, repo.WorkTree, "", rules)
 		return fmt.Errorf("failed to clear worktree: %w", err)
 	}
 
-	// 6. Checkout branch tree into worktree
+	// Checkout Savefile tree into worktree
 	commit, err := githashread.Object_Read(repo, *branchSHA)
 	if err != nil {
-		_ = copyDir(backupPath, repo.WorkTree, "")
+		_ = copyDir(backupPath, repo.WorkTree, "", rules)
 		return fmt.Errorf("failed to read commit: %w", err)
 	}
 	concreteCommit, ok := commit.(*gitobj.GitCommit)
 	if !ok {
-		_ = copyDir(backupPath, repo.WorkTree, "")
+		_ = copyDir(backupPath, repo.WorkTree, "", rules)
 		return fmt.Errorf("not a commit object")
 	}
 	concreteCommit.Deserialize()
@@ -74,42 +94,54 @@ func SwitchAltVer(repo gitpath.GitRepository, name string) error {
 
 	tree, err := githashread.Object_Read(repo, treeSHA)
 	if err != nil {
-		_ = copyDir(backupPath, repo.WorkTree, "")
+		_ = copyDir(backupPath, repo.WorkTree, "", rules)
 		return fmt.Errorf("failed to read tree: %w", err)
 	}
 	concreteTree, ok := tree.(gitobj.GitTree)
 	if !ok {
-		_ = copyDir(backupPath, repo.WorkTree, "")
+		_ = copyDir(backupPath, repo.WorkTree, "", rules)
 		return fmt.Errorf("not a tree object")
 	}
 	concreteTree.DeserializeData(tree.Deserialize())
 
-	if err := loading.TreeCheckout(repo, concreteTree, repo.WorkTree); err != nil {
+	err = loading.TreeCheckout(repo, concreteTree, repo.WorkTree)
+	if err != nil {
 		// restore backup on failure
-		_ = copyDir(backupPath, repo.WorkTree, "")
+		_ = copyDir(backupPath, repo.WorkTree, "", rules)
 		return fmt.Errorf("failed to checkout tree: %w", err)
 	}
 
-	// 7. Update HEAD to point to new branch
+	// Update HEAD to point to Savefile ref
 	headPath := gitpath.Repo_Path(repo, "HEAD")
 	headContent := fmt.Sprintf("ref: refs/heads/%s\n", name)
-	if err := os.WriteFile(headPath, []byte(headContent), 0644); err != nil {
+	err = os.WriteFile(headPath, []byte(headContent), 0644)
+	if err != nil {
 		return fmt.Errorf("failed to update HEAD: %w", err)
 	}
 
-	// 8. Rebuild index via add --all
-	if err := add.Add(&repo, nil, add.Options{All: true}); err != nil {
+	// Clear index in case files does not exist in switched Savefile
+	emptyIndex := &gitobj.GitIndex{
+		Version: 2,
+		Entries: []gitobj.GitIndexEntry{},
+	}
+	if err := gitobj.Index_Write(repo, *emptyIndex); err != nil {
+		return fmt.Errorf("failed to clear index: %w", err)
+	}
+
+	// Rebuild index via add --all
+	err = add.Add(&repo, nil, add.Options{All: true})
+	if err != nil {
 		return fmt.Errorf("failed to rebuild index: %w", err)
 	}
 
-	// 9. Delete backup on success
+	// Delete backup on success
 	os.RemoveAll(backupPath)
 
-	fmt.Printf("Switched to alternate version %q\n", name)
+	fmt.Printf("Switched to Savefile: %q\n", name)
 	return nil
 }
 
-// isDirty checks if any index entry has a different mtime than the real file
+// check if any file is not in the savelist. Checks Mtime
 func isDirty(repo gitpath.GitRepository, index gitobj.GitIndex) bool {
 	for _, entry := range index.Entries {
 		fullPath := filepath.Join(repo.WorkTree, entry.Name)
@@ -124,8 +156,8 @@ func isDirty(repo gitpath.GitRepository, index gitobj.GitIndex) bool {
 	return false
 }
 
-// clearWorktree removes all files/dirs in worktree except .git
-func clearWorktree(repo gitpath.GitRepository) error {
+// delete all files/dirs in worktree except .git
+func clearWorktree(repo gitpath.GitRepository, rules *gitcheckignore.GitIgnore) error {
 	entries, err := os.ReadDir(repo.WorkTree)
 	if err != nil {
 		return err
@@ -134,7 +166,19 @@ func clearWorktree(repo gitpath.GitRepository) error {
 		if entry.Name() == ".git" {
 			continue
 		}
+
 		fullPath := filepath.Join(repo.WorkTree, entry.Name())
+		rel, err := filepath.Rel(repo.WorkTree, fullPath)
+		if err != nil {
+			continue
+		}
+
+		// skip ignored files — they aren't tracked so don't touch them
+		ignored, err := gitcheckignore.CheckIgnore(rules, rel)
+		if err == nil && ignored {
+			continue
+		}
+
 		if err := os.RemoveAll(fullPath); err != nil {
 			return err
 		}
@@ -143,7 +187,7 @@ func clearWorktree(repo gitpath.GitRepository) error {
 }
 
 // copyDir recursively copies src to dst, skipping skipPath
-func copyDir(src, dst, skipPath string) error {
+func copyDir(src, dst, skipPath string, rules *gitcheckignore.GitIgnore) error {
 	return filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -151,10 +195,23 @@ func copyDir(src, dst, skipPath string) error {
 		if skipPath != "" && path == skipPath {
 			return filepath.SkipDir
 		}
+
 		rel, err := filepath.Rel(src, path)
 		if err != nil {
 			return err
 		}
+
+		// skip ignored files — no need to back them up
+		if rules != nil {
+			ignored, err := gitcheckignore.CheckIgnore(rules, rel)
+			if err == nil && ignored {
+				if d.IsDir() {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+		}
+
 		destPath := filepath.Join(dst, rel)
 		if d.IsDir() {
 			return os.MkdirAll(destPath, 0755)

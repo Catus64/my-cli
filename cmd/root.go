@@ -7,6 +7,7 @@ import (
 	"gocmd/internal/cli/add"
 	altversion "gocmd/internal/cli/alt-version"
 	checkignore "gocmd/internal/cli/check-ignore"
+	"gocmd/internal/cli/combine"
 	getcurrent "gocmd/internal/cli/get-current"
 	gitsave "gocmd/internal/cli/git-save"
 	"gocmd/internal/cli/gitLog"
@@ -20,6 +21,7 @@ import (
 	showsavelist "gocmd/internal/cli/show-savelist"
 	"gocmd/internal/cli/showObject"
 	"gocmd/internal/cli/showTree"
+	switchver "gocmd/internal/cli/switch-ver"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -78,4 +80,6 @@ func init() {
 	rootCmd.AddCommand(setconfig.NewCommand())
 	rootCmd.AddCommand(gitsave.NewCommand())
 	rootCmd.AddCommand(altversion.NewCommand())
+	rootCmd.AddCommand(switchver.NewCommand())
+	rootCmd.AddCommand(combine.NewCommand())
 }
