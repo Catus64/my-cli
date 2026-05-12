@@ -2,7 +2,6 @@ package GitObjLib
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
 )
 
@@ -76,28 +75,35 @@ func Kvlm_Parse(data []byte, start int, dict KvlmDict) KvlmDict {
 }
 
 func Kvlm_Serialize(kvlm KvlmDict) []byte {
-
 	var ret []byte
 
 	keys := []string{"tree", "parent", "author", "committer"}
 	for _, key := range keys {
 		value, ok := kvlm.Dict[key]
 		if !ok {
-			continue // skip missing optional fields like parent
+			continue
 		}
-		ret = append(ret, []byte(key)...)
-		ret = append(ret, ' ')
-		ret = append(ret, value...)
-		ret = append(ret, '\n')
+
+		// split on null byte — multiple values = multiple lines
+		parts := bytes.Split(value, []byte{0x00})
+		for _, part := range parts {
+			part = bytes.TrimSpace(part)
+			if len(part) == 0 {
+				continue
+			}
+			ret = append(ret, []byte(key)...)
+			ret = append(ret, ' ')
+			ret = append(ret, part...)
+			ret = append(ret, '\n')
+		}
 	}
+
+	// message body after blank line
 	ret = append(ret, '\n')
 	ret = append(ret, kvlm.Dict["data"]...)
 
-	fmt.Println(string(ret))
-
 	return ret
 }
-
 func GetKvlmValues(dict map[string][]byte, key string) []string {
 	val, ok := dict[key]
 	if !ok {

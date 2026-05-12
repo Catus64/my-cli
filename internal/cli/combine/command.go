@@ -2,8 +2,7 @@ package combine
 
 import (
 	"fmt"
-	githashread "gocmd/testfiles/GitHashRead"
-	gitobj "gocmd/testfiles/GitObject"
+	save "gocmd/testfiles/GitSave"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 
 	"github.com/spf13/cobra"
@@ -15,21 +14,11 @@ func combine(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		panic(err)
 	}
-	checkSha := "a067aeb2f5ab8668edc04a9ad5de60ddac1e71d8"
-	commit, err := githashread.Object_Read(*repo, checkSha)
 
+	err = save.Combine(*repo, args[0])
 	if err != nil {
-		return fmt.Errorf("failed to read object: %w", err)
+		return fmt.Errorf("failed to combine savefiles: %w", err)
 	}
-
-	concreteCommit, ok := commit.(*gitobj.GitCommit)
-	if !ok {
-		return fmt.Errorf("failed to cast commit to GitCommit")
-	}
-	concreteCommit.Deserialize()
-	parent_sha := concreteCommit.Dict["parent"]
-
-	fmt.Println(string(parent_sha))
 
 	return nil
 }
