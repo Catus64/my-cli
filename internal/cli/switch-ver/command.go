@@ -23,8 +23,8 @@ func switch_alt_ver(cmd *cobra.Command, args []string) error {
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "switch-ver [version-name]",
-		Short: "Switch to the specified alternate version savefile",
+		Use:   "switch [version-name]",
+		Short: "Switch to the specified alternate savefile",
 		RunE:  switch_alt_ver,
 		Args:  cobra.ExactArgs(1),
 	}

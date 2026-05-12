@@ -65,7 +65,7 @@ func SwitchAltVer(repo gitpath.GitRepository, name string) error {
 
 	// Backup worktree, will restore if error
 	backupPath := filepath.Join(filepath.Dir(repo.WorkTree), "ezgit_backup")
-	fmt.Println("Backing up current worktree to", backupPath)
+	// fmt.Println("Backing up current worktree to", backupPath)
 	err = copyDir(repo.WorkTree, backupPath, repo.GitDir, rules)
 	if err != nil {
 		return fmt.Errorf("failed to backup worktree: %w", err)

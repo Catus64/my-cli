@@ -113,8 +113,8 @@ func Add(repo *gitpath.GitRepository, paths []string, opts Options) error {
 		}
 
 		index.Entries = append(index.Entries, entry)
-		fmt.Printf("Adding file: %s (relative path: %s)\n", clean_path.absolute, clean_path.relative)
-		fmt.Printf("Hash for %s: %x\n", clean_path.relative, sha)
+		// fmt.Printf("Adding file: %s (relative path: %s)\n", clean_path.absolute, clean_path.relative)
+		// fmt.Printf("Hash for %s: %x\n", clean_path.relative, sha)
 
 	}
 

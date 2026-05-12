@@ -279,7 +279,7 @@ func Combine(repo gitpath.GitRepository, targetBranch string) error {
 	// files only in target — auto add
 	for path, sha := range targetFiles {
 		if _, exists := currentFiles[path]; !exists {
-			fmt.Printf("  adding:   %s\n", path)
+			// fmt.Printf("  adding:   %s\n", path)
 			obj, err := githashread.Object_Read(repo, sha)
 			if err != nil {
 				return err
