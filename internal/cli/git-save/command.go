@@ -14,28 +14,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func GetOrPromptConfig() (*gitpath.EzGitConfig, error) {
-	cfg, err := gitpath.Load()
-	if err == nil {
-		// config exists and is complete — just use it
-		return cfg, nil
-	}
-
-	// config missing or incomplete — prompt user
-	fmt.Println("No ezgit config found. Setting up your email and name to save a version.")
-	cfg, err = setconfig.PromptUser()
-	if err != nil {
-		return nil, err
-	}
-
-	if err := gitpath.Save(cfg); err != nil {
-		return nil, fmt.Errorf("failed to save config: %w", err)
-	}
-
-	fmt.Printf("Config saved — name: %s, email: %s\n\n", cfg.Name, cfg.Email)
-	return cfg, nil
-}
-
 func promptMessage() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("Type your commit message and press Enter(Not advisable to leave empty):")
@@ -81,7 +59,7 @@ func save(cmd *cobra.Command, args []string) error {
 	}
 
 	//Get author from config
-	user_config, err := GetOrPromptConfig()
+	user_config, err := setconfig.GetOrPromptConfig()
 	if err != nil {
 		panic(err)
 	}
@@ -89,7 +67,7 @@ func save(cmd *cobra.Command, args []string) error {
 	author := user_config.Format()
 	timestamp := time.Now()
 
-	commitSHA, err := gitsave.Version_Create(*repo, treeSHA, *parentSHA, author, timestamp, message)
+	commitSHA, err := gitsave.Version_Create(*repo, treeSHA, []string{*parentSHA}, author, timestamp, message)
 	if err != nil {
 		panic(err)
 	}
@@ -100,6 +78,11 @@ func save(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}
 	fmt.Printf("Saved on branch %s → %s\n", branchName, commitSHA)
+
+	err = gitsave.RefreshIndex(*repo, index)
+	if err != nil {
+		panic(err)
+	}
 
 	return nil
 }

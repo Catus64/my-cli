@@ -8,14 +8,16 @@ import (
 	gitpath "gocmd/testfiles/Gitrepostruct"
 	logger "gocmd/testfiles/Helper"
 	"os"
+	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 )
 
 func Version_Create(
 	repo gitpath.GitRepository,
 	treeSHA string,
-	parentSHA string,
+	parentSHA []string, //for multiple parents
 	author string,
 	timestamp time.Time,
 	message string,
@@ -40,8 +42,8 @@ func Version_Create(
 	// Git expects: tree, parent (optional), author, committer, then message
 	dict := make(map[string][]byte)
 	dict["tree"] = []byte(treeSHA)
-	if parentSHA != "" {
-		dict["parent"] = []byte(parentSHA)
+	if len(parentSHA) > 0 {
+		dict["parent"] = []byte(strings.Join(parentSHA, "\x00"))
 	}
 	dict["author"] = []byte(author_line)
 	dict["committer"] = []byte(author_line)
@@ -76,4 +78,25 @@ func Update_Branch_Ref(repo gitpath.GitRepository, verSHA string) (string, error
 	logger.L().Info("Branch reference updated", "branch", branchName, "new_sha", verSHA)
 
 	return branchName, nil
+}
+
+func RefreshIndex(repo gitpath.GitRepository, index *gitobj.GitIndex) error {
+	for i, entry := range index.Entries {
+		fullPath := filepath.Join(repo.WorkTree, entry.Name)
+		info, err := os.Stat(fullPath)
+		if err != nil {
+			continue // file might not exist
+		}
+		// update stat data to current
+		index.Entries[i].MtimeSec = uint32(info.ModTime().Unix())
+		index.Entries[i].MtimeNano = uint32(info.ModTime().Nanosecond())
+		index.Entries[i].FSize = uint32(info.Size())
+
+		if sysStat, ok := info.Sys().(*syscall.Stat_t); ok {
+			index.Entries[i].CtimeSec = uint32(sysStat.Ctim.Sec)
+			index.Entries[i].CtimeNano = uint32(sysStat.Ctim.Nsec)
+		}
+	}
+	fmt.Println("index refresh")
+	return gitobj.Index_Write(repo, *index)
 }

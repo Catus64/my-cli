@@ -46,12 +46,6 @@ func Get_Tree_SHA(repo gitpath.GitRepository, ref string) (string, error) {
 	return treeSHA, nil
 }
 
-// func TreeToMap(repo *gitpath.GitRepository, ref string, prefix string, result map[string]string) error {
-// 	_, _ = Get_Tree_SHA(*repo, ref)
-
-// 	return nil
-// }
-
 func TreeToMap(repo gitpath.GitRepository, ref string, prefix string, result map[string]string) error {
 	// Get tree SHA from ref (use Get_Tree_SHA only at top level, then read tree directly)
 	// ref here can be either a commit ref ("HEAD") or a raw tree SHA from recursion

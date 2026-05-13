@@ -86,3 +86,25 @@ func PromptUser() (*gitpath.EzGitConfig, error) {
 		Email: email,
 	}, nil
 }
+
+func GetOrPromptConfig() (*gitpath.EzGitConfig, error) {
+	cfg, err := gitpath.Load()
+	if err == nil {
+		// config exists and is complete — just use it
+		return cfg, nil
+	}
+
+	// config missing or incomplete — prompt user
+	fmt.Println("No ezgit config found. Setting up your email and name to save a version.")
+	cfg, err = PromptUser()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := gitpath.Save(cfg); err != nil {
+		return nil, fmt.Errorf("failed to save config: %w", err)
+	}
+
+	fmt.Printf("Config saved — name: %s, email: %s\n\n", cfg.Name, cfg.Email)
+	return cfg, nil
+}
