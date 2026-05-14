@@ -13,10 +13,13 @@ import (
 	"time"
 )
 
+// option if user wants to add all
 type Options struct {
 	All bool
 }
 
+// absolute path is for the real system path
+// clean is relative to .git parent (worktree)
 type cleanPath struct {
 	absolute string
 	relative string
@@ -40,10 +43,15 @@ func Add(repo *gitpath.GitRepository, paths []string, opts Options) error {
 			// CheckIgnore needs relative path
 			rel, err := filepath.Rel(repo.WorkTree, path)
 			if err != nil {
+				fmt.Printf("Error processing %s: %v\n", path, err)
 				continue
 			}
 			ignored, err := gitcheckignore.CheckIgnore(rules, rel)
-			if err != nil || ignored {
+			if err != nil {
+				fmt.Printf("Error checking ignore for %s: %v\n", rel, err)
+				continue
+			}
+			if ignored {
 				continue
 			}
 			filtered = append(filtered, path)
@@ -51,8 +59,11 @@ func Add(repo *gitpath.GitRepository, paths []string, opts Options) error {
 		paths = filtered
 	}
 
+	//dest -> dest/ explicit end and work with both os
 	worktree := repo.WorkTree + string(os.PathSeparator)
 
+	//remove first before adding
+	//easy way to avoid duplicates
 	_, err := Remove(repo, paths, RemoveOptions{
 		Delete:          false,
 		SkipMissingFile: true,
@@ -79,6 +90,7 @@ func Add(repo *gitpath.GitRepository, paths []string, opts Options) error {
 			return fmt.Errorf("not a file or does not exist %s: %w", path, err)
 		}
 
+		//Rel is getting rel path from repo worktree
 		relativePath, err := filepath.Rel(repo.WorkTree, absolutePath)
 		if err != nil {
 			return fmt.Errorf("failed to get relative path for %s: %w", path, err)
@@ -96,6 +108,7 @@ func Add(repo *gitpath.GitRepository, paths []string, opts Options) error {
 	}
 
 	for _, clean_path := range cleanPaths {
+		// store blobs in /object
 		sha, err := hashread.Hash_Object(clean_path.absolute, "blob", *repo)
 		if err != nil {
 			return fmt.Errorf("failed to hash file %s: %w", clean_path.relative, err)
@@ -106,7 +119,7 @@ func Add(repo *gitpath.GitRepository, paths []string, opts Options) error {
 			return fmt.Errorf("failed to stat file %s: %w", clean_path.relative, err)
 		}
 
-		//build index entry
+		//build index entry the append
 		entry, err := buildIndexEntry(clean_path.relative, fmt.Sprintf("%x", sha), stat)
 		if err != nil {
 			return fmt.Errorf("failed to build index entry for %s: %w", clean_path.relative, err)
@@ -136,6 +149,8 @@ func buildIndexEntry(relpath, sha string, stat os.FileInfo) (gitobj.GitIndexEntr
 	mtimeNsec = uint32(mod.Nanosecond())
 
 	// Read platform-specific fields from syscall.Stat_t
+	// This is mainly to handle cases with windows vs linux(unix)
+	// windows doesn't have ctime and bunch other stuff
 	if sysStat, ok := ctime.(*syscall.Stat_t); ok {
 		ctimeSec = uint32(sysStat.Ctim.Sec)
 		ctimeNsec = uint32(sysStat.Ctim.Nsec)
@@ -144,7 +159,7 @@ func buildIndexEntry(relpath, sha string, stat os.FileInfo) (gitobj.GitIndexEntr
 		uid = sysStat.Uid
 		gid = sysStat.Gid
 	} else {
-		// falback for windows
+		// values for windows lmao
 		ctimeSec = uint32(time.Now().Unix())
 		ctimeNsec = 0
 		dev = 0
@@ -154,7 +169,7 @@ func buildIndexEntry(relpath, sha string, stat os.FileInfo) (gitobj.GitIndexEntr
 	}
 
 	mode := stat.Mode()
-	modeType := uint16(0b1000) // regular file
+	modeType := uint16(0b1000) // blob file
 	modePerms := uint16(mode.Perm()) & 0o777
 
 	return gitobj.GitIndexEntry{
@@ -179,6 +194,7 @@ func buildIndexEntry(relpath, sha string, stat os.FileInfo) (gitobj.GitIndexEntr
 func getAllFiles(repo gitpath.GitRepository) ([]string, error) {
 	var files []string
 
+	//anonymous function here is to deal with walk result
 	err := filepath.Walk(repo.WorkTree, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
