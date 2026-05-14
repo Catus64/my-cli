@@ -2,7 +2,7 @@ package GitObjLib
 
 import (
 	"bytes"
-	"fmt"
+	"strings"
 )
 
 type GitCommit struct {
@@ -21,15 +21,12 @@ func (c *GitCommit) Serialize() *[]byte {
 }
 
 func (commit *GitCommit) Deserialize() []byte {
-
 	if commit.data == nil {
 		return Kvlm_Serialize(commit.KvlmDict)
 	}
-
+	// clear dict before re-parsing to prevent doubling
 	temp := make(map[string][]byte)
-	kvlm := KvlmDict{
-		Dict: temp,
-	}
+	kvlm := KvlmDict{Dict: temp}
 	start := 0
 	commit.KvlmDict = Kvlm_Parse(commit.data, start, kvlm)
 	return commit.data
@@ -44,16 +41,14 @@ func Kvlm_Parse(data []byte, start int, dict KvlmDict) KvlmDict {
 	space := bytes.IndexByte(data[start:], ' ') + start
 	newline := bytes.IndexByte(data[start:], '\n') + start
 
-	// fmt.Println("space:", space, "newline:", newline)
+	// base case: no more key-value pairs
 	if space-start < 0 || newline < space {
-		//end recursion
 		dict.Dict["data"] = data[start:]
 		return dict
 	}
 
 	key := data[start:space]
 	end := start
-
 	for {
 		end_offset := bytes.IndexByte(data[end+1:], '\n')
 		end = end + end_offset + 1
@@ -63,38 +58,65 @@ func Kvlm_Parse(data []byte, start int, dict KvlmDict) KvlmDict {
 	}
 
 	value := data[space+1 : end]
+	valueCopy := make([]byte, len(value))
+	copy(valueCopy, value)
 
 	_, ok := dict.Dict[string(key)]
-	if ok { //check for two commits here
+	if ok {
+		// key exists — append with null separator (e.g. multiple parents)
 		dict.Dict[string(key)] = append(dict.Dict[string(key)], 0x00)
-		dict.Dict[string(key)] = append(dict.Dict[string(key)], value...)
+		dict.Dict[string(key)] = append(dict.Dict[string(key)], valueCopy...)
 	} else {
-		dict.Dict[string(key)] = value
+		// first time seeing this key
+		dict.Dict[string(key)] = valueCopy
 	}
 
-	//fmt.Println("key: ", string(key), "|value: ", string(value))
 	return Kvlm_Parse(data, end+1, dict)
 }
 
 func Kvlm_Serialize(kvlm KvlmDict) []byte {
-
 	var ret []byte
 
 	keys := []string{"tree", "parent", "author", "committer"}
 	for _, key := range keys {
 		value, ok := kvlm.Dict[key]
 		if !ok {
-			continue // skip missing optional fields like parent
+			continue
 		}
-		ret = append(ret, []byte(key)...)
-		ret = append(ret, ' ')
-		ret = append(ret, value...)
-		ret = append(ret, '\n')
+
+		// split on null byte — multiple values = multiple lines
+		parts := bytes.Split(value, []byte{0x00})
+		for _, part := range parts {
+			part = bytes.TrimSpace(part)
+			if len(part) == 0 {
+				continue
+			}
+			ret = append(ret, []byte(key)...)
+			ret = append(ret, ' ')
+			ret = append(ret, part...)
+			ret = append(ret, '\n')
+		}
 	}
+
+	// message body after blank line
 	ret = append(ret, '\n')
 	ret = append(ret, kvlm.Dict["data"]...)
 
-	fmt.Println(string(ret))
-
 	return ret
+}
+func GetKvlmValues(dict map[string][]byte, key string) []string {
+	val, ok := dict[key]
+	if !ok {
+		return nil
+	}
+	// split on null byte separator
+	parts := bytes.Split(val, []byte{0x00})
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		s := strings.TrimSpace(string(p))
+		if s != "" {
+			result = append(result, s)
+		}
+	}
+	return result
 }

@@ -45,23 +45,24 @@ func Recurse_Log(repo *gitpath.GitRepository, commit gitobj.GitCommit, sha strin
 		Reset  = "\033[0m"
 	)
 
-	//log one obj
-	//fmt.Println(Yellow+"Commit: ", sha+Reset)
 	date, author := Format_Date_Author(string(commit.Dict["author"]))
+	treeSHA := strings.TrimSpace(string(commit.Dict["tree"]))
+	parents := gitobj.GetKvlmValues(commit.Dict, "parent")
 
-	// fmt.Println("Date: ", date)
-	// fmt.Println("Author: ", author)
-	// fmt.Println("tree: ", string(commit.Dict["tree"]))
-	// fmt.Println("parent: ", string(commit.Dict["parent"]))
-
-	// fmt.Println(string(commit.Dict["data"]))
+	parentDisplay := ""
+	if len(parents) > 0 {
+		parentDisplay = parents[0]
+		if len(parents) > 1 {
+			parentDisplay += fmt.Sprintf(" (+%d more)", len(parents)-1)
+		}
+	}
 
 	PrintCommit(
 		sha,
 		author,
 		date,
-		string(commit.Dict["tree"]),
-		string(commit.Dict["parent"]),
+		treeSHA,
+		parentDisplay,
 		string(commit.Dict["data"]),
 	)
 
@@ -71,7 +72,15 @@ func Recurse_Log(repo *gitpath.GitRepository, commit gitobj.GitCommit, sha strin
 	}
 
 	//recurse
-	Parent_Obj, err := githashread.Object_Read(*repo, string(commit.Dict["parent"]))
+	if len(parents) == 0 {
+		println("end")
+		return
+	}
+
+	// follow first parent only for linear log
+	firstParent := parents[0]
+
+	Parent_Obj, err := githashread.Object_Read(*repo, firstParent)
 	if err != nil {
 		panic(err)
 	}
@@ -80,8 +89,7 @@ func Recurse_Log(repo *gitpath.GitRepository, commit gitobj.GitCommit, sha strin
 		panic("not a commit object")
 	}
 	Concrete_Parent_Commit.Deserialize()
-	//println("\n")
-	Recurse_Log(repo, *Concrete_Parent_Commit, string(commit.Dict["parent"]))
+	Recurse_Log(repo, *Concrete_Parent_Commit, firstParent)
 }
 
 func Log(repo gitpath.GitRepository) error {
@@ -108,44 +116,56 @@ func Log(repo gitpath.GitRepository) error {
 
 // AI slop will be rewritten
 func PrintCommit(sha, author, date, tree, parent, message string) {
-	const width = 55
+	const width = 72        // total box width including borders
+	const inner = width - 4 // "│ " + content + " │"
 
-	line := func(left, mid, right string) {
+	border := strings.Repeat("─", width-2)
+
+	printLine := func(left, mid, right string) {
 		fmt.Printf("%s%s%s\n", left, mid, right)
 	}
 
 	row := func(text string) {
-		fmt.Printf("│ %-*s │\n", width-2, text)
-	}
-
-	repeat := func(s string, n int) string {
-		out := ""
-		for i := 0; i < n; i++ {
-			out += s
+		// wrap long text into multiple lines
+		for _, wrapped := range wrapText(text, inner) {
+			fmt.Printf("│ %-*s │\n", inner, wrapped)
 		}
-		return out
 	}
 
-	line("┌", repeat("─", width), "┐")
+	printLine("┌", border, "┐")
 	row("Version")
-	line("├", repeat("─", width), "┤")
-
+	printLine("├", border, "┤")
 	row("SHA    : " + sha)
 	row("Author : " + author)
 	row("Date   : " + date)
 	row("")
 	row("Tree   : " + tree)
-	row("Parent : " + parent)
-
-	line("├", repeat("─", width), "┤")
+	if parent != "" {
+		row("Parent : " + parent)
+	}
+	printLine("├", border, "┤")
 	row("Message")
 	row("")
-
 	for _, line := range splitLines(message) {
 		row(line)
 	}
+	printLine("└", border, "┘")
+}
 
-	line("└", repeat("─", width), "┘")
+// wrapText splits text into lines of max `width` chars
+func wrapText(text string, width int) []string {
+	if len(text) <= width {
+		return []string{text}
+	}
+	var lines []string
+	for len(text) > width {
+		lines = append(lines, text[:width])
+		text = text[width:]
+	}
+	if text != "" {
+		lines = append(lines, text)
+	}
+	return lines
 }
 
 func splitLines(s string) []string {

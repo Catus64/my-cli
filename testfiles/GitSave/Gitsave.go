@@ -1,21 +1,25 @@
 package gitsave
 
 import (
+	"bufio"
 	"fmt"
+	gitCurrent "gocmd/testfiles/GitCurrent"
 	gitcur "gocmd/testfiles/GitCurrent"
 	githashread "gocmd/testfiles/GitHashRead"
 	gitobj "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 	logger "gocmd/testfiles/Helper"
 	"os"
+	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 )
 
 func Version_Create(
 	repo gitpath.GitRepository,
 	treeSHA string,
-	parentSHA string,
+	parentSHA []string, //for multiple parents
 	author string,
 	timestamp time.Time,
 	message string,
@@ -40,8 +44,8 @@ func Version_Create(
 	// Git expects: tree, parent (optional), author, committer, then message
 	dict := make(map[string][]byte)
 	dict["tree"] = []byte(treeSHA)
-	if parentSHA != "" {
-		dict["parent"] = []byte(parentSHA)
+	if len(parentSHA) > 0 {
+		dict["parent"] = []byte(strings.Join(parentSHA, "\x00"))
 	}
 	dict["author"] = []byte(author_line)
 	dict["committer"] = []byte(author_line)
@@ -68,12 +72,77 @@ func Update_Branch_Ref(repo gitpath.GitRepository, verSHA string) (string, error
 
 	// Update the branch ref to point to the new commit SHA
 	ref_path := gitpath.Repo_Path(repo, "refs", "heads", branchName)
-	err = os.WriteFile(ref_path, []byte(verSHA+"\n"), 0644)
-	if err != nil {
-		return "", fmt.Errorf("failed to update branch ref :%w", err)
+
+	// in case file does not exist
+	if err := os.MkdirAll(filepath.Dir(ref_path), 0755); err != nil {
+		return "", fmt.Errorf("failed to create ref directory: %w", err)
 	}
 
-	logger.L().Info("Branch reference updated", "branch", branchName, "new_sha", verSHA)
+	err = os.WriteFile(ref_path, []byte(verSHA+"\n"), 0644)
+	if err != nil {
+		return "", fmt.Errorf("failed to update Savefile ref :%w", err)
+	}
+
+	logger.L().Info("Savefile reference updated", "Savefile", branchName, "new_sha", verSHA)
 
 	return branchName, nil
+}
+
+func RefreshIndex(repo gitpath.GitRepository, index *gitobj.GitIndex) error {
+	for i, entry := range index.Entries {
+		fullPath := filepath.Join(repo.WorkTree, entry.Name)
+		info, err := os.Stat(fullPath)
+		if err != nil {
+			continue // file might not exist
+		}
+		// update stat data to current
+		index.Entries[i].MtimeSec = uint32(info.ModTime().Unix())
+		index.Entries[i].MtimeNano = uint32(info.ModTime().Nanosecond())
+		index.Entries[i].FSize = uint32(info.Size())
+
+		if sysStat, ok := info.Sys().(*syscall.Stat_t); ok {
+			index.Entries[i].CtimeSec = uint32(sysStat.Ctim.Sec)
+			index.Entries[i].CtimeNano = uint32(sysStat.Ctim.Nsec)
+		}
+	}
+	fmt.Println("index refresh")
+	return gitobj.Index_Write(repo, *index)
+}
+
+func CheckCommitReady(repo gitpath.GitRepository, index gitobj.GitIndex) (bool, error) {
+	reader := bufio.NewReader(os.Stdin)
+
+	// Check 1 — nothing staged
+	headResult, err := gitCurrent.StatusHeadIndex(repo, index)
+	if err != nil {
+		return false, err
+	}
+	if !headResult.HasChanges() {
+		fmt.Println("Nothing to commit your savelist is the same as the version's content.")
+		return false, nil
+	}
+
+	// Check 2 — warn about unstaged changes
+	worktreeResult, err := gitCurrent.StatusIndexWorktree(repo, index)
+	if err != nil {
+		return false, err
+	}
+	if worktreeResult.HasUnstaged() {
+		fmt.Println("!!WARNING!!  These changes are NOT included in this save:")
+		for _, f := range worktreeResult.Modified {
+			fmt.Println("  modified (not added):", f)
+		}
+		for _, f := range worktreeResult.Deleted {
+			fmt.Println("  deleted  (not added):", f)
+		}
+		fmt.Println("\n!!WARNING!!  Progress on these files can be lost if you switch branches.")
+		fmt.Print("  Continue saving without them? (y/n): ")
+		input, _ := reader.ReadString('\n')
+		if strings.TrimSpace(strings.ToLower(input)) != "y" {
+			fmt.Println("Save cancelled.")
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
