@@ -6,29 +6,26 @@ import (
 	githashread "gocmd/testfiles/GitHashRead"
 	gitobj "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
-	logger "gocmd/testfiles/Helper"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"syscall"
 )
 
-func StatusIndexWorktree(repo gitpath.GitRepository, index gitobj.GitIndex) ([]string, error) {
-	fmt.Println("Changes not staged for commit:")
+func StatusIndexWorktree(repo gitpath.GitRepository, index gitobj.GitIndex) (*IndexWorkTree, error) {
+	result := IndexWorkTree{}
 
-	// Load gitignore rules
 	rules, err := gitcheckignore.ReadGitIgnore(repo)
 	if err != nil {
-		return nil, err
+		return &result, err
 	}
 
-	// Walk filesystem and collect all relative file paths
+	// collect all files on disk
 	var allFiles []string
 	err = filepath.WalkDir(repo.WorkTree, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		// Skip .git directory entirely
 		if d.IsDir() && path == repo.GitDir {
 			return filepath.SkipDir
 		}
@@ -42,47 +39,33 @@ func StatusIndexWorktree(repo gitpath.GitRepository, index gitobj.GitIndex) ([]s
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return &result, err
 	}
 
-	// Compare index entries against real files on disk
+	// compare index against disk
 	for _, entry := range index.Entries {
 		fullPath := filepath.Join(repo.WorkTree, entry.Name)
 
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-			// File in index but gone from disk
-			fmt.Println("  deleted:  ", entry.Name)
+			result.Deleted = append(result.Deleted, entry.Name)
 		} else {
-			// File exists — check timestamps first
 			info, _ := os.Stat(fullPath)
 			stat := info.Sys().(*syscall.Stat_t)
-
 			entryMtime := int64(entry.MtimeSec)*1e9 + int64(entry.MtimeNano)
 			actualMtime := stat.Mtim.Sec*1e9 + stat.Mtim.Nsec
 
-			logger.L().Debug("Comparing index entry to disk",
-				"entry", entry.Name,
-				"indexMtime", entryMtime,
-				"actualMtime", actualMtime,
-			)
 			if entryMtime != actualMtime {
-				// Timestamps differ — hash to confirm
 				newSHA, err := githashread.Hash_Object_NoWrite(fullPath, "blob")
 				if err != nil {
-					return nil, err
+					return &result, err
 				}
-				logger.L().Debug("Hashing file to confirm modification",
-					"entry", entry.Name,
-					"indexSHA", entry.SHA,
-					"newSHA", fmt.Sprintf("%x", newSHA),
-				)
 				if fmt.Sprintf("%x", newSHA) != entry.SHA {
-					fmt.Println("  modified: ", entry.Name)
+					result.Modified = append(result.Modified, entry.Name)
 				}
 			}
 		}
 
-		// Remove from allFiles — it's accounted for
+		// remove from allFiles — accounted for
 		for i, f := range allFiles {
 			if f == entry.Name {
 				allFiles = append(allFiles[:i], allFiles[i+1:]...)
@@ -90,17 +73,15 @@ func StatusIndexWorktree(repo gitpath.GitRepository, index gitobj.GitIndex) ([]s
 			}
 		}
 	}
-	logger.L().Debug("All files on disk after processing index", "allFiles", allFiles)
 
-	var untrackedFiled []string
-	// Whatever remains in allFiles is untracked
+	// remaining files are untracked
 	for _, f := range allFiles {
 		ignored, err := gitcheckignore.CheckIgnore(rules, f)
 		if err != nil || ignored {
 			continue
 		}
-		untrackedFiled = append(untrackedFiled, f)
+		result.Untracked = append(result.Untracked, f)
 	}
 
-	return untrackedFiled, nil
+	return &result, nil
 }

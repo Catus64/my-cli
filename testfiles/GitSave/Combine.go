@@ -16,6 +16,12 @@ import (
 	gitpath "gocmd/testfiles/Gitrepostruct"
 )
 
+type conflict struct {
+	path       string
+	currentSHA string
+	targetSHA  string
+}
+
 // getCommitTreeSHA resolves a commit SHA to its tree SHA
 func getCommitTreeSHA(repo gitpath.GitRepository, commitSHA string) (string, error) {
 	obj, err := githashread.Object_Read(repo, commitSHA)
@@ -217,39 +223,38 @@ func applyResolution(
 func Combine(repo gitpath.GitRepository, targetBranch string) error {
 	reader := bufio.NewReader(os.Stdin)
 
-	// 1. get current branch
+	// get current branch from HEAD
 	currentBranch, err := gitCurrent.Get_Active_Branch(repo)
 	if err != nil || currentBranch == "" {
 		return fmt.Errorf("could not determine current branch")
 	}
+	//resolve head to get sha
+	currentCommitSHA, err := gitobj.Ref_Resolve(repo, "HEAD")
+	if err != nil || currentCommitSHA == nil {
+		return fmt.Errorf("could not resolve HEAD")
+	}
 
-	// 2. check target branch exists
+	// check target branch exists
 	targetRef := "refs/heads/" + targetBranch
 	targetCommitSHA, err := gitobj.Ref_Resolve(repo, targetRef)
 	if err != nil || targetCommitSHA == nil {
 		return fmt.Errorf("alternate version %q not found", targetBranch)
 	}
 
-	// 3. get current HEAD commit SHA
-	currentCommitSHA, err := gitobj.Ref_Resolve(repo, "HEAD")
-	if err != nil || currentCommitSHA == nil {
-		return fmt.Errorf("could not resolve HEAD")
-	}
-
-	// 4. fast forward check — if current is ancestor of target
+	// ast forward check if HEAD is ancestor of target
 	if *currentCommitSHA == *targetCommitSHA {
 		fmt.Println("Already up to date.")
 		return nil
 	}
 
-	// 5. dirty index check
+	// dirty index check
 	index, err := gitobj.Index_Read2(repo)
 	if err != nil {
 		return fmt.Errorf("failed to read index: %w", err)
 	}
 	if checkDirty(repo, *index) {
-		fmt.Println("⚠️  You have unsaved changes.")
-		fmt.Print("    Continue anyway? (y/n): ")
+		fmt.Println(" You have unsaved changes.")
+		fmt.Print("   Continue anyway? (y/n): ")
 		input, _ := reader.ReadString('\n')
 		if strings.TrimSpace(strings.ToLower(input)) != "y" {
 			fmt.Println("Combine cancelled.")
@@ -257,7 +262,7 @@ func Combine(repo gitpath.GitRepository, targetBranch string) error {
 		}
 	}
 
-	// 6. build file maps from both commits
+	// build file maps from both commits
 	fmt.Println("Comparing versions...")
 	currentFiles, err := buildFileMap(repo, *currentCommitSHA)
 	if err != nil {
@@ -268,12 +273,7 @@ func Combine(repo gitpath.GitRepository, targetBranch string) error {
 		return fmt.Errorf("failed to read target branch files: %w", err)
 	}
 
-	// 7. categorize files
-	type conflict struct {
-		path       string
-		currentSHA string
-		targetSHA  string
-	}
+	// categorize files
 	var conflicts []conflict
 
 	// files only in target — auto add
@@ -311,7 +311,7 @@ func Combine(repo gitpath.GitRepository, targetBranch string) error {
 		}
 	}
 
-	// 8. resolve conflicts interactively
+	// resolve conflicts interactively
 	if len(conflicts) == 0 {
 		fmt.Println("No conflicts found.")
 	} else {
@@ -351,7 +351,7 @@ func Combine(repo gitpath.GitRepository, targetBranch string) error {
 		return fmt.Errorf("failed to get config: %w", err)
 	}
 
-	mergeMessage := fmt.Sprintf("Merge alternate version '%s' into '%s'", targetBranch, currentBranch)
+	mergeMessage := fmt.Sprintf("Merge alternate Savefile '%s' into '%s'", targetBranch, currentBranch)
 	commitSHA, err := Version_Create(
 		repo,
 		treeSHA,
@@ -361,13 +361,13 @@ func Combine(repo gitpath.GitRepository, targetBranch string) error {
 		mergeMessage,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create merge commit: %w", err)
+		return fmt.Errorf("failed to create combined version: %w", err)
 	}
 
 	// 11. update branch ref
 	_, err = Update_Branch_Ref(repo, commitSHA)
 	if err != nil {
-		return fmt.Errorf("failed to update branch: %w", err)
+		return fmt.Errorf("failed to update savefile: %w", err)
 	}
 
 	fmt.Printf("\nCombined '%s' into '%s' → %s\n", targetBranch, currentBranch, commitSHA[:7])

@@ -27,15 +27,37 @@ func get_current(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}
 
-	err = gitCurrent.StatusHeadIndex(*repo, *index)
-
-	untracked, err := gitCurrent.StatusIndexWorktree(*repo, *index)
+	// staged changes
+	headResult, err := gitCurrent.StatusHeadIndex(*repo, *index)
 	if err != nil {
 		return err
 	}
+	fmt.Println("\nChanges to be committed:")
+	for _, f := range headResult.Added {
+		fmt.Println("  added:   ", f)
+	}
+	for _, f := range headResult.Modified {
+		fmt.Println("  modified:", f)
+	}
+	for _, f := range headResult.Deleted {
+		fmt.Println("  deleted: ", f)
+	}
+
+	// unstaged + untracked
+	worktreeResult, err := gitCurrent.StatusIndexWorktree(*repo, *index)
+	if err != nil {
+		return err
+	}
+	fmt.Println("\nChanges not staged for commit:")
+	for _, f := range worktreeResult.Modified {
+		fmt.Println("  modified:", f)
+	}
+	for _, f := range worktreeResult.Deleted {
+		fmt.Println("  deleted: ", f)
+	}
 
 	fmt.Println("\nUntracked files:")
-	for _, f := range untracked {
+	for _, f := range worktreeResult.Untracked {
 		fmt.Println(" ", f)
 	}
 

@@ -40,17 +40,28 @@ func save(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}
 
+	is_clean, err := gitsave.CheckCommitReady(*repo, *index)
+	if err != nil {
+		panic(err)
+	}
+	if !is_clean {
+		return nil
+	}
+
 	treeSHA, err := gitobj.TreeFromIndex(*repo, *index)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println("Tree SHA:", treeSHA)
 
+	var parents []string
 	parentSHA, err := gitobj.Ref_Resolve(*repo, "HEAD")
-	if err != nil {
-		panic(err)
+	if err == nil && parentSHA != nil {
+		fmt.Println("Parent SHA:", *parentSHA)
+		parents = []string{*parentSHA}
+	} else {
+		fmt.Println("No parent — this is the first commit")
 	}
-	fmt.Println("Parent SHA:", *parentSHA)
 
 	//Get commit message from user input
 	message, err := promptMessage()
@@ -67,7 +78,7 @@ func save(cmd *cobra.Command, args []string) error {
 	author := user_config.Format()
 	timestamp := time.Now()
 
-	commitSHA, err := gitsave.Version_Create(*repo, treeSHA, []string{*parentSHA}, author, timestamp, message)
+	commitSHA, err := gitsave.Version_Create(*repo, treeSHA, parents, author, timestamp, message)
 	if err != nil {
 		panic(err)
 	}

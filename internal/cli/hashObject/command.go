@@ -4,6 +4,7 @@ import (
 	"fmt"
 	githashread "gocmd/testfiles/GitHashRead"
 	gitpath "gocmd/testfiles/Gitrepostruct"
+	prettyprint "gocmd/testfiles/PrettyPrint"
 
 	"github.com/spf13/cobra"
 )
@@ -18,57 +19,8 @@ func hash(cmd *cobra.Command, args []string) error {
 	// fmt.Printf("file: {%s} has been compressed and stored in the objects folder\n", args[0])
 	// fmt.Printf("SHA: %x \n", sha)
 	// fmt.Println("To search for the file in the repository please use this hash to find it later")
-	PrintObjectStored("blob", args[0], fmt.Sprintf("%x", sha))
+	prettyprint.PrintObjectStored("blob", args[0], fmt.Sprintf("%x", sha))
 	return nil
-}
-
-// Ai slop will be rewritten
-func PrintObjectStored(objectType, fileName, sha string) {
-	const width = 55
-
-	line := func() {
-		fmt.Printf("┌%s┐\n", repeat("─", width))
-	}
-	sep := func() {
-		fmt.Printf("├%s┤\n", repeat("─", width))
-	}
-	end := func() {
-		fmt.Printf("└%s┘\n", repeat("─", width))
-	}
-
-	row := func(text string) {
-		fmt.Printf("│ %-*s │\n", width-2, text)
-	}
-
-	line()
-	row(center("Object Stored Successfully", width-2))
-	sep()
-	row(fmt.Sprintf("Type : %s", objectType))
-	row(fmt.Sprintf("File : %s", fileName))
-	row("")
-	row(fmt.Sprintf("SHA  : %s", sha))
-	row("")
-	row("The object has been compressed and written")
-	row("to the repository object database.")
-	sep()
-	row("Use the SHA above to reference this object.")
-	end()
-}
-
-func repeat(s string, n int) string {
-	out := ""
-	for i := 0; i < n; i++ {
-		out += s
-	}
-	return out
-}
-
-func center(s string, width int) string {
-	if len(s) >= width {
-		return s
-	}
-	padding := (width - len(s)) / 2
-	return repeat(" ", padding) + s
 }
 
 func NewCommand() *cobra.Command {

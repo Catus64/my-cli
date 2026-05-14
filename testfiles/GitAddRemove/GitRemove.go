@@ -62,7 +62,7 @@ func Remove(repo *gitpath.GitRepository, paths []string, options RemoveOptions) 
 
 		if _, found := absolutePaths[fullpath]; found {
 			toRemove = append(toRemove, fullpath)
-			fmt.Printf("%s has been removed from the Savelist \n\n", fullpath)
+			// fmt.Printf("%s has been removed from the Savelist \n\n", fullpath)
 			delete(absolutePaths, fullpath)
 		} else {
 			keptEntries = append(keptEntries, entry)

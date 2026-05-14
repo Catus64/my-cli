@@ -11,6 +11,27 @@ import (
 	"strings"
 )
 
+type HeadCurrentResult struct {
+	Added    []string
+	Modified []string
+	Deleted  []string
+}
+
+type IndexWorkTree struct {
+	Modified  []string
+	Deleted   []string
+	Untracked []string
+}
+
+// HasChanges — convenience method so save command can check cleanly
+func (r HeadCurrentResult) HasChanges() bool {
+	return len(r.Added) > 0 || len(r.Modified) > 0 || len(r.Deleted) > 0
+}
+
+func (r IndexWorkTree) HasUnstaged() bool {
+	return len(r.Modified) > 0 || len(r.Deleted) > 0
+}
+
 // Check Active Branch from .git/HEAD
 func Get_Active_Branch(repo gitpath.GitRepository) (string, error) {
 	headPath := gitpath.Repo_Path(repo, "HEAD")
@@ -75,15 +96,20 @@ func TreeToMap(repo gitpath.GitRepository, ref string, prefix string, result map
 	return nil
 }
 
-func StatusHeadIndex(repo gitpath.GitRepository, index gitobj.GitIndex) error {
-	fmt.Println("Changes to be committed:")
+func StatusHeadIndex(repo gitpath.GitRepository, index gitobj.GitIndex) (*HeadCurrentResult, error) {
+
+	result := HeadCurrentResult{}
 
 	// Build flat map of HEAD tree: path -> sha
 	head := make(map[string]string)
 
 	treeSHA, err := Get_Tree_SHA(repo, "HEAD")
 	if err != nil {
-		return err
+		// no commits yet — everything in index is new
+		for _, entry := range index.Entries {
+			result.Added = append(result.Added, entry.Name)
+		}
+		return &result, nil
 	}
 
 	err = TreeToMap(repo, treeSHA, "", head)
@@ -93,7 +119,7 @@ func StatusHeadIndex(repo gitpath.GitRepository, index gitobj.GitIndex) error {
 		// for _, entry := range index.Entries {
 		// 	fmt.Println("  added:    ", entry.Name)
 		// }
-		return nil
+		return &result, nil
 	}
 
 	logger.L().Debug("HEAD tree mapped to path->sha", "head", head)
@@ -103,18 +129,19 @@ func StatusHeadIndex(repo gitpath.GitRepository, index gitobj.GitIndex) error {
 		if headSHA, exists := head[entry.Name]; exists {
 			logger.L().Debug("Comparing index entry to HEAD", "entry", entry.Name, "indexSHA", entry.SHA, "headSHA", headSHA)
 			if headSHA != entry.SHA {
-				fmt.Println("  modified: ", entry.Name)
+				result.Modified = append(result.Modified, entry.Name)
 			}
 			delete(head, entry.Name) // mark as seen
 		} else {
-			fmt.Println("  added:    ", entry.Name)
+			result.Added = append(result.Added, entry.Name)
 		}
 	}
 
 	// Anything left in head was not in the index — deleted
 	for path := range head {
 		fmt.Println("  deleted:  ", path)
+		result.Deleted = append(result.Deleted, path)
 	}
 
-	return nil
+	return &result, nil
 }
