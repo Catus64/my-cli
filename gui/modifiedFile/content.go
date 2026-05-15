@@ -21,7 +21,7 @@ type FileStatus struct {
 	Status string // "MODIFIED" or "ADDED"
 }
 
-func getFileStatuses(repoPath string) ([]FileStatus,  *gitpath.GitRepository) {
+func getFileStatuses(repoPath string) ([]FileStatus, *gitpath.GitRepository) {
 	var result []FileStatus
 
 	defer func() {
@@ -43,12 +43,12 @@ func getFileStatuses(repoPath string) ([]FileStatus,  *gitpath.GitRepository) {
 	}
 
 	// --- MODIFIED: only run if HEAD exists ---
-	modified, untracked, err := gitCurrent.StatusIndexWorktree(*repo, *index)
+	status_files, err := gitCurrent.StatusIndexWorktree(*repo, *index)
 	if err == nil {
-		for _, f := range modified {
+		for _, f := range status_files.Modified {
 			result = append(result, FileStatus{Name: f, Status: "MODIFIED"})
 		}
-		for _, f := range untracked {
+		for _, f := range status_files.Untracked {
 			result = append(result, FileStatus{Name: f, Status: "ADDED"})
 		}
 	}
@@ -114,7 +114,7 @@ func modifiedListBox(files *[]FileStatus, repo *gitpath.GitRepository) (fyne.Can
 		}
 
 		var selectedFiles []string
-		for name, checked := range checkedFiles{
+		for name, checked := range checkedFiles {
 			if checked {
 				absolutePath := filepath.Join(repo.WorkTree, name)
 				selectedFiles = append(selectedFiles, absolutePath)
@@ -137,13 +137,13 @@ func modifiedListBox(files *[]FileStatus, repo *gitpath.GitRepository) (fyne.Can
 		// Reload files after adding
 		index, err := gitobject.Index_Read2(*repo)
 		if err == nil && index != nil {
-			modified, untracked, err := gitCurrent.StatusIndexWorktree(*repo, *index)
+			status_files, err := gitCurrent.StatusIndexWorktree(*repo, *index)
 			if err == nil {
 				*files = []FileStatus{}
-				for _, f := range modified {
+				for _, f := range status_files.Modified {
 					*files = append(*files, FileStatus{Name: f, Status: "MODIFIED"})
 				}
-				for _, f := range untracked {
+				for _, f := range status_files.Untracked {
 					*files = append(*files, FileStatus{Name: f, Status: "ADDED"})
 				}
 			}
@@ -190,7 +190,7 @@ func modifiedListBox(files *[]FileStatus, repo *gitpath.GitRepository) (fyne.Can
 			checkedFiles[file.Name] = false
 			checkbox := widget.NewCheck("", func(checked bool) {
 				checkedFiles[file.Name] = checked
- 			})
+			})
 
 			fileName := canvas.NewText(file.Name, color.White)
 			fileName.TextSize = 14
