@@ -147,7 +147,7 @@ func Repo_create(path string) (*GitRepository, error) {
 	mustRepo_Dir(*repo, mkdir, "branches")
 	mustRepo_Dir(*repo, mkdir, "objects")
 	mustRepo_Dir(*repo, mkdir, "refs", "tags")
-	mustRepo_Dir(*repo, mkdir, "refs", "head")
+	mustRepo_Dir(*repo, mkdir, "refs", "heads")
 
 	head_file_path := Repo_Path(*repo, "HEAD")
 	content := "ref: refs/heads/master\n"

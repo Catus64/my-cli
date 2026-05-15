@@ -1,7 +1,9 @@
 package gitsave
 
 import (
+	"bufio"
 	"fmt"
+	gitCurrent "gocmd/testfiles/GitCurrent"
 	gitcur "gocmd/testfiles/GitCurrent"
 	githashread "gocmd/testfiles/GitHashRead"
 	gitobj "gocmd/testfiles/GitObject"
@@ -70,12 +72,18 @@ func Update_Branch_Ref(repo gitpath.GitRepository, verSHA string) (string, error
 
 	// Update the branch ref to point to the new commit SHA
 	ref_path := gitpath.Repo_Path(repo, "refs", "heads", branchName)
-	err = os.WriteFile(ref_path, []byte(verSHA+"\n"), 0644)
-	if err != nil {
-		return "", fmt.Errorf("failed to update branch ref :%w", err)
+
+	// in case file does not exist
+	if err := os.MkdirAll(filepath.Dir(ref_path), 0755); err != nil {
+		return "", fmt.Errorf("failed to create ref directory: %w", err)
 	}
 
-	logger.L().Info("Branch reference updated", "branch", branchName, "new_sha", verSHA)
+	err = os.WriteFile(ref_path, []byte(verSHA+"\n"), 0644)
+	if err != nil {
+		return "", fmt.Errorf("failed to update Savefile ref :%w", err)
+	}
+
+	logger.L().Info("Savefile reference updated", "Savefile", branchName, "new_sha", verSHA)
 
 	return branchName, nil
 }
@@ -99,4 +107,42 @@ func RefreshIndex(repo gitpath.GitRepository, index *gitobj.GitIndex) error {
 	}
 	fmt.Println("index refresh")
 	return gitobj.Index_Write(repo, *index)
+}
+
+func CheckCommitReady(repo gitpath.GitRepository, index gitobj.GitIndex) (bool, error) {
+	reader := bufio.NewReader(os.Stdin)
+
+	// Check 1 — nothing staged
+	headResult, err := gitCurrent.StatusHeadIndex(repo, index)
+	if err != nil {
+		return false, err
+	}
+	if !headResult.HasChanges() {
+		fmt.Println("Nothing to commit your savelist is the same as the version's content.")
+		return false, nil
+	}
+
+	// Check 2 — warn about unstaged changes
+	worktreeResult, err := gitCurrent.StatusIndexWorktree(repo, index)
+	if err != nil {
+		return false, err
+	}
+	if worktreeResult.HasUnstaged() {
+		fmt.Println("!!WARNING!!  These changes are NOT included in this save:")
+		for _, f := range worktreeResult.Modified {
+			fmt.Println("  modified (not added):", f)
+		}
+		for _, f := range worktreeResult.Deleted {
+			fmt.Println("  deleted  (not added):", f)
+		}
+		fmt.Println("\n!!WARNING!!  Progress on these files can be lost if you switch branches.")
+		fmt.Print("  Continue saving without them? (y/n): ")
+		input, _ := reader.ReadString('\n')
+		if strings.TrimSpace(strings.ToLower(input)) != "y" {
+			fmt.Println("Save cancelled.")
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
