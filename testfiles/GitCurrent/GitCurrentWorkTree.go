@@ -9,7 +9,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"syscall"
 )
 
 func StatusIndexWorktree(repo gitpath.GitRepository, index gitobj.GitIndex) (*IndexWorkTree, error) {
@@ -46,13 +45,12 @@ func StatusIndexWorktree(repo gitpath.GitRepository, index gitobj.GitIndex) (*In
 	for _, entry := range index.Entries {
 		fullPath := filepath.Join(repo.WorkTree, entry.Name)
 
+		info, _ := os.Stat(fullPath)
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 			result.Deleted = append(result.Deleted, entry.Name)
 		} else {
-			info, _ := os.Stat(fullPath)
-			stat := info.Sys().(*syscall.Stat_t)
+			actualMtime := info.ModTime().UnixNano()
 			entryMtime := int64(entry.MtimeSec)*1e9 + int64(entry.MtimeNano)
-			actualMtime := stat.Mtim.Sec*1e9 + stat.Mtim.Nsec
 
 			if entryMtime != actualMtime {
 				newSHA, err := githashread.Hash_Object_NoWrite(fullPath, "blob")

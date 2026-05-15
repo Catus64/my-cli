@@ -17,43 +17,59 @@ import (
 )
 
 type FileStatus struct {
-	Name   string
-	Status string // "MODIFIED" or "ADDED"
+	Name   string // File Name
+	Status string // "MODIFIED" or "ADDED" or "DELETED"
 }
 
 func getFileStatuses(repoPath string) ([]FileStatus, *gitpath.GitRepository) {
-	var result []FileStatus
+    var result []FileStatus
 
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("Recovered from panic in getFileStatuses:", r)
-		}
-	}()
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println("Recovered from panic in getFileStatuses:", r)
+        }
+    }()
 
-	repo, err := gitpath.Repo_find(repoPath, false)
-	if err != nil || repo == nil {
-		fmt.Println("No repo found at:", repoPath)
-		return result, nil
-	}
+    repo, err := gitpath.Repo_find(repoPath, false)
+    if err != nil || repo == nil {
+        fmt.Println("No repo found at:", repoPath)
+        return result, nil
+    }
 
-	index, err := gitobject.Index_Read2(*repo)
-	if err != nil {
-		fmt.Println("Failed to read index:", err)
-		return result, repo
-	}
+    index, err := gitobject.Index_Read2(*repo)
+    if err != nil {
+        fmt.Println("Failed to read index:", err)
+        return result, repo
+    }
 
-	// --- MODIFIED: only run if HEAD exists ---
-	status_files, err := gitCurrent.StatusIndexWorktree(*repo, *index)
-	if err == nil {
-		for _, f := range status_files.Modified {
-			result = append(result, FileStatus{Name: f, Status: "MODIFIED"})
-		}
-		for _, f := range status_files.Untracked {
-			result = append(result, FileStatus{Name: f, Status: "ADDED"})
-		}
-	}
+    // Build a set of files staged as DELETED
+    deletedFromIndex := map[string]bool{}
+    headStatus, headErr := gitCurrent.StatusHeadIndex(*repo, *index)
+    if headErr == nil {
+        for _, f := range headStatus.Deleted {
+            normalized := filepath.ToSlash(f)
+            deletedFromIndex[normalized] = true
+            result = append(result, FileStatus{Name: f, Status: "DELETED"})
+        }
+    }
 
-	return result, repo
+    // Check worktree vs index
+    status_files, err := gitCurrent.StatusIndexWorktree(*repo, *index)
+    if err == nil {
+        for _, f := range status_files.Modified {
+            result = append(result, FileStatus{Name: f, Status: "MODIFIED"})
+        }
+        for _, f := range status_files.Untracked {
+            normalized := filepath.ToSlash(f)
+            // Skip files already shown as DELETED
+            if deletedFromIndex[normalized] {
+                continue
+            }
+            result = append(result, FileStatus{Name: f, Status: "ADDED"})
+        }
+    }
+
+    return result, repo
 }
 
 func FolderDirectory(repoPath string) fyne.CanvasObject {
@@ -207,9 +223,14 @@ func modifiedListBox(files *[]FileStatus, repo *gitpath.GitRepository) (fyne.Can
 
 			// Different color for ADDED vs MODIFIED
 			var statusColor color.Color
-			if file.Status == "ADDED" {
+			switch file.Status {
+			case "ADDED":
 				statusColor = color.RGBA{R: 100, G: 200, B: 100, A: 255} // green
-			} else {
+			case "MODIFIED":
+				statusColor = color.RGBA{R: 255, G: 200, B: 0, A: 255}   // yellow
+			case "DELETED":
+				statusColor = color.RGBA{R: 220, G: 50, B: 50, A: 255}    // red
+			default:
 				statusColor = color.Gray{Y: 150} // grey
 			}
 
