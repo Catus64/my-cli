@@ -12,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -100,10 +99,8 @@ func RefreshIndex(repo gitpath.GitRepository, index *gitobj.GitIndex) error {
 		index.Entries[i].MtimeNano = uint32(info.ModTime().Nanosecond())
 		index.Entries[i].FSize = uint32(info.Size())
 
-		if sysStat, ok := info.Sys().(*syscall.Stat_t); ok {
-			index.Entries[i].CtimeSec = uint32(sysStat.Ctim.Sec)
-			index.Entries[i].CtimeNano = uint32(sysStat.Ctim.Nsec)
-		}
+		index.Entries[i].CtimeSec = uint32(info.ModTime().Unix())
+		index.Entries[i].CtimeNano = uint32(info.ModTime().Nanosecond())
 	}
 	fmt.Println("index refresh")
 	return gitobj.Index_Write(repo, *index)
