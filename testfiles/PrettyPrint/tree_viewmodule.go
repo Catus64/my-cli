@@ -33,6 +33,7 @@ type treeViewerState struct {
 	cursor     int
 	breadcrumb []string
 	config     ViewerConfig
+	header     string // optional when called with version SHA
 }
 
 type stackEntry struct {
@@ -54,13 +55,19 @@ func drawTree(state *treeViewerState) {
 	fileW := 45
 	shaW := 10
 
-	crumb := "."
-	if len(state.breadcrumb) > 0 {
-		crumb = ". > " + strings.Join(state.breadcrumb, " > ")
+	Top(width)
+
+	// optional version header
+	if state.header != "" {
+		Row(state.header, width)
+		Mid(width)
 	}
 
-	//printing logic
-	Top(width)
+	// breadcrumb
+	crumb := "root"
+	if len(state.breadcrumb) > 0 {
+		crumb = "root > " + strings.Join(state.breadcrumb, " > ")
+	}
 	Row(crumb, width)
 	Mid(width)
 	Row(fmt.Sprintf("  %-4s  %-*s  %-*s", "#", fileW, "Name", shaW, "SHA"), width)
@@ -71,7 +78,6 @@ func drawTree(state *treeViewerState) {
 		if i == state.cursor {
 			cursor = ">"
 		}
-
 		name := item.Name
 		if item.IsTree {
 			name = "[" + name + "]"
@@ -79,12 +85,10 @@ func drawTree(state *treeViewerState) {
 		if len(name) > fileW {
 			name = "..." + name[len(name)-fileW+3:]
 		}
-
 		shortSHA := item.SHA
 		if len(shortSHA) > shaW {
 			shortSHA = shortSHA[:shaW]
 		}
-
 		Row(fmt.Sprintf("%s %-4d  %-*s  %-*s", cursor, i+1, fileW, name, shaW, shortSHA), width)
 	}
 
@@ -101,25 +105,22 @@ func RunTreeViewer(
 	fetchChildren func(sha string) ([]TreeItem, error),
 	fetchBlob func(sha string) ([]byte, error),
 	config ViewerConfig,
+	header string, // empty string = no header
 ) error {
-	// switch terminal to raw mode
-	// This mode disables line buffering and local echo,
-	// allowing the program to process every
-	// keystroke immediately as it happens.
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		return fmt.Errorf("failed to enter raw mode: %w", err)
 	}
 	defer term.Restore(int(os.Stdin.Fd()), oldState)
-
 	SetRawMode(true)
-	defer SetRawMode(false) //rawmode will be off after this func so wont mess up other formatting
+	defer SetRawMode(false)
 
 	state := &treeViewerState{
 		items:      rootItems,
 		cursor:     0,
 		breadcrumb: []string{},
 		config:     config,
+		header:     header,
 	}
 
 	// stack for navigation history
@@ -271,13 +272,13 @@ func RunRefsViewer(
 	fetchChildren func(sha string) ([]TreeItem, error),
 	onSelect func(sha string) error,
 	config ViewerConfig,
+	header string,
 ) error {
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		return fmt.Errorf("failed to enter raw mode: %w", err)
 	}
 	defer term.Restore(int(os.Stdin.Fd()), oldState)
-
 	SetRawMode(true)
 	defer SetRawMode(false)
 
@@ -286,6 +287,7 @@ func RunRefsViewer(
 		cursor:     0,
 		breadcrumb: []string{},
 		config:     config,
+		header:     header,
 	}
 
 	drawTree(state)

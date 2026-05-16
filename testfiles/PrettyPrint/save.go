@@ -17,12 +17,12 @@ type SaveResult struct {
 	VersionName string
 }
 
-func get_short_hash(sha string) string {
-	if len(sha) >= 7 {
-		return sha[:7]
-	}
-	return sha
-}
+// func get_short_hash(sha string) string {
+// 	if len(sha) >= 7 {
+// 		return sha[:7]
+// 	}
+// 	return sha
+// }
 
 func PrintSaveResult(r SaveResult) {
 	const width = 72
@@ -33,7 +33,6 @@ func PrintSaveResult(r SaveResult) {
 
 	// savefile + branch
 	Row(fmt.Sprintf("Savefile : %s", r.Branch), width)
-	Row(fmt.Sprintf("Branch   : %s", r.Branch), width)
 	EmptyRow(width)
 
 	// version info — most prominent
@@ -41,10 +40,10 @@ func PrintSaveResult(r SaveResult) {
 	EmptyRow(width)
 
 	// commit details
-	Row(fmt.Sprintf("SHA      : %s", get_short_hash(r.CommitSHA)), width)
-	Row(fmt.Sprintf("Tree     : %s", get_short_hash(r.TreeSHA)), width)
+	Row(fmt.Sprintf("SHA      : %s", (r.CommitSHA)), width)
+	Row(fmt.Sprintf("Tree     : %s", (r.TreeSHA)), width)
 	if r.ParentSHA != "" {
-		Row(fmt.Sprintf("Parent   : %s", get_short_hash(r.ParentSHA)), width)
+		Row(fmt.Sprintf("Parent   : %s", (r.ParentSHA)), width)
 	} else {
 		Row("Parent   : none (first commit)", width)
 	}
@@ -69,6 +68,9 @@ func PrintSaveResult(r SaveResult) {
 
 	// help message
 	Mid(width)
-	Row(Center("use 'ezgit view version' to browse all versions", width), width)
+	Row(Center("use 'ezgit view version' to browse all latest versions", width), width)
+	Bottom(width)
+	Mid(width)
+	Row(Center("use 'ezgit set-name' to track a specific version", width), width)
 	Bottom(width)
 }

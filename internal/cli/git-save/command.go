@@ -8,6 +8,7 @@ import (
 	gitsave "gocmd/testfiles/GitSave"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 	logger "gocmd/testfiles/Helper"
+	prettyprint "gocmd/testfiles/PrettyPrint"
 	"os"
 	"strings"
 	"time"
@@ -53,13 +54,15 @@ func save(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		panic(err)
 	}
-	logger.L().Debug("Tree SHA:", treeSHA)
+	logger.L().Debug("TreeShaBuilding", "Tree SHA:", treeSHA)
 
 	var parents []string
+	var parentSHAStr string
 	parentSHA, err := gitobj.Ref_Resolve(*repo, "HEAD")
 	if err == nil && parentSHA != nil {
 		logger.L().Debug(*parentSHA)
 		parents = []string{*parentSHA}
+		parentSHAStr = *parentSHA
 	} else {
 		fmt.Println("No parent this is the first commit")
 	}
@@ -106,12 +109,29 @@ func save(cmd *cobra.Command, args []string) error {
 
 	logger.L().Info("Index refreshed after save")
 
+	var versionNum int
+	var versionName string
+
 	entry, err := gitsave.WriteVersionRef(*repo, branchName, commitSHA)
 	if err != nil {
 		fmt.Println("warning:", err)
+		logger.L().Warn("failed to write version ref", "error", err)
 	} else {
-		fmt.Printf("Version: %s\n", entry.ShortName())
+		versionNum = entry.Number
+		versionName = entry.Name
 	}
+
+	prettyprint.PrintSaveResult(prettyprint.SaveResult{
+		Branch:      branchName,
+		CommitSHA:   commitSHA,
+		TreeSHA:     treeSHA,
+		ParentSHA:   parentSHAStr,
+		Author:      author,
+		Timestamp:   timestamp,
+		Message:     message,
+		VersionNum:  versionNum,
+		VersionName: versionName,
+	})
 
 	return nil
 }

@@ -1,4 +1,4 @@
-package showTree
+package viewcommand
 
 import (
 	githashread "gocmd/testfiles/GitHashRead"
@@ -10,43 +10,41 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func LsTree(cmd *cobra.Command, args []string) error {
-	required := true
-	repo, err := gitpath.Repo_find(gitpath.Get_Os_Dir(), required)
-	if err != nil {
-		panic(err)
+func newTreeCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "tree <sha>",
+		Short: "Interactively browse a tree object",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runTree,
 	}
+}
 
-	// build root items from the given SHA
-	rootItems, err := buildTreeItems(*repo, args[0])
+func runTree(cmd *cobra.Command, args []string) error {
+	repo, err := gitpath.Repo_find(gitpath.Get_Os_Dir(), true)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return viewTree(*repo, args[0], "") // empty header
+}
 
-	// fetchChildren — called when user enters a subtree
+func viewTree(repo gitpath.GitRepository, sha string, header string) error {
+	rootItems, err := buildTreeItems(repo, sha)
+	if err != nil {
+		return err
+	}
 	fetchChildren := func(sha string) ([]prettyprint.TreeItem, error) {
-		return buildTreeItems(*repo, sha)
+		return buildTreeItems(repo, sha)
 	}
-
-	// fetchBlob — called when user selects a file
 	fetchBlob := func(sha string) ([]byte, error) {
-		obj, err := githashread.Object_Read(*repo, sha)
+		obj, err := githashread.Object_Read(repo, sha)
 		if err != nil {
 			return nil, err
 		}
 		return obj.Deserialize(), nil
 	}
-
-	return prettyprint.RunTreeViewer(
-		rootItems,
-		fetchChildren,
-		fetchBlob,
-		prettyprint.DefaultViewerConfig,
-		"",
-	)
+	return prettyprint.RunTreeViewer(rootItems, fetchChildren, fetchBlob, prettyprint.DefaultViewerConfig, header)
 }
 
-// buildTreeItems converts GitTreeLeaf slice into TreeItem slice
 func buildTreeItems(repo gitpath.GitRepository, sha string) ([]prettyprint.TreeItem, error) {
 	obj, err := githashread.Object_Read(repo, sha)
 	if err != nil {
@@ -63,15 +61,4 @@ func buildTreeItems(repo gitpath.GitRepository, sha string) ([]prettyprint.TreeI
 		})
 	}
 	return items, nil
-}
-
-func NewCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "show-tree [tree-hash]",
-		Short: "Show contents of Tree object",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  LsTree,
-	}
-
-	return cmd
 }
