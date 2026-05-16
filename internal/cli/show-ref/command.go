@@ -33,10 +33,11 @@ func show_ref(cmd *cobra.Command, args []string) error {
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show-versions [object-hash]",
-		Short: "Show tracked versions in the repository",
-		Args:  cobra.MaximumNArgs(0),
-		RunE:  show_ref,
+		Use:     "show-versions [object-hash]",
+		Aliases: []string{"show-ver"},
+		Short:   "Show tracked versions in the repository",
+		Args:    cobra.MaximumNArgs(0),
+		RunE:    show_ref,
 	}
 
 	return cmd

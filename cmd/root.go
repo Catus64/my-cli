@@ -15,6 +15,7 @@ import (
 	"gocmd/internal/cli/gitinit"
 	"gocmd/internal/cli/hashObject"
 	"gocmd/internal/cli/load"
+	"gocmd/internal/cli/quicksave"
 	"gocmd/internal/cli/remove"
 	setconfig "gocmd/internal/cli/set-config"
 	showref "gocmd/internal/cli/show-ref"
@@ -84,4 +85,5 @@ func init() {
 	rootCmd.AddCommand(switchver.NewCommand())
 	rootCmd.AddCommand(combine.NewCommand())
 	rootCmd.AddCommand(view.NewCommand())
+	rootCmd.AddCommand(quicksave.NewCommand())
 }

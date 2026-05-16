@@ -69,7 +69,7 @@ func wrapText(text string, width int) []string {
 		return []string{text}
 	}
 	var lines []string
-	for len(text) > width {
+	for len(text) > width { //fit text to width
 		lines = append(lines, text[:width])
 		text = text[width:]
 	}
@@ -80,7 +80,7 @@ func wrapText(text string, width int) []string {
 }
 
 func Center(text string, width int) string {
-	inner := width - 4 // account for "│ " and " │"
+	inner := width - 4 // reserve for border
 	if len(text) >= inner {
 		return text
 	}
@@ -88,6 +88,7 @@ func Center(text string, width int) string {
 	return strings.Repeat(" ", padding) + text
 }
 
+// split strings with newlines into arrays
 func SplitLines(text string) []string {
 	var out []string
 	current := ""
@@ -140,10 +141,10 @@ func PrintObjectContentNoBorder(sha string, content []byte) {
 
 //print commit info
 
-func PrintCommit(sha, author, date, tree, parent, message string) {
+func PrintCommit(sha, author, date, tree, parent, header, message string) {
 	const width = 72 //slightly longer
 	Top(width)
-	Header("Version", width)
+	Header("Version "+header, width)
 	Row("SHA    : "+sha, width)
 	Row("Author : "+author, width)
 	Row("Date   : "+date, width)
@@ -177,5 +178,24 @@ func PrintObjectStored(objectType, fileName, sha string) {
 	Row("to the repository object database.", width)
 	Mid(width)
 	Row("Use the SHA above to reference this object.", width)
+	Bottom(width)
+}
+
+func PrintMessage(header string, path string, message string) {
+	const width = 69
+
+	Top(width)
+	Row(Center(header, width), width)
+	Mid(width)
+
+	if path != "" {
+		Row("Path : "+path, width)
+		EmptyRow(width)
+	}
+
+	for _, line := range SplitLines(message) {
+		Row(line, width)
+	}
+
 	Bottom(width)
 }

@@ -11,8 +11,9 @@ import (
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "savefile",
-		Short: "Manage Savefiles for alternate versions",
+		Use:     "savefile",
+		Aliases: []string{"sfile", "sf"},
+		Short:   "Manage Savefiles for alternate versions",
 	}
 	cmd.AddCommand(newCreateCommand())
 	cmd.AddCommand(newListCommand())

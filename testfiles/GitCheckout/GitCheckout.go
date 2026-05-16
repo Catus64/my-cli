@@ -78,7 +78,7 @@ func Load(arg string, name string, repo gitpath.GitRepository) (string, error) {
 
 	// Deserializing the tree to get its items
 	concreteTree.DeserializeData(tree.Deserialize())
-	fmt.Println(string(concreteTree.Items[6].Path))
+	// fmt.Println(string(concreteTree.Items[6].Path))
 
 	//checkout tree to sister directory
 	target_path, err := PrepareCheckoutDir(repo, name)

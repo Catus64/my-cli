@@ -5,6 +5,7 @@ import (
 	githashread "gocmd/testfiles/GitHashRead"
 	gitobj "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
+	logger "gocmd/testfiles/Helper"
 	prettyprint "gocmd/testfiles/PrettyPrint"
 
 	"github.com/spf13/cobra"
@@ -35,6 +36,7 @@ func resolveAndView(repo gitpath.GitRepository, sha string) error {
 
 	switch obj.Get_Format() {
 	case "commit":
+		logger.L().Debug("Printing commit")
 		return viewCommit(repo, sha)
 	case "tree":
 		return viewTree(repo, sha, "")

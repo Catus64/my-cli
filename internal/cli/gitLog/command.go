@@ -5,6 +5,7 @@ import (
 	//githashread "gocmd/testfiles/GitHashRead"
 
 	"fmt"
+	"strconv"
 	"strings"
 
 	gitCurrent "gocmd/testfiles/GitCurrent"
@@ -64,6 +65,25 @@ func log(cmd *cobra.Command, args []string) error {
 			Parents:  parents,
 		}
 
+		label := prettyprint.ResolveCommitLabel(*repo, sha, branch)
+		if label != "" {
+			lc.HasVersion = true
+			if strings.HasPrefix(label, "tag:") {
+				// git tag - use tag name as version name, no number
+				lc.VersionNum = 0
+				lc.VersionName = strings.TrimPrefix(label, "tag: ")
+			} else if strings.Contains(label, "·") {
+				// ezgit version - parse out number and name
+				// format: "v3 · swift-harbor | main"
+				parts := strings.SplitN(label, " · ", 2)
+				numStr := strings.TrimPrefix(parts[0], "v")
+				lc.VersionNum, _ = strconv.Atoi(numStr)
+				if len(parts) > 1 {
+					lc.VersionName = strings.Split(parts[1], " | ")[0]
+				}
+			}
+		}
+
 		if branch != "" {
 			entry, err := gitsave.ReadVersionRef(*repo, branch, sha)
 			if err == nil {
@@ -120,10 +140,11 @@ func log(cmd *cobra.Command, args []string) error {
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "history [object-hash]",
-		Short: "Print a friendly greeting",
-		Args:  cobra.MaximumNArgs(0),
-		RunE:  log,
+		Use:     "history [object-hash]",
+		Aliases: []string{"his"},
+		Short:   "Print a friendly greeting",
+		Args:    cobra.MaximumNArgs(0),
+		RunE:    log,
 	}
 
 	return cmd

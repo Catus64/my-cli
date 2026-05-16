@@ -3,6 +3,7 @@ package prettyprint
 import (
 	"bufio"
 	"fmt"
+	logger "gocmd/testfiles/Helper"
 	"os"
 	"strconv"
 	"strings"
@@ -132,7 +133,7 @@ func RunTreeViewer(
 	numBuf := ""
 	reader := bufio.NewReader(os.Stdin)
 
-	for {
+	for { //input loop
 		b, err := reader.ReadByte()
 		if err != nil {
 			break
@@ -274,6 +275,7 @@ func RunRefsViewer(
 	config ViewerConfig,
 	header string,
 ) error {
+	logger.L().Debug("running refs viewer")
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		return fmt.Errorf("failed to enter raw mode: %w", err)

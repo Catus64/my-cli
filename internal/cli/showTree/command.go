@@ -67,10 +67,11 @@ func buildTreeItems(repo gitpath.GitRepository, sha string) ([]prettyprint.TreeI
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show-tree [tree-hash]",
-		Short: "Show contents of Tree object",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  LsTree,
+		Use:     "show-tree [tree-hash]",
+		Aliases: []string{"tree"},
+		Short:   "Show contents of Tree object",
+		Args:    cobra.MaximumNArgs(1),
+		RunE:    LsTree,
 	}
 
 	return cmd

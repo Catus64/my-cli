@@ -24,10 +24,11 @@ func show_ref(cmd *cobra.Command, args []string) error {
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-name [object-hash]",
-		Short: "Set a name for a specific object hash",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  show_ref,
+		Use:     "set-name [object-hash]",
+		Aliases: []string{"set", "name"},
+		Short:   "Set a name for a specific object hash",
+		Args:    cobra.MaximumNArgs(1),
+		RunE:    show_ref,
 	}
 
 	return cmd

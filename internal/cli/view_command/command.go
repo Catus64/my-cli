@@ -6,8 +6,9 @@ import (
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "view",
-		Short: "View repository objects, trees, refs and versions",
+		Use:     "view",
+		Aliases: []string{"vw"},
+		Short:   "View repository objects, trees, refs and versions",
 	}
 
 	cmd.AddCommand(newResolveCommand())
