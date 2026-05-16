@@ -7,6 +7,7 @@ import (
 	gitobj "gocmd/testfiles/GitObject"
 	gitsave "gocmd/testfiles/GitSave"
 	gitpath "gocmd/testfiles/Gitrepostruct"
+	logger "gocmd/testfiles/Helper"
 	"os"
 	"strings"
 	"time"
@@ -52,15 +53,15 @@ func save(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Tree SHA:", treeSHA)
+	logger.L().Debug("Tree SHA:", treeSHA)
 
 	var parents []string
 	parentSHA, err := gitobj.Ref_Resolve(*repo, "HEAD")
 	if err == nil && parentSHA != nil {
-		fmt.Println("Parent SHA:", *parentSHA)
+		logger.L().Debug(*parentSHA)
 		parents = []string{*parentSHA}
 	} else {
-		fmt.Println("No parent — this is the first commit")
+		fmt.Println("No parent this is the first commit")
 	}
 
 	//Get commit message from user input
@@ -69,11 +70,15 @@ func save(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}
 
+	logger.L().Info("Creating new commit", "message", message, "treeSHA", treeSHA, "parents", parents)
+
 	//Get author from config
 	user_config, err := setconfig.GetOrPromptConfig()
 	if err != nil {
 		panic(err)
 	}
+
+	logger.L().Info("Using author", "author", user_config.Format())
 
 	author := user_config.Format()
 	timestamp := time.Now()
@@ -84,15 +89,28 @@ func save(cmd *cobra.Command, args []string) error {
 	}
 	fmt.Println("New commit SHA:", commitSHA)
 
+	logger.L().Info("Updating branch ref to new commit", "branch", "HEAD", "commitSHA", commitSHA)
+
 	branchName, err := gitsave.Update_Branch_Ref(*repo, commitSHA)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Saved on branch %s → %s\n", branchName, commitSHA)
+	logger.L().Debug("Saved on branch ", branchName, commitSHA)
+
+	logger.L().Info("Save completed successfully", "branch", branchName, "commitSHA", commitSHA)
 
 	err = gitsave.RefreshIndex(*repo, index)
 	if err != nil {
 		panic(err)
+	}
+
+	logger.L().Info("Index refreshed after save")
+
+	entry, err := gitsave.WriteVersionRef(*repo, branchName, commitSHA)
+	if err != nil {
+		fmt.Println("warning:", err)
+	} else {
+		fmt.Printf("Version: %s\n", entry.ShortName())
 	}
 
 	return nil

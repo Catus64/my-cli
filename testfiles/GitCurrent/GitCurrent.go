@@ -35,10 +35,12 @@ func (r IndexWorkTree) HasUnstaged() bool {
 // Check Active Branch from .git/HEAD
 func Get_Active_Branch(repo gitpath.GitRepository) (string, error) {
 	headPath := gitpath.Repo_Path(repo, "HEAD")
+
 	data, err := os.ReadFile(headPath)
 	if err != nil {
 		return "", err
 	}
+
 	logger.L().Debug("HEAD content read", "content", string(data))
 
 	head := strings.TrimSpace(string(data))

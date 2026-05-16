@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	logger "gocmd/testfiles/Helper"
+
 	"gopkg.in/ini.v1"
 )
 
@@ -89,7 +91,7 @@ func Repo_Dir(repo GitRepository, mkdir bool, paths ...string) (string, error) {
 			if err != nil {
 				return "", fmt.Errorf("error creating directory %v", err)
 			}
-			fmt.Println("Directory has been created:", path)
+			logger.L().Debug("Directory has been created", "Dir:", path)
 			return path, nil
 		} else {
 			return "", fmt.Errorf("error while making files %v", path)
@@ -148,6 +150,7 @@ func Repo_create(path string) (*GitRepository, error) {
 	mustRepo_Dir(*repo, mkdir, "objects")
 	mustRepo_Dir(*repo, mkdir, "refs", "tags")
 	mustRepo_Dir(*repo, mkdir, "refs", "heads")
+	mustRepo_Dir(*repo, mkdir, "ezgit", "saves")
 
 	head_file_path := Repo_Path(*repo, "HEAD")
 	content := "ref: refs/heads/master\n"

@@ -66,7 +66,9 @@ func Version_Create(
 		return "", err
 	}
 
-	return fmt.Sprintf("%x", sha), nil
+	sha_str := fmt.Sprintf("%x", sha)
+
+	return sha_str, nil
 }
 
 func Update_Branch_Ref(repo gitpath.GitRepository, verSHA string) (string, error) {
@@ -113,7 +115,7 @@ func RefreshIndex(repo gitpath.GitRepository, index *gitobj.GitIndex) error {
 			index.Entries[i].CtimeNano = uint32(sysStat.Ctim.Nsec)
 		}
 	}
-	fmt.Println("index refresh")
+	// fmt.Println("index refresh")
 	return gitobj.Index_Write(repo, *index)
 }
 

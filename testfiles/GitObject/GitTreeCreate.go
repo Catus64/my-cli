@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	gitpath "gocmd/testfiles/Gitrepostruct"
+	logger "gocmd/testfiles/Helper"
 	"os"
 	"path/filepath"
 	"sort"
@@ -33,7 +34,7 @@ func TreeFromIndex(repo gitpath.GitRepository, index GitIndex) (string, error) {
 
 		// add the entry to its direct parent
 		mode := fmt.Sprintf("%02o%04o", entry.ModeType, entry.ModePerms)
-		fmt.Printf("Adding index entry %s to tree %q with mode %s\n", entry.Name, dir, mode)
+		logger.L().Info("Adding index entry", "Name", entry.Name, "Dir", dir, "Mode", mode)
 		contents[dir] = append(contents[dir], treeEntry{
 			Mode: mode,
 			Name: filepath.Base(entry.Name),
@@ -66,7 +67,7 @@ func TreeFromIndex(repo gitpath.GitRepository, index GitIndex) (string, error) {
 	})
 
 	for path := range paths {
-		fmt.Printf("Tree path in order of creation: %q\n", paths[path])
+		logger.L().Debug("treepath", "Tree path in order of creation:", paths[path])
 	}
 
 	// Phase 3: build trees bottom-up
@@ -157,7 +158,7 @@ func writeObject(repo gitpath.GitRepository, hexSHA string, raw []byte) error {
 	location_2 := hexSHA[2:]
 	path := gitpath.Repo_Path(repo, "objects", location_1, location_2)
 
-	fmt.Printf("Writing tree object %s to %s\n", hexSHA, path)
+	logger.L().Debug("Writing tree object", hexSHA, path)
 
 	// don't rewrite if it already exists
 	if _, err := os.Stat(path); err == nil {
