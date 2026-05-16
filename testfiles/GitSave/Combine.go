@@ -332,7 +332,7 @@ func Combine(repo gitpath.GitRepository, targetBranch string) error {
 	if err := gitobj.Index_Write(repo, *emptyIndex); err != nil {
 		return fmt.Errorf("failed to clear index: %w", err)
 	}
-	if err := add.Add(&repo, nil, add.Options{All: true}); err != nil {
+	if _, err := add.Add(&repo, nil, add.Options{All: true}); err != nil {
 		return fmt.Errorf("failed to rebuild index: %w", err)
 	}
 

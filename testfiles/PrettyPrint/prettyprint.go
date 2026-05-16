@@ -8,29 +8,49 @@ import (
 // default value *can mess around with this
 const DefaultWidth = 65
 
+// rawMode flag for rawmode for better interactions
+var rawMode bool
+
+// rawMode related funcs so that format will not be messed up
+func SetRawMode(enabled bool) {
+	rawMode = enabled
+}
+
+func println(s string) {
+	if rawMode {
+		fmt.Print(s + "\r\n")
+	} else {
+		fmt.Println(s)
+	}
+}
+
+func printf(format string, args ...any) {
+	s := fmt.Sprintf(format, args...)
+	if rawMode {
+		// replace any \n with \r\n
+		s = strings.ReplaceAll(s, "\n", "\r\n")
+		fmt.Print(s)
+	} else {
+		fmt.Print(s)
+	}
+}
+
 // main building blocks
 // -------------------------------------------------------------
 func border(left, fill, right string, width int) string {
 	return fmt.Sprintf("%s%s%s", left, strings.Repeat(fill, width), right)
 }
 
-func Top(width int) {
-	fmt.Println(border("┌", "─", "┐", width))
-}
-func Mid(width int) {
-	fmt.Println(border("├", "─", "┤", width))
-}
-func Bottom(width int) {
-	fmt.Println(border("└", "─", "┘", width))
-}
+func Top(width int)    { println(border("┌", "─", "┐", width)) }
+func Mid(width int)    { println(border("├", "─", "┤", width)) }
+func Bottom(width int) { println(border("└", "─", "┘", width)) }
 
 func Row(text string, width int) {
 	inner := width - 4
 	for _, line := range wrapText(text, inner) {
-		fmt.Printf("│ %-*s   │\n", inner, line)
+		printf("│ %-*s   │\r\n", inner, line)
 	}
 }
-
 func EmptyRow(width int) {
 	Row("", width)
 }
@@ -100,6 +120,22 @@ func PrintObjectContent(sha string, content []byte) {
 	}
 	EmptyRow(width)
 	Bottom(width)
+}
+
+func PrintObjectContentNoBorder(sha string, content []byte) {
+	const width = 72
+	separator := strings.Repeat("─", width)
+
+	println("  Object: " + sha)
+	println(separator)
+	println("")
+
+	for _, line := range SplitLines(string(content)) {
+		println(line)
+	}
+
+	println("")
+	println(separator)
 }
 
 //print commit info
