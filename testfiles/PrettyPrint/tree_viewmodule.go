@@ -265,3 +265,113 @@ func RunTreeViewer(
 
 	return nil
 }
+
+func RunRefsViewer(
+	items []TreeItem,
+	fetchChildren func(sha string) ([]TreeItem, error),
+	onSelect func(sha string) error,
+	config ViewerConfig,
+) error {
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		return fmt.Errorf("failed to enter raw mode: %w", err)
+	}
+	defer term.Restore(int(os.Stdin.Fd()), oldState)
+
+	SetRawMode(true)
+	defer SetRawMode(false)
+
+	state := &treeViewerState{
+		items:      items,
+		cursor:     0,
+		breadcrumb: []string{},
+		config:     config,
+	}
+
+	drawTree(state)
+
+	numBuf := ""
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		b, err := reader.ReadByte()
+		if err != nil {
+			break
+		}
+
+		switch {
+		case b == 'q' || b == 3:
+			term.Restore(int(os.Stdin.Fd()), oldState)
+			SetRawMode(false)
+			clearScreen()
+			return nil
+
+		case b == '\x1b':
+			b2, _ := reader.ReadByte()
+			b3, _ := reader.ReadByte()
+			if b2 == '[' {
+				switch b3 {
+				case 'A':
+					numBuf = ""
+					if state.cursor > 0 {
+						state.cursor--
+					}
+					drawTree(state)
+				case 'B':
+					numBuf = ""
+					if state.cursor < len(state.items)-1 {
+						state.cursor++
+					}
+					drawTree(state)
+				}
+			}
+
+		case b == 'k':
+			numBuf = ""
+			if state.cursor > 0 {
+				state.cursor--
+			}
+			drawTree(state)
+
+		case b == 'j':
+			numBuf = ""
+			if state.cursor < len(state.items)-1 {
+				state.cursor++
+			}
+			drawTree(state)
+
+		case b >= '0' && b <= '9':
+			numBuf += string(b)
+			drawTree(state)
+			fmt.Printf("\r  jumping to: %s", numBuf)
+
+		case b == '\r' || b == '\n':
+			if numBuf != "" {
+				num, err := strconv.Atoi(numBuf)
+				numBuf = ""
+				if err == nil && num >= 1 && num <= len(state.items) {
+					state.cursor = num - 1
+				}
+				drawTree(state)
+				break
+			}
+
+			selected := state.items[state.cursor]
+
+			// restore terminal before handing off to commit view
+			term.Restore(int(os.Stdin.Fd()), oldState)
+			SetRawMode(false)
+			clearScreen()
+
+			if err := onSelect(selected.SHA); err != nil {
+				fmt.Printf("error: %v\n", err)
+			}
+
+			// re-enter raw mode and redraw after returning
+			oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
+			SetRawMode(true)
+			drawTree(state)
+		}
+	}
+	return nil
+}

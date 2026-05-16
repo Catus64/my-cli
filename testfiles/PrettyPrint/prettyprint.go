@@ -110,7 +110,7 @@ func SplitLines(text string) []string {
 // for printing objects content
 
 func PrintObjectContent(sha string, content []byte) {
-	const width = DefaultWidth
+	const width = DefaultWidth + 5
 	Top(width)
 	Row("Object: "+sha, width)
 	Mid(width)

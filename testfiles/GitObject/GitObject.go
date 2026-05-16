@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	gitpath "gocmd/testfiles/Gitrepostruct"
+	logging "gocmd/testfiles/Helper"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -48,20 +49,22 @@ func MakeGitObj(Byte_data []byte) GitObject {
 
 	switch string(temp_fmt) {
 	case "blob":
-		// fmt.Println("returning blob")
+		logging.L().Debug("returning blob")
 		obj = GitBlob{GitObjectData: GitObjectData{parts[1]}, format: []byte("blob")}
 	case "commit":
-		//fmt.Println("returning commit object")
+		logging.L().Debug("returning commit")
 		obj = &GitCommit{GitObjectData: GitObjectData{parts[1]}, format: []byte("commit")}
 	case "tag":
-		fmt.Println("returning tag")
+		logging.L().Debug("returning tag")
+		obj = &GitTag{
+			GitObjectData: GitObjectData{parts[1]}, format: []byte("tag")}
 	case "tree":
-		//fmt.Println("returning tree")
+		logging.L().Debug("returning tree")
 		x := bytes.IndexByte(Byte_data[0:], 0x00)
 		GitTreeData := Byte_data[x+1:]
 		obj = GitTree{GitObjectData: GitObjectData{GitTreeData}, format: []byte("tree")}
 	case "ref":
-		fmt.Println("returning ref")
+		logging.L().Debug("returning ref")
 	default:
 	}
 

@@ -3,7 +3,6 @@ package GitObjLib
 import (
 	gitpath "gocmd/testfiles/Gitrepostruct"
 	"os"
-	"time"
 )
 
 // take a ref eg, ".git/HEAD" and resolve it to the sha
@@ -32,12 +31,27 @@ func Ref_Resolve(repo gitpath.GitRepository, ref string) (*string, error) {
 
 type GitTag struct {
 	GitObjectData
-	Tag_Name    string
-	Tag_Email   string
-	Tag_Date    time.Time
-	Tag_Message string
-	Tag_Object  string
-	Tag_Type    string
+	KvlmDict
+	format []byte
+}
+
+func (t *GitTag) Get_Format() string {
+	return "tag"
+}
+
+func (t *GitTag) Deserialize() []byte {
+	if t.data == nil {
+		return Kvlm_Serialize(t.KvlmDict)
+	}
+	temp := make(map[string][]byte)
+	kvlm := KvlmDict{Dict: temp}
+	t.KvlmDict = Kvlm_Parse(t.data, 0, kvlm)
+	return t.data
+}
+
+func (t *GitTag) Serialize() *[]byte {
+	ret := Kvlm_Serialize(t.KvlmDict)
+	return &ret
 }
 
 func Create_Ref(repo gitpath.GitRepository, name string, sha string) error {

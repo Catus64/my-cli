@@ -22,6 +22,7 @@ import (
 	"gocmd/internal/cli/showObject"
 	"gocmd/internal/cli/showTree"
 	switchver "gocmd/internal/cli/switch-ver"
+	view "gocmd/internal/cli/view_command"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -82,4 +83,5 @@ func init() {
 	rootCmd.AddCommand(altversion.NewCommand())
 	rootCmd.AddCommand(switchver.NewCommand())
 	rootCmd.AddCommand(combine.NewCommand())
+	rootCmd.AddCommand(view.NewCommand())
 }
