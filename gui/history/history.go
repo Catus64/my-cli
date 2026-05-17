@@ -8,11 +8,8 @@ import (
 	"fyne.io/fyne/v2/container"
 )
 
-func Show(g *gui.MyApp, pathName string, window fyne.Window,
-	onHome func(), onSave func(), onModified func(),
-	onIgnored func(), onHistory func(), onHelp func(),
-) {
-	sb := sidebar.SideBar(g, window, pathName, "history",
+func Show(g *gui.MyApp, pathName string, window fyne.Window, onHome func(), onSave func(), onModified func(), onIgnored func(), onHistory func(), onHelp func()) {
+	sidebar := sidebar.SideBar(g, window, pathName, "history",
 		func() { onHome() },
 		func() { onSave() },
 		func() { onModified() },
@@ -21,6 +18,6 @@ func Show(g *gui.MyApp, pathName string, window fyne.Window,
 		func() { onHelp() },
 	)
 
-	fullContent := container.NewBorder(nil, nil, sb, nil, HistoryPageContent(pathName))
+	fullContent := container.NewBorder(nil, nil, sidebar, nil, HistoryPageContent(pathName))
 	window.SetContent(fullContent)
 }
