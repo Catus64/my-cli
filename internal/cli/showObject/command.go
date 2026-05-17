@@ -33,10 +33,11 @@ func show(cmd *cobra.Command, args []string) error {
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show-object [object-hash]",
-		Short: "Print a friendly greeting",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  show,
+		Use:     "show-object [object-hash]",
+		Aliases: []string{"obj"},
+		Short:   "Print a friendly greeting",
+		Args:    cobra.MaximumNArgs(1),
+		RunE:    show,
 	}
 
 	return cmd

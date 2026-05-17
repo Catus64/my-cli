@@ -1,8 +1,8 @@
 package gitinit
 
 import (
-	"fmt"
 	gitpath "gocmd/testfiles/Gitrepostruct"
+	prettyprint "gocmd/testfiles/PrettyPrint"
 
 	"github.com/spf13/cobra"
 )
@@ -11,7 +11,11 @@ func Git_init(cmd *cobra.Command, args []string) error {
 	// fmt.Println("making repo")
 	rootpath := gitpath.Get_Os_Dir()
 	gitrepo, _ := gitpath.Repo_create(rootpath)
-	PrintRepoInitialized(gitrepo.GitDir)
+	prettyprint.PrintMessage(
+		"Repository Initialized Successfully",
+		gitrepo.GitDir,
+		"An empty repository has been created and\nis ready for use.\n If you have files you want to save\nuse ezg git -a then ezg save",
+	)
 	return nil
 }
 
@@ -22,47 +26,4 @@ func NewCommand() *cobra.Command {
 		RunE:  Git_init,
 	}
 	return cmd
-}
-
-func repeat(s string, n int) string {
-	out := ""
-	for i := 0; i < n; i++ {
-		out += s
-	}
-	return out
-}
-
-func center(s string, width int) string {
-	if len(s) >= width {
-		return s
-	}
-	padding := (width - len(s)) / 2
-	return repeat(" ", padding) + s
-}
-
-func PrintRepoInitialized(path string) {
-	const width = 69
-
-	repeat := func(s string, n int) string {
-		out := ""
-		for i := 0; i < n; i++ {
-			out += s
-		}
-		return out
-	}
-
-	row := func(text string) {
-		fmt.Printf("│ %-*s │\n", width-2, text)
-	}
-
-	fmt.Printf("┌%s┐\n", repeat("─", width))
-	row(center("Repository Initialized Successfully", width-2))
-	fmt.Printf("├%s┤\n", repeat("─", width))
-
-	row("Path : " + path)
-	row("")
-	row("An empty repository has been created and")
-	row("is ready for use.")
-
-	fmt.Printf("└%s┘\n", repeat("─", width))
 }

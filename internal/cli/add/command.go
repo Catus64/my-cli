@@ -4,6 +4,7 @@ import (
 	"fmt"
 	Add "gocmd/testfiles/GitAddRemove"
 	gitpath "gocmd/testfiles/Gitrepostruct"
+	prettyprint "gocmd/testfiles/PrettyPrint"
 
 	"github.com/spf13/cobra"
 )
@@ -16,8 +17,8 @@ func add(cmd *cobra.Command, args []string) error {
 	}
 
 	all, _ := cmd.Flags().GetBool("all")
+	showIgnored, _ := cmd.Flags().GetBool("show-ignored")
 
-	// --all and specific files are mutually exclusive
 	if all && len(args) > 0 {
 		return fmt.Errorf("cannot use --all with specific files")
 	}
@@ -25,7 +26,31 @@ func add(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("specify files to add or use --all")
 	}
 
-	Add.Add(repo, args, Add.Options{All: all})
+	result, err := Add.Add(repo, args, Add.Options{All: all})
+	if err != nil {
+		return err
+	}
+
+	// for _, file := range result.Added {
+	// 	fmt.Println(file.Path)
+	// }
+
+	// build table rows
+	var rows []prettyprint.TableRow
+	for _, f := range result.Added {
+		rows = append(rows, prettyprint.TableRow{
+			File:   f.Path,
+			SHA:    f.SHA,
+			Status: f.Status,
+		})
+	}
+
+	prettyprint.PrintAddTable(rows, result.Ignored, all)
+
+	if showIgnored && len(result.Ignored) > 0 {
+		prettyprint.PrintIgnoredFiles(result.Ignored)
+	}
+
 	return nil
 }
 
@@ -33,7 +58,7 @@ func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add [file]",
 		Short: "Add file contents to the Savelist",
-		Long: `Add file contents to the index (staging area).
+		Long: `Add file contents to the Savelist (other common names include: Staging Area, Index)
 
 Examples:
   ezgit add main.go                  add a single file

@@ -12,19 +12,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"time"
 )
 
-func Version_Create(
-	repo gitpath.GitRepository,
-	treeSHA string,
-	parentSHA []string, //for multiple parents
-	author string,
-	timestamp time.Time,
-	message string,
-) (string, error) {
-
+// format timezone from timestamp
+func get_timezone(timestamp time.Time) string {
 	_, offset := timestamp.Zone() // offset in seconds
 	hours := offset / 3600
 	minutes := (offset % 3600) / 60
@@ -35,6 +27,20 @@ func Version_Create(
 		minutes = -minutes
 	}
 	time_zone := fmt.Sprintf("%s%02d%02d", sign, hours, minutes)
+
+	return time_zone
+}
+
+func Version_Create(
+	repo gitpath.GitRepository,
+	treeSHA string,
+	parentSHA []string, //for multiple parents
+	author string,
+	timestamp time.Time,
+	message string,
+) (string, error) {
+
+	time_zone := get_timezone(timestamp)
 
 	// Build author string: "Name email unix timestamp timezone"
 	author_line := fmt.Sprintf("%s %d %s", author, timestamp.Unix(), time_zone)
@@ -53,12 +59,15 @@ func Version_Create(
 
 	commit := gitobj.MakeGitCommit(dict)
 
+	//write commit object to /objects
 	sha, err := githashread.Object_Write(commit, &repo)
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("%x", sha), nil
+	sha_str := fmt.Sprintf("%x", sha)
+
+	return sha_str, nil
 }
 
 func Update_Branch_Ref(repo gitpath.GitRepository, verSHA string) (string, error) {
@@ -100,19 +109,19 @@ func RefreshIndex(repo gitpath.GitRepository, index *gitobj.GitIndex) error {
 		index.Entries[i].MtimeNano = uint32(info.ModTime().Nanosecond())
 		index.Entries[i].FSize = uint32(info.Size())
 
-		if sysStat, ok := info.Sys().(*syscall.Stat_t); ok {
-			index.Entries[i].CtimeSec = uint32(sysStat.Ctim.Sec)
-			index.Entries[i].CtimeNano = uint32(sysStat.Ctim.Nsec)
-		}
+		index.Entries[i].MtimeSec = uint32(info.ModTime().Unix())
+		index.Entries[i].MtimeNano = uint32(info.ModTime().Nanosecond())
+		index.Entries[i].FSize = uint32(info.Size())
+		updateStatTimes(index, i, info)
 	}
-	fmt.Println("index refresh")
+	// fmt.Println("index refresh")
 	return gitobj.Index_Write(repo, *index)
 }
 
 func CheckCommitReady(repo gitpath.GitRepository, index gitobj.GitIndex) (bool, error) {
 	reader := bufio.NewReader(os.Stdin)
 
-	// Check 1 — nothing staged
+	// Check if nothing changed
 	headResult, err := gitCurrent.StatusHeadIndex(repo, index)
 	if err != nil {
 		return false, err
@@ -122,7 +131,7 @@ func CheckCommitReady(repo gitpath.GitRepository, index gitobj.GitIndex) (bool, 
 		return false, nil
 	}
 
-	// Check 2 — warn about unstaged changes
+	// Check for unstaged changes
 	worktreeResult, err := gitCurrent.StatusIndexWorktree(repo, index)
 	if err != nil {
 		return false, err

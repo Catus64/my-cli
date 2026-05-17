@@ -15,6 +15,7 @@ import (
 	"gocmd/internal/cli/gitinit"
 	"gocmd/internal/cli/hashObject"
 	"gocmd/internal/cli/load"
+	"gocmd/internal/cli/quicksave"
 	"gocmd/internal/cli/remove"
 	setconfig "gocmd/internal/cli/set-config"
 	showref "gocmd/internal/cli/show-ref"
@@ -22,6 +23,7 @@ import (
 	"gocmd/internal/cli/showObject"
 	"gocmd/internal/cli/showTree"
 	switchver "gocmd/internal/cli/switch-ver"
+	view "gocmd/internal/cli/view_command"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -82,4 +84,6 @@ func init() {
 	rootCmd.AddCommand(altversion.NewCommand())
 	rootCmd.AddCommand(switchver.NewCommand())
 	rootCmd.AddCommand(combine.NewCommand())
+	rootCmd.AddCommand(view.NewCommand())
+	rootCmd.AddCommand(quicksave.NewCommand())
 }

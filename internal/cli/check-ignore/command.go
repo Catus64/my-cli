@@ -50,9 +50,10 @@ func check_ignore(cmd *cobra.Command, args []string) error {
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "check-ignore [object-hash]",
-		Short: "Check if the specified object is ignored by .gitignore",
-		RunE:  check_ignore,
+		Use:     "check-ignore [object-hash]",
+		Aliases: []string{"check", "ci"},
+		Short:   "Check if the specified object is ignored by .gitignore",
+		RunE:    check_ignore,
 	}
 
 	return cmd

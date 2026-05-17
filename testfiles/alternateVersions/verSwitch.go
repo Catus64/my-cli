@@ -129,7 +129,7 @@ func SwitchAltVer(repo gitpath.GitRepository, name string) error {
 	}
 
 	// Rebuild index via add --all
-	err = add.Add(&repo, nil, add.Options{All: true})
+	_, err = add.Add(&repo, nil, add.Options{All: true})
 	if err != nil {
 		return fmt.Errorf("failed to rebuild index: %w", err)
 	}

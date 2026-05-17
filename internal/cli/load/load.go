@@ -1,9 +1,9 @@
 package load
 
 import (
-	"fmt"
 	loading "gocmd/testfiles/GitCheckout"
 	gitpath "gocmd/testfiles/Gitrepostruct"
+	prettyprint "gocmd/testfiles/PrettyPrint"
 
 	"github.com/spf13/cobra"
 )
@@ -31,15 +31,18 @@ func load(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}
 
-	fmt.Println("Loading Successful!!")
-	fmt.Println("Loaded to:", loaded_path)
+	prettyprint.PrintMessage(
+		"Version Loaded Successfully",
+		loaded_path,
+		"The contents of the version will be in this path. ",
+	)
 
 	return nil
 }
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "load [commit-object]",
+		Use:   "load [commit-object] [name]",
 		Short: "Load Version",
 		Args:  cobra.MaximumNArgs(2),
 		RunE:  load,

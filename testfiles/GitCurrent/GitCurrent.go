@@ -35,10 +35,12 @@ func (r IndexWorkTree) HasUnstaged() bool {
 // Check Active Branch from .git/HEAD
 func Get_Active_Branch(repo gitpath.GitRepository) (string, error) {
 	headPath := gitpath.Repo_Path(repo, "HEAD")
+
 	data, err := os.ReadFile(headPath)
 	if err != nil {
 		return "", err
 	}
+
 	logger.L().Debug("HEAD content read", "content", string(data))
 
 	head := strings.TrimSpace(string(data))
@@ -49,7 +51,10 @@ func Get_Active_Branch(repo gitpath.GitRepository) (string, error) {
 }
 
 func Get_Tree_SHA(repo gitpath.GitRepository, ref string) (string, error) {
-	commitSHA, _ := gitobj.Ref_Resolve(repo, ref)
+	commitSHA, err := gitobj.Ref_Resolve(repo, ref)
+	if err != nil {
+		return " ", fmt.Errorf("no commits yet")
+	}
 	logger.L().Debug("Resolved ref to SHA", "ref", ref, "sha", *commitSHA)
 
 	Commit_Object, err := githashread.Object_Read(repo, ref)
@@ -105,7 +110,7 @@ func StatusHeadIndex(repo gitpath.GitRepository, index gitobj.GitIndex) (*HeadCu
 
 	treeSHA, err := Get_Tree_SHA(repo, "HEAD")
 	if err != nil {
-		// no commits yet — everything in index is new
+		// no commits yet everything in index is new
 		for _, entry := range index.Entries {
 			result.Added = append(result.Added, entry.Name)
 		}
