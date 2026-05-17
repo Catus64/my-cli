@@ -5,9 +5,13 @@ import (
 	gitaddremove "gocmd/testfiles/GitAddRemove"
 	gitCurrent "gocmd/testfiles/GitCurrent"
 	gitobject "gocmd/testfiles/GitObject"
+	gitsave "gocmd/testfiles/GitSave"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 	"image/color"
+	"net/mail"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -35,7 +39,7 @@ func SaveFileContent(repoPath string, window fyne.Window) fyne.CanvasObject {
 
 	var updateStagedFiles func()
  
-	onRemove := func() {
+	onFileChange := func() {
 		// Reload staged files from index and refresh the readySaveBox
 		stagedFiles = getStagedFiles(repoPath)
 		if updateStagedFiles != nil {
@@ -43,7 +47,7 @@ func SaveFileContent(repoPath string, window fyne.Window) fyne.CanvasObject {
 		}
 	}
 
-	saveListBox, updateSaveList := saveListBox(&allFiles, repo, window, onRemove)
+	saveListBox, updateSaveList := saveListBox(&allFiles, repo, window, onFileChange)
 	readySaveBox, updateStagedFile := readySaveList(&stagedFiles)
 	updateStagedFiles = updateStagedFile
 
@@ -51,7 +55,7 @@ func SaveFileContent(repoPath string, window fyne.Window) fyne.CanvasObject {
 	updateStagedFiles()
 
 	// Commit Box
-	commitBox := commitBox()
+	commitBox := commitBox(repoPath, window, onFileChange)
 
 	columnGap := canvas.NewRectangle(color.Transparent)
 	columnGap.SetMinSize(fyne.NewSize(10, 0))
@@ -164,7 +168,7 @@ func getStagedFiles(repoPath string) []string {
 	return result
 }
 
-func saveListBox(file *[]string, repo *gitpath.GitRepository, window fyne.Window, onRemove func()) (fyne.CanvasObject, func()) {
+func saveListBox(file *[]string, repo *gitpath.GitRepository, window fyne.Window, onFileChange func()) (fyne.CanvasObject, func()) {
 	saveListTitle := canvas.NewText(fmt.Sprintf("Save List (%d)", len(*file)), color.RGBA{R: 208, G: 200, B: 200, A: 255})
 	saveListTitle.TextSize = 20
 	saveListTitle.TextStyle = fyne.TextStyle{Bold: true}
@@ -236,8 +240,8 @@ func saveListBox(file *[]string, repo *gitpath.GitRepository, window fyne.Window
 			updateFunction()
 		}
 
-		if onRemove != nil {
-			onRemove()
+		if onFileChange != nil {
+			onFileChange()
 		}
 	})
 	removeButton.Importance = widget.DangerImportance
@@ -286,7 +290,7 @@ func saveListBox(file *[]string, repo *gitpath.GitRepository, window fyne.Window
 	return box, update
 }
 
-func commitBox() fyne.CanvasObject {
+func commitBox(repoPath string, window fyne.Window, onFileChange func()) fyne.CanvasObject {
 	commitMessageEntry := widget.NewMultiLineEntry()
 	commitMessageEntry.Wrapping = fyne.TextWrapWord
 
@@ -319,7 +323,149 @@ func commitBox() fyne.CanvasObject {
 
 	commitBox := container.NewStack(commitBackground, container.NewPadded(commitMessageEntry), placeholderPosition)
 
-	saveButton := widget.NewButton("Save", func() {})
+	doSave := func(repo *gitpath.GitRepository, index *gitobject.GitIndex, treeSHA string, parents []string, author string, message string) {
+		// Create Commit
+		commitSHA, err := gitsave.Version_Create(*repo, treeSHA, parents, author, time.Now(), message)
+		if err != nil {
+			dialog.ShowError(fmt.Errorf("failed to create version: %w", err), window)
+			return
+		}
+ 
+		// Update branch ref
+		branchName, err := gitsave.Update_Branch_Ref(*repo, commitSHA)
+		if err != nil {
+			dialog.ShowError(fmt.Errorf("failed to update branch: %w", err), window)
+			return
+		}
+ 
+		// Refresh Index
+		err = gitsave.RefreshIndex(*repo, index)
+		if err != nil {
+			dialog.ShowError(fmt.Errorf("failed to refresh index: %w", err), window)
+			return
+		}
+ 
+		// Clear message box after successful save
+		commitMessageEntry.SetText("")
+		placeholder.Show()
+		placeholder.Refresh()
+ 
+		dialog.ShowInformation(
+			"Saved Successfully",
+			fmt.Sprintf("Version saved on '%s'\n%s", branchName, commitSHA[:7]),
+			window,
+		)
+ 
+		if onFileChange != nil {
+			onFileChange()
+		}
+	}
+
+	setupConfigForm := func(repo *gitpath.GitRepository, index *gitobject.GitIndex, treeSHA string, parents []string, message string) {
+		nameEntry := widget.NewEntry()
+		nameEntry.SetPlaceHolder("Your Name")
+ 
+		emailEntry := widget.NewEntry()
+		emailEntry.SetPlaceHolder("Your Email")
+ 
+		formItems := []*widget.FormItem{
+			widget.NewFormItem("Name", nameEntry),
+			widget.NewFormItem("Email", emailEntry),
+		}
+ 
+		dialog.ShowForm(
+			"Setup Required",
+			"Save", "Cancel",
+			formItems,
+			func(submitted bool) {
+				if !submitted {
+					return
+				}
+ 
+				name := strings.TrimSpace(nameEntry.Text)
+				email := strings.ToLower(strings.TrimSpace(emailEntry.Text))
+ 
+				if name == "" || email == "" {
+					dialog.ShowInformation("Required", "Please enter both name and email.", window)
+					return
+				}
+ 
+				// Validate email format
+				_, err := mail.ParseAddress(email)
+				if err != nil {
+					dialog.ShowInformation("Invalid Email", "Please enter a valid email address.", window)
+					return
+				}
+ 
+				// Save to disk so next time it loads automatically
+				newConfig := &gitpath.EzGitConfig{Name: name, Email: email}
+				if err := gitpath.Save(newConfig); err != nil {
+					dialog.ShowError(fmt.Errorf("failed to save config: %w", err), window)
+					return
+				}
+ 
+				doSave(repo, index, treeSHA, parents, newConfig.Format(), message)
+			},
+			window,
+		)
+	}
+
+	saveButton := widget.NewButton("Save", func() {
+		message := strings.TrimSpace(commitMessageEntry.Text)
+		if message == "" {
+			dialog.ShowInformation("Message Required", "Please enter a version message before saving.", window)
+			return
+		}
+
+		// Find repo
+		repo, err := gitpath.Repo_find(repoPath, true)
+		if err != nil || repo == nil {
+			dialog.ShowError(fmt.Errorf("could not find repository: %w", err), window)
+			return
+		}
+
+		// Read index
+		index, err := gitobject.Index_Read2(*repo)
+		if err != nil || index == nil {
+			dialog.ShowError(fmt.Errorf("could not read index: %w", err), window)
+			return
+		}
+
+		// Check if there is anything to commit
+		headResult, err := gitCurrent.StatusHeadIndex(*repo, *index)
+		if err != nil {
+			dialog.ShowError(err, window)
+			return
+		}
+		if !headResult.HasChanges() {
+			dialog.ShowInformation("Nothing to Save", "Your save list is already up to date.", window)
+			return
+		}
+ 
+		// Build tree from index
+		treeSHA, err := gitobject.TreeFromIndex(*repo, *index)
+		if err != nil {
+			dialog.ShowError(fmt.Errorf("failed to build tree: %w", err), window)
+			return
+		}
+ 
+		// Get parent commit SHA
+		var parents []string
+		parentSHA, err := gitobject.Ref_Resolve(*repo, "HEAD")
+		if err == nil && parentSHA != nil {
+			parents = []string{*parentSHA}
+		}
+ 
+		// Get author from config
+		userConfig, err := gitpath.Load()
+		if err != nil {
+			// Config not found — show GUI form to collect name and email
+			setupConfigForm(repo, index, treeSHA, parents, message)
+			return
+		}
+		// Config exists, commit directly
+		doSave(repo, index, treeSHA, parents, userConfig.Format(), message)
+	})
 	saveButton.Importance = widget.HighImportance
 	saveButtonRow := container.NewHBox(layout.NewSpacer(), saveButton, layout.NewSpacer())
 

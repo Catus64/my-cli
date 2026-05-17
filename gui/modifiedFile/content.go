@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
@@ -72,7 +73,7 @@ func getFileStatuses(repoPath string) ([]FileStatus, *gitpath.GitRepository) {
 	return result, repo
 }
 
-func FolderDirectory(repoPath string) fyne.CanvasObject {
+func FileDirectory(repoPath string, window fyne.Window) fyne.CanvasObject {
 	title := canvas.NewText("File Directory", color.White)
 	title.TextSize = 40
 	title.TextStyle = fyne.TextStyle{Bold: true}
@@ -83,7 +84,7 @@ func FolderDirectory(repoPath string) fyne.CanvasObject {
 	// Load files from git
 	files, repo := getFileStatuses(repoPath)
 
-	modifiedBox, updateModifiedList := modifiedListBox(&files, repo)
+	modifiedBox, updateModifiedList := modifiedListBox(&files, repo, window)
 	updateModifiedList()
 
 	widthMargin := canvas.NewRectangle(color.Transparent)
@@ -97,7 +98,7 @@ func FolderDirectory(repoPath string) fyne.CanvasObject {
 	return container.NewBorder(nil, nil, widthMargin, widthMargin, container.NewPadded(modifiedFileContent))
 }
 
-func modifiedListBox(files *[]FileStatus, repo *gitpath.GitRepository) (fyne.CanvasObject, func()) {
+func modifiedListBox(files *[]FileStatus, repo *gitpath.GitRepository, window fyne.Window) (fyne.CanvasObject, func()) {
 	modifiedListTitle := canvas.NewText(fmt.Sprintf("File List (%d)", len(*files)), color.RGBA{R: 208, G: 200, B: 200, A: 255})
 	modifiedListTitle.TextSize = 20
 	modifiedListTitle.TextStyle = fyne.TextStyle{Bold: true}
@@ -138,17 +139,15 @@ func modifiedListBox(files *[]FileStatus, repo *gitpath.GitRepository) (fyne.Can
 		}
 
 		if len(selectedFiles) == 0 {
-			fmt.Println("No files selected")
+			dialog.ShowInformation("No Files Selected", "Please select at least one file to add.", window)
 			return
 		}
 
 		_, err := gitaddremove.Add(repo, selectedFiles, gitaddremove.Options{All: false})
 		if err != nil {
-			fmt.Println("Add error:", err)
+			dialog.ShowError(err, window)
 			return
 		}
-
-		fmt.Println("Files added to save list successfully")
 
 		// Reload files after adding
 		index, err := gitobject.Index_Read2(*repo)
@@ -168,6 +167,12 @@ func modifiedListBox(files *[]FileStatus, repo *gitpath.GitRepository) (fyne.Can
 		if updateFunction != nil {
 			updateFunction() // refresh UI
 		}
+
+		dialog.ShowInformation(
+        "Success",
+        fmt.Sprintf("%d file(s) added to save list!", len(selectedFiles)),
+        window,
+    )
 	})
 	addButton.Importance = widget.HighImportance
 

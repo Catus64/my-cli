@@ -22,7 +22,7 @@ func Action(screen *gui.MyApp) fyne.CanvasObject {
 		screen.Window.Hide()
 		openRepo.Show(screen)
 	})
-	ExitButton := widget.NewButton("Exit", func() { screen.Window.Close() })
+	ExitButton := widget.NewButton("Exit", func() { screen.App.Quit() })
 
 	// Put the button into the action box
 	btnSpacer := canvas.NewRectangle(color.Transparent)
