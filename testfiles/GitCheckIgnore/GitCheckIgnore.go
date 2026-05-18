@@ -2,6 +2,7 @@ package gitcheckignore
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 )
@@ -43,70 +44,55 @@ func Gitignore_Parse(lines []string) []string {
 
 }
 
-func Check_Ignore_1(patterns []string, path string) *bool {
-	var result *bool
-
-	for _, p := range patterns {
-		isNegation := false
-		pattern := p
-
-		if strings.HasPrefix(p, "!") {
-			isNegation = true
-			pattern = p[1:]
-		}
-
-		match, err := filepath.Match(pattern, path)
-		if err != nil {
-			continue // ignore malformed patterns
-		}
-
-		if strings.HasPrefix(pattern, "*") {
-			if strings.HasSuffix(path, pattern[1:]) {
-				match = true
-			}
-		}
-
-		if strings.HasSuffix(pattern, "/") {
-			if strings.Contains(path, pattern) {
-				match = true
-			}
-		}
-
-		// logger.L().Debug("Checking pattern",
-		// 	"pattern", pattern,
-		// 	"path", path,
-		// 	"match", match,
-		// 	"isNegation", isNegation,
-		// )
-		if match {
-			val := !isNegation
-			result = &val // last match wins
-		}
-
-	}
-
-	return result
-}
-
 func Check_Ignore_Scoped(rules map[string][]string, path string) *bool {
-	parent := filepath.Dir(path)
+	path = filepath.ToSlash(path)
+	path = filepath.ToSlash(strings.TrimSuffix(path, "/"))
+	parent := filepath.ToSlash(filepath.Dir(path))
+
+	fmt.Printf("[SCOPED] Checking path: %q, starting parent: %q\n", path, parent)
+	fmt.Printf("[SCOPED] Available rule scopes: %v\n", scopeKeys(rules))
 
 	for {
 		if ruleset, ok := rules[parent]; ok {
-			result := Check_Ignore_1(ruleset, path)
+			relativePath := path
+			if parent != "." && parent != "" {
+				relativePath = strings.TrimPrefix(path, parent+"/")
+			}
+			fmt.Printf("[SCOPED] Found ruleset at scope %q, relativePath: %q, patterns: %v\n", parent, relativePath, ruleset)
+
+			result := Check_Ignore_1(ruleset, relativePath)
+			fmt.Printf("[SCOPED] Result from Check_Ignore_1: %v\n", ptrVal(result))
 			if result != nil {
 				return result
 			}
+		} else {
+			fmt.Printf("[SCOPED] No ruleset at scope %q, skipping\n", parent)
 		}
 
 		if parent == "." || parent == "" {
+			fmt.Printf("[SCOPED] Reached root, no match found\n")
 			break
 		}
-
-		parent = filepath.Dir(parent)
+		parent = filepath.ToSlash(filepath.Dir(parent))
+		fmt.Printf("[SCOPED] Moving up to parent: %q\n", parent)
 	}
-
 	return nil
+}
+
+// helpers to make prints readable
+func scopeKeys(rules map[string][]string) []string {
+	keys := make([]string, 0, len(rules))
+	for k := range rules {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+func ptrVal(b *bool) string {
+	if b == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("%v", *b)
 }
 
 func Check_Ignore_Absolute(patterns []string, path string) bool {
@@ -130,4 +116,79 @@ func CheckIgnore(rules *GitIgnore, path string) (bool, error) {
 
 	// Absolute Rules
 	return Check_Ignore_Absolute(rules.Absolute, path), nil
+}
+
+func Check_Ignore_1(patterns []string, path string) *bool {
+	var result *bool
+	// Normalize to forward slashes for consistent matching
+	path = filepath.ToSlash(path)
+
+	for _, p := range patterns {
+		isNegation := strings.HasPrefix(p, "!")
+		pattern := p
+		if isNegation {
+			pattern = p[1:]
+		}
+		pattern = filepath.ToSlash(pattern)
+
+		matched := matchGitignorePattern(pattern, path)
+		if matched {
+			val := !isNegation
+			result = &val
+		}
+	}
+	return result
+}
+
+func matchGitignorePattern(pattern, path string) bool {
+	// Leading "/" means anchored to root — strip it and do prefix match
+	anchored := false
+	if strings.HasPrefix(pattern, "/") {
+		anchored = true
+		pattern = pattern[1:]
+	}
+
+	if strings.HasSuffix(pattern, "/") {
+		dirPattern := strings.TrimSuffix(pattern, "/")
+		if anchored {
+			// Must match as the first directory component only
+			return strings.HasPrefix(path, dirPattern+"/") || path == dirPattern
+		}
+		return containsDirComponent(path, dirPattern)
+	}
+
+	if anchored {
+		// Match from root only
+		matched, err := filepath.Match(pattern, path)
+		if err != nil {
+			return false
+		}
+		// Also match everything inside if it's a directory name
+		return matched || strings.HasPrefix(path, pattern+"/")
+	}
+
+	// Non-anchored, no slash — match basename or any component
+	parts := strings.Split(path, "/")
+	base := parts[len(parts)-1]
+	if matched, err := filepath.Match(pattern, base); err == nil && matched {
+		return true
+	}
+	for _, part := range parts[:len(parts)-1] {
+		if matched, err := filepath.Match(pattern, part); err == nil && matched {
+			return true
+		}
+	}
+	return false
+}
+
+func containsDirComponent(path, dirPattern string) bool {
+	parts := strings.Split(path, "/")
+	// Check each directory component in the path
+	for i, part := range parts[:len(parts)-1] { // exclude filename
+		if matched, err := filepath.Match(dirPattern, part); err == nil && matched {
+			_ = i
+			return true
+		}
+	}
+	return false
 }
