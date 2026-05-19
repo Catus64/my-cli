@@ -2,6 +2,7 @@ package gitcheckignore
 
 import (
 	"errors"
+	logger "gocmd/testfiles/Helper"
 	"path/filepath"
 	"strings"
 )
@@ -67,17 +68,29 @@ func Check_Ignore_1(patterns []string, path string) *bool {
 		}
 
 		if strings.HasSuffix(pattern, "/") {
-			if strings.Contains(path, pattern) {
+			// Directory pattern — match any path component, not substring
+			dir := strings.TrimSuffix(pattern, "/")
+			for _, part := range strings.Split(filepath.ToSlash(path), "/") {
+				if part == dir {
+					match = true
+					break
+				}
+			}
+		}
+
+		if strings.HasPrefix(pattern, "/") {
+			logger.L().Debug("Has prefix /", "pattern", pattern)
+			if strings.Contains(path, pattern[1:]) {
 				match = true
 			}
 		}
 
-		// logger.L().Debug("Checking pattern",
-		// 	"pattern", pattern,
-		// 	"path", path,
-		// 	"match", match,
-		// 	"isNegation", isNegation,
-		// )
+		logger.L().Debug("Checking pattern",
+			"pattern", pattern,
+			"path", path,
+			"match", match,
+			"isNegation", isNegation,
+		)
 		if match {
 			val := !isNegation
 			result = &val // last match wins
