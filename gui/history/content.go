@@ -18,98 +18,90 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// ── data types ────────────────────────────────────────────────────────────────
-
 type Commit struct {
-	SHA         string
-	ShortSHA    string
-	Author      string
-	Date        string
-	Message     string
-	TreeSHA     string
-	Parents     []string
-	VersionNum  int
-	VersionName string
-	HasVersion  bool
+	SHA         string    // Full commit hash
+	ShortSHA    string    // Short Form commit hash
+	Author      string    // Commit author
+	Date        string    // Commit date
+	Message     string    // Commit message
+	TreeSHA     string    // File tree snapshot
+	Parents     []string  // parent commit SHA (can be 2 if merge)
+	VersionNum  int		  // Version number 
+	VersionName string	  // Version name 
+	HasVersion  bool	  // Whether this commit is tagged as a version
 }
 
-// ── colours & sizes ──────────────────────────────────────────────────────────
-
 const (
-	bubbleR   float32 = 28
-	bubbleD   float32 = bubbleR * 2
-	colGap    float32 = 110
-	mainY     float32 = 80
-	altY      float32 = 180
-	lineW     float32 = 2
-	canvasH   float32 = 280
-	bubblesPerRow int     = 15
-	rowGapY       float32 = 200
+	bubbleRadius   float32 = 28 // radius of commit bubbles
+	bubbleDiameter   float32 = bubbleRadius * 2 // diameter of commit bubbles
+	bubbleGap    float32 = 110	// left and right gap between bubbles
+	mainY     float32 = 80	// Y position of the first row
+	altY      float32 = 180	// Y position of the first row of alternate branches 
+	lineWidth     float32 = 2	// line thickness
+	canvasHeight   float32 = 280			
+	bubblesPerRow int     = 15	// Max bubbles per row
+	rowGapY       float32 = 200	// Up and Down gap between rows
 )
 
 var (
-	colMain   = color.RGBA{R: 80, G: 140, B: 255, A: 255}
-	colAlt    = color.RGBA{R: 255, G: 160, B: 60, A: 255}
-	colLine   = color.RGBA{R: 180, G: 180, B: 180, A: 255}
-	colSelect = color.RGBA{R: 255, G: 220, B: 60, A: 255}
-	colText   = color.White
+	bubbleMain   = color.RGBA{R: 80, G: 140, B: 255, A: 255} // main bubbles
+	bubbleAlt    = color.RGBA{R: 255, G: 160, B: 60, A: 255} // branch bubbles
+	bubbleLine   = color.RGBA{R: 180, G: 180, B: 180, A: 255} // connector lines
+	bubbleSelect = color.RGBA{R: 255, G: 220, B: 60, A: 255} // yellow ring for selected bubble
+	bubbleText   = color.White // text color for bubbles
 )
 
-// ── commit node (position + data) ────────────────────────────────────────────
-
 type commitNode struct {
-	commit   Commit
-	cx, cy   float32
-	isAlt    bool
-	selected bool
+	commit   Commit	// the commit data
+	cx, cy   float32 // position of the bubble
+	isAlternate bool // true = yellow, false = blue
+	selected bool // true = selected
 }
 
-// ── custom widget: the bubble graph ──────────────────────────────────────────
-
+// Bubble Graph
 type HistoryCanvas struct {
 	widget.BaseWidget
-	nodes      []commitNode
-	canvasSize fyne.Size
+	nodes      []commitNode // all bubble nodes to draw
+	canvasSize fyne.Size 
 	onSelect   func(Commit)
 }
 
+type historyRenderer struct {
+	historycanvas *HistoryCanvas
+	objects []fyne.CanvasObject
+}
+
 func (h *HistoryCanvas) CreateRenderer() fyne.WidgetRenderer {
-	return &historyRenderer{hc: h}
+	return &historyRenderer{historycanvas: h}
 }
 
 func (h *HistoryCanvas) MinSize() fyne.Size { return h.canvasSize }
 
 func (h *HistoryCanvas) Tapped(ev *fyne.PointEvent) {
 	for i, n := range h.nodes {
-		dx := ev.Position.X - n.cx
-		dy := ev.Position.Y - n.cy
-		if dx*dx+dy*dy <= bubbleR*bubbleR {
+		dx := ev.Position.X - n.cx // horizontal distance
+		dy := ev.Position.Y - n.cy // vertical distance
+		if dx*dx+dy*dy <= bubbleRadius*bubbleRadius {
+			// if click is inside the circle
 			for j := range h.nodes {
-				h.nodes[j].selected = false
+				h.nodes[j].selected = false // deselect all
 			}
-			h.nodes[i].selected = true
-			h.Refresh()
+			h.nodes[i].selected = true // select the clicked one
+			h.Refresh() //redraw
 			if h.onSelect != nil {
-				h.onSelect(h.nodes[i].commit)
+				h.onSelect(h.nodes[i].commit) // callback
 			}
 			return
 		}
 	}
 }
 
-// ── renderer ─────────────────────────────────────────────────────────────────
-
-type historyRenderer struct {
-	hc      *HistoryCanvas
-	objects []fyne.CanvasObject
-}
-
-func (r *historyRenderer) Layout(_ fyne.Size)      {}
-func (r *historyRenderer) MinSize() fyne.Size      { return r.hc.canvasSize }
-func (r *historyRenderer) Destroy()                {}
+func (r *historyRenderer) Layout(_ fyne.Size) {}
+func (r *historyRenderer) MinSize() fyne.Size { return r.historycanvas.canvasSize }
+func (r *historyRenderer) Destroy() {}
 func (r *historyRenderer) Refresh() {
 	r.objects = r.build()
-	canvas.Refresh(r.hc)
+	canvas.Refresh(r.historycanvas)
 }
 func (r *historyRenderer) Objects() []fyne.CanvasObject {
 	if len(r.objects) == 0 {
@@ -120,9 +112,9 @@ func (r *historyRenderer) Objects() []fyne.CanvasObject {
 
 func (r *historyRenderer) build() []fyne.CanvasObject {
 	var objs []fyne.CanvasObject
-	hc := r.hc
+	hc := r.historycanvas
 
-	// index nodes by hash for line drawing
+	// index nodes by hash (SHA) 
 	byHash := map[string]*commitNode{}
 	for i := range hc.nodes {
 		byHash[hc.nodes[i].commit.SHA] = &hc.nodes[i]
@@ -135,7 +127,7 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 				
 				dy := float64(n.cy - pn.cy)
 				
-				// 1. Detect if this line skips a row (causing a collision)
+				// Detect if this line skips a row (causing a collision)
 				isLongDrop := math.Abs(dy) > float64(rowGapY*1.2)
 
 				var arriveX, arriveY float64
@@ -159,8 +151,8 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 						currX := inv*inv*float64(pn.cx) + 2*inv*t*cpX + t*t*float64(n.cx)
 						currY := inv*inv*float64(pn.cy) + 2*inv*t*cpY + t*t*float64(n.cy)
 						
-						seg := canvas.NewLine(colLine)
-						seg.StrokeWidth = lineW
+						seg := canvas.NewLine(bubbleLine)
+						seg.StrokeWidth = lineWidth
 						seg.Position1 = fyne.NewPos(float32(prevX), float32(prevY))
 						seg.Position2 = fyne.NewPos(float32(currX), float32(currY))
 						objs = append(objs, seg)
@@ -174,9 +166,9 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 						prevY = currY
 					}
 				} else {
-					// 2. Draw normal straight line for adjacent commits
-					line := canvas.NewLine(colLine)
-					line.StrokeWidth = lineW
+					// Draw normal straight line for adjacent commits
+					line := canvas.NewLine(bubbleLine)
+					line.StrokeWidth = lineWidth
 					line.Position1 = fyne.NewPos(n.cx, n.cy)
 					line.Position2 = fyne.NewPos(pn.cx, pn.cy)
 					objs = append(objs, line)
@@ -185,7 +177,7 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 					arriveY = float64(pn.cy)
 				}
 
-				// 3. Calculate angles for the arrow head
+				// Calculate angles for the arrow head
 				// We use arriveX/arriveY so the arrow perfectly matches the end of the curve!
 				arrowDx := float64(n.cx) - arriveX
 				arrowDy := float64(n.cy) - arriveY
@@ -196,22 +188,22 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 				arrowAngle := math.Pi / 6    
 
 				// Calculate where the tip should stop (edge of the CHILD bubble)
-				tipX := float64(n.cx) - float64(bubbleR)*math.Cos(angle)
-				tipY := float64(n.cy) - float64(bubbleR)*math.Sin(angle)
+				tipX := float64(n.cx) - float64(bubbleRadius)*math.Cos(angle)
+				tipY := float64(n.cy) - float64(bubbleRadius)*math.Sin(angle)
 
 				leftX := tipX - arrowLen*math.Cos(angle-arrowAngle)
 				leftY := tipY - arrowLen*math.Sin(angle-arrowAngle)
 				rightX := tipX - arrowLen*math.Cos(angle+arrowAngle)
 				rightY := tipY - arrowLen*math.Sin(angle+arrowAngle)
 
-				arrow1 := canvas.NewLine(colLine)
-				arrow1.StrokeWidth = lineW
+				arrow1 := canvas.NewLine(bubbleLine)
+				arrow1.StrokeWidth = lineWidth
 				arrow1.Position1 = fyne.NewPos(float32(tipX), float32(tipY))
 				arrow1.Position2 = fyne.NewPos(float32(leftX), float32(leftY))
 				objs = append(objs, arrow1)
 
-				arrow2 := canvas.NewLine(colLine)
-				arrow2.StrokeWidth = lineW
+				arrow2 := canvas.NewLine(bubbleLine)
+				arrow2.StrokeWidth = lineWidth
 				arrow2.Position1 = fyne.NewPos(float32(tipX), float32(tipY))
 				arrow2.Position2 = fyne.NewPos(float32(rightX), float32(rightY))
 				objs = append(objs, arrow2)
@@ -220,23 +212,34 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 	}
 
 	// draw bubbles and labels
-	for _, n := range hc.nodes {
-		col := colMain
-		if n.isAlt {
-			col = colAlt
+	for idx, n := range hc.nodes {
+		col := bubbleMain
+		if n.isAlternate {
+			col = bubbleAlt
+		}
+
+		// Add a label at top of current commit
+		if idx == 0 {
+			tag := canvas.NewText("Latest Save", color.RGBA{R: 100, G: 220, B: 100, A: 255})
+			tag.TextSize = 11
+			tag.TextStyle = fyne.TextStyle{Bold: true}
+			tag.Alignment = fyne.TextAlignCenter
+			tag.Resize(fyne.NewSize(100, 15))
+			tag.Move(fyne.NewPos(n.cx-50, n.cy-bubbleRadius-20))
+			objs = append(objs, tag)
 		}
 
 		// yellow ring when selected
 		if n.selected {
-			ring := canvas.NewCircle(colSelect)
-			ring.Move(fyne.NewPos(n.cx-bubbleR-4, n.cy-bubbleR-4))
-			ring.Resize(fyne.NewSize(bubbleD+8, bubbleD+8))
+			ring := canvas.NewCircle(bubbleSelect)
+			ring.Move(fyne.NewPos(n.cx-bubbleRadius-4, n.cy-bubbleRadius-4))
+			ring.Resize(fyne.NewSize(bubbleDiameter+8, bubbleDiameter+8))
 			objs = append(objs, ring)
 		}
 
 		circle := canvas.NewCircle(col)
-		circle.Move(fyne.NewPos(n.cx-bubbleR, n.cy-bubbleR))
-		circle.Resize(fyne.NewSize(bubbleD, bubbleD))
+		circle.Move(fyne.NewPos(n.cx-bubbleRadius, n.cy-bubbleRadius))
+		circle.Resize(fyne.NewSize(bubbleDiameter, bubbleDiameter))
 		objs = append(objs, circle)
 
 		// first 5 chars of SHA inside bubble
@@ -244,17 +247,16 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 		if len(labelText) > 5 {
 			labelText = labelText[:5]
 		}
-		label := canvas.NewText(labelText, colText)
+		label := canvas.NewText(labelText, bubbleText)
 		label.TextSize = 11
 		label.TextStyle = fyne.TextStyle{Bold: true}
 		label.Alignment = fyne.TextAlignCenter
 
-		// 1. Force the text box to be exactly as wide as the bubble
-		label.Resize(fyne.NewSize(bubbleD, 15)) 
+		// Force the text box to be exactly as wide as the bubble
+		label.Resize(fyne.NewSize(bubbleDiameter, 15)) 
 		
-		// 2. Start the text box at the exact left edge of the bubble, 
-		// and adjust the Y position slightly to center it vertically.
-		label.Move(fyne.NewPos(n.cx-bubbleR, n.cy-7))
+		// Start the text box at the exact left edge of the bubble, and adjust the Y position slightly to center it vertically.
+		label.Move(fyne.NewPos(n.cx-bubbleRadius, n.cy-7))
 
 		objs = append(objs, label)
 	}
@@ -264,7 +266,7 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 
 // ── load real commits from repo ───────────────────────────────────────────────
 
-func loadCommits(repoPath string, maxDepth int) ([]Commit, *gitpath.GitRepository) {
+func loadCommits(repoPath string) ([]Commit, *gitpath.GitRepository) {
 	repo, err := gitpath.Repo_find(repoPath, false)
 	if err != nil || repo == nil {
 		return nil, nil
@@ -279,9 +281,9 @@ func loadCommits(repoPath string, maxDepth int) ([]Commit, *gitpath.GitRepositor
 
 	var commits []Commit
 	seen := map[string]bool{}
-	queue := []string{*headSHA}
+	queue := []string{*headSHA} // start from HEAD mean start from current commit
 
-	for len(queue) > 0 && len(commits) < maxDepth {
+	for len(queue) > 0 {
 		sha := queue[0]
 		queue = queue[1:]
 
@@ -294,20 +296,20 @@ func loadCommits(repoPath string, maxDepth int) ([]Commit, *gitpath.GitRepositor
 		if err != nil {
 			continue
 		}
-		gc, ok := obj.(*gitobj.GitCommit)
+		gitCommit, ok := obj.(*gitobj.GitCommit)
 		if !ok {
 			continue
 		}
-		gc.Deserialize()
+		gitCommit.Deserialize()
 
-		date, author := gitlog.Format_Date_Author(string(gc.KvlmDict.Dict["author"]))
-		treeSHA := strings.TrimSpace(string(gc.KvlmDict.Dict["tree"]))
-		parents := gitobj.GetKvlmValues(gc.KvlmDict.Dict, "parent")
-		message := strings.TrimSpace(string(gc.KvlmDict.Dict["data"]))
+		date, author := gitlog.Format_Date_Author(string(gitCommit.KvlmDict.Dict["author"]))
+		treeSHA := strings.TrimSpace(string(gitCommit.KvlmDict.Dict["tree"]))
+		parents := gitobj.GetKvlmValues(gitCommit.KvlmDict.Dict, "parent")
+		message := strings.TrimSpace(string(gitCommit.KvlmDict.Dict["data"]))
 
 		c := Commit{
 			SHA:      sha,
-			ShortSHA: sha[:7],
+			ShortSHA: sha[:5],
 			Author:   author,
 			Date:     date,
 			Message:  message,
@@ -337,8 +339,6 @@ func loadCommits(repoPath string, maxDepth int) ([]Commit, *gitpath.GitRepositor
 	return commits, repo
 }
 
-// ── diff: files changed between commit and its first parent ──────────────────
-
 func getChangedFiles(repo *gitpath.GitRepository, c Commit) []string {
 	if repo == nil {
 		return nil
@@ -352,7 +352,7 @@ func getChangedFiles(repo *gitpath.GitRepository, c Commit) []string {
 	if len(c.Parents) == 0 {
 		var result []string
 		for path := range current {
-			result = append(result, "A  "+path)
+			result = append(result, path)
 		}
 		return result
 	}
@@ -378,28 +378,26 @@ func getChangedFiles(repo *gitpath.GitRepository, c Commit) []string {
 	for path, sha := range current {
 		if parentSHA, exists := parent[path]; exists {
 			if parentSHA != sha {
-				result = append(result, "M  "+path)
+				result = append(result, path)
 			}
 		} else {
-			result = append(result, "A  "+path)
+			result = append(result, path)
 		}
 	}
 
 	// deleted
 	for path := range parent {
 		if _, exists := current[path]; !exists {
-			result = append(result, "D  "+path)
+			result = append(result, path)
 		}
 	}
 
 	return result
 }
 
-// ── build the bubble graph nodes ──────────────────────────────────────────────
-
 func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 	if len(commits) == 0 {
-		return nil, 200, canvasH
+		return nil, 200, canvasHeight
 	}
 
 	byHash := map[string]Commit{}
@@ -407,7 +405,7 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 		byHash[c.SHA] = c
 	}
 
-	// Step 1: walk main chain (first parent only)
+	// walk main chain (first parent only)
 	var mainChain []string
 	seen := map[string]bool{}
 	current := commits[0].SHA
@@ -418,13 +416,13 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 		}
 		seen[current] = true
 		mainChain = append(mainChain, current)
-		if len(c.Parents) == 0 {
+		if len(c.Parents) == 0 { // if no parents, mean it is first commit, stop here
 			break
 		}
 		current = c.Parents[0]
 	}
 
-	// Step 2: collect all remaining commits not in main chain
+	// collect all remaining commits not in main chain (mean branch commits)
 	var altChain []string
 	for _, c := range commits {
 		if !seen[c.SHA] {
@@ -434,12 +432,10 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 	}
 
 	totalRows := (len(mainChain) + bubblesPerRow - 1) / bubblesPerRow
-	canvasW := float32(bubblesPerRow)*colGap + colGap
-	totalH := float32(totalRows+1)*rowGapY + canvasH // ← +1 for alt row
 
 	var nodes []commitNode
 
-	// Step 3: place main chain nodes
+	// place main chain nodes
 	for i, sha := range mainChain {
 		c := byHash[sha]
 		row := i / bubblesPerRow
@@ -447,23 +443,24 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 
 		var cx float32
         if row%2 == 0 {
-            // Even rows go left to right (Cols 0 -> 19)
-            cx = float32(col+1) * colGap
+            // Even rows go left to right 
+            cx = float32(col+1) * bubbleGap
         } else {
-            // Odd rows go right to left (Cols 19 -> 0)
-            cx = float32(bubblesPerRow-col) * colGap
+            // Odd rows go right to left 
+            cx = float32(bubblesPerRow-col) * bubbleGap
         }
 		cy := mainY + float32(row)*rowGapY
 		nodes = append(nodes, commitNode{commit: c, cx: cx, cy: cy})
 	}
 
-	// Step 4: place alt commits relative to their merge point
+	// place alt commits relative to their merge point
 	placedAlt := map[string]bool{}
 
-	// 1. Calculate a safe Y starting point BELOW the entire main chain
-	baseAltY := mainY + float32(totalRows)*(rowGapY * 0.8)
+	// Calculate a safe Y starting point BELOW the entire main chain
+	lastMainRowY := mainY + float32(totalRows-1)*rowGapY
+	baseAltY := lastMainRowY + rowGapY
 	
-	// 2. Track how many separate branches we draw so they don't overlap each other
+	// Track how many separate branches we draw so they don't overlap each other
 	branchIndex := 0
 
 	originalLen := len(nodes)
@@ -476,7 +473,7 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 
 		altSHA := node.commit.Parents[1]
 		
-		// 3. Assign this specific branch its own unique Y level
+		// Assign this specific branch its own unique Y level
 		altY := baseAltY + float32(branchIndex)*100
 
 		altOffset := 0
@@ -496,9 +493,9 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 			// Place going RIGHT from merge point
 			nodes = append(nodes, commitNode{
 				commit: altC,
-				cx:     node.cx + float32(altOffset)*colGap, // ← right not left
+				cx:     node.cx + float32(altOffset)*bubbleGap, // ← right not left
 				cy:     altY,
-				isAlt:  true,
+				isAlternate:  true,
 			})
 
 			if len(altC.Parents) == 0 {
@@ -508,7 +505,7 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 			// Stop if parent is already in main chain
 			if _, inMain := func() (*commitNode, bool) {
 				for i := range nodes {
-					if nodes[i].commit.SHA == altC.Parents[0] && !nodes[i].isAlt {
+					if nodes[i].commit.SHA == altC.Parents[0] && !nodes[i].isAlternate {
 						return &nodes[i], true
 					}
 				}
@@ -521,19 +518,26 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 			altOffset++
 		}
 		
-		// 4. If we drew a branch, increment the index to push the NEXT branch lower
+		// If we drew a branch, increment the index to push the NEXT branch lower
 		if drewBranch {
 			branchIndex++
 		}
 	}
 
+	// Dynamically calculate height based on actual node positions
+	var maxX, maxY float32
+	for _, n := range nodes {
+		if n.cx > maxX { maxX = n.cx }
+		if n.cy > maxY { maxY = n.cy }
+	}
+	canvasW := maxX + bubbleRadius + 60
+	totalH  := maxY + bubbleRadius + 60
+
 	return nodes, canvasW, totalH
 }
 
-// ── main page ─────────────────────────────────────────────────────────────────
-
 func HistoryPageContent(repoPath string, app fyne.App) fyne.CanvasObject {
-	title := canvas.NewText("History", color.White)
+	title := canvas.NewText("Save History", color.White)
 	title.TextSize = 40
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -541,7 +545,7 @@ func HistoryPageContent(repoPath string, app fyne.App) fyne.CanvasObject {
 	subtitle.TextSize = 15
 
 	// load real commits
-	commits, repo := loadCommits(repoPath, 30)
+	commits, repo := loadCommits(repoPath)
 
 	if len(commits) == 0 {
 		empty := canvas.NewText("No commits found in this repository.", color.Gray{Y: 150})
@@ -566,7 +570,7 @@ func HistoryPageContent(repoPath string, app fyne.App) fyne.CanvasObject {
 			// Get changed files
 			files := getChangedFiles(repo, c)
 			// Open new window
-			ShowCommitWindow(app, c, files)
+			ShowSaveHistoryWindow(app, c, files)
 		},
 	}
 	hCanvas.ExtendBaseWidget(hCanvas)

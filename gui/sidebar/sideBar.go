@@ -47,7 +47,7 @@ func SideBar(gui *gui.MyApp, window fyne.Window, pathName string, activePage str
 	saveFileButton := NavButton("Save File", activePage == "save", Save)
 	modifiedFileButton := NavButton("File Directory", activePage == "file-directory", fileDirectory)  
 	ignoredFileButton := NavButton("Ignored File", activePage == "ignored", Ignored)
-	historyButton := NavButton("History", activePage == "history", History)
+	historyButton := NavButton("Save History", activePage == "history", History)
 	helpButton := NavButton("Help", activePage == "help", Help)
 
 	// Current repository box

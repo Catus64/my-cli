@@ -12,14 +12,11 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func ShowCommitWindow(app fyne.App, c Commit, files []string) {	
-	win := app.NewWindow(fmt.Sprintf("Commit: %s", c.SHA))
+func ShowSaveHistoryWindow(app fyne.App, clicked Commit, files []string) {	
+	win := app.NewWindow(fmt.Sprintf("Commit: %s", clicked.SHA))
 	win.Resize(fyne.NewSize(900, 600))
 
-	topHash := c.SHA
-    if len(topHash) > 5 {
-        topHash = topHash[:5]
-    }
+	topHash := clicked.ShortSHA
 
 	// ── Top: Commit Hash ──
 	hashTitle := canvas.NewText(topHash, color.White)
@@ -47,15 +44,7 @@ func ShowCommitWindow(app fyne.App, c Commit, files []string) {
 	fileList.Add(topSpacing)
 
 	for _, f := range files {
-		f := f
-
-		// Extract just the filename without status prefix
-		fileName := f
-		if len(f) > 3 {
-			fileName = strings.TrimSpace(f[3:]) // remove "A  ", "M  ", "D  "
-		}
-
-		bullet := canvas.NewText("• "+fileName, color.White)
+		bullet := canvas.NewText("• "+f, color.White)
 		bullet.TextSize = 13
 
 		leftSpacing := canvas.NewRectangle(color.Transparent)
@@ -94,19 +83,19 @@ func ShowCommitWindow(app fyne.App, c Commit, files []string) {
 	fileInner := container.NewBorder(header, loadBtnContainer, nil, nil, scrollFileList)
 	filePanel := container.NewStack(fileBackground, container.NewPadded(fileInner))
 
-	// ── Right: Commit Details ──
+	// Commit Details
 	detailTitle := canvas.NewText("Commit Details", color.White)
 	detailTitle.TextSize = 20
 	detailTitle.TextStyle = fyne.TextStyle{Bold: true}
 
-	hashLabel := canvas.NewText(fmt.Sprintf("Hash: %s", c.SHA), color.RGBA{R: 120, G: 200, B: 255, A: 255})
+	hashLabel := canvas.NewText(fmt.Sprintf("Hash: %s", clicked.SHA), color.RGBA{R: 120, G: 200, B: 255, A: 255})
 	hashLabel.TextSize = 14
 	hashLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	parentStr := "none"
-	if len(c.Parents) > 0 {
+	if len(clicked.Parents) > 0 {
 		parts := []string{}
-		for _, p := range c.Parents {
+		for _, p := range clicked.Parents {
 			short := p
 			// If the parent hash is longer than 5 characters, cut it down
 			if len(p) > 5 {
@@ -120,17 +109,17 @@ func ShowCommitWindow(app fyne.App, c Commit, files []string) {
 	parentsLabel := canvas.NewText(fmt.Sprintf("Parents: %s", parentStr), color.RGBA{R: 180, G: 180, B: 180, A: 255})
 	parentsLabel.TextSize = 13
 
-	authorLabel := canvas.NewText(fmt.Sprintf("Author: %s", c.Author), color.RGBA{R: 180, G: 180, B: 180, A: 255})
+	authorLabel := canvas.NewText(fmt.Sprintf("Author: %s", clicked.Author), color.RGBA{R: 180, G: 180, B: 180, A: 255})
 	authorLabel.TextSize = 13
 
-	dateLabel := canvas.NewText(fmt.Sprintf("Date: %s", c.Date), color.RGBA{R: 180, G: 180, B: 180, A: 255})
+	dateLabel := canvas.NewText(fmt.Sprintf("Date: %s", clicked.Date), color.RGBA{R: 180, G: 180, B: 180, A: 255})
 	dateLabel.TextSize = 13
 
 	heightMargin := canvas.NewRectangle(color.Transparent)
 	heightMargin.SetMinSize(fyne.NewSize(0, 20))
 
 	// Commit message centered
-	msgLabel := widget.NewLabel(c.Message)
+	msgLabel := widget.NewLabel(clicked.Message)
 	msgLabel.TextStyle = fyne.TextStyle{Bold: true}
 	msgLabel.Alignment = fyne.TextAlignCenter
 	msgLabel.Wrapping = fyne.TextWrapWord
@@ -144,7 +133,7 @@ func ShowCommitWindow(app fyne.App, c Commit, files []string) {
 		authorLabel,
 		dateLabel,
 		heightMargin,
-		msgContainer, // ← centered message
+		msgContainer, // centered message
 	)
 
 	divider := canvas.NewRectangle(color.RGBA{R: 60, G: 60, B: 60, A: 255})
@@ -152,7 +141,6 @@ func ShowCommitWindow(app fyne.App, c Commit, files []string) {
 
 	detailPanel := container.NewBorder(nil, nil, divider, nil, container.NewPadded(detailContent))
 
-	// ── Layout ──
 	widthMargin := canvas.NewRectangle(color.Transparent)
 	widthMargin.SetMinSize(fyne.NewSize(30, 0))
 
@@ -166,7 +154,7 @@ func ShowCommitWindow(app fyne.App, c Commit, files []string) {
 	content := container.NewGridWithColumns(2, filePanelWithSpace, detailPanel)
 
 	fullContent := container.NewBorder(
-		container.NewPadded(headerArea), // ← hash at top
+		container.NewPadded(headerArea), 
 		bottomMargin,
 		widthMargin, 
 		widthMargin,

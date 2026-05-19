@@ -38,7 +38,7 @@ func SaveFileContent(repoPath string, window fyne.Window) fyne.CanvasObject {
 	stagedFiles := getStagedFiles(repoPath)
 
 	var updateStagedFiles func()
- 
+
 	onFileChange := func() {
 		// Reload staged files from index and refresh the readySaveBox
 		stagedFiles = getStagedFiles(repoPath)
@@ -118,7 +118,6 @@ func getSaveListFiles(repoPath string) []string {
 		println("File: ", entry.Name, " Mode: ", entry.ModePerms, " SHA: ", entry.SHA)
 	}
 
-
 	fmt.Println("Staged files:", len(result))
 	return result
 }
@@ -174,13 +173,13 @@ func saveListBox(file *[]string, repo *gitpath.GitRepository, window fyne.Window
 	saveListTitle.TextStyle = fyne.TextStyle{Bold: true}
 
 	titleLine := canvas.NewRectangle(color.RGBA{R: 208, G: 200, B: 200, A: 255})
-    titleLine.SetMinSize(fyne.NewSize(0, 1))
+	titleLine.SetMinSize(fyne.NewSize(0, 1))
 
 	LRMargin := canvas.NewRectangle(color.Transparent)
-   	LRMargin.SetMinSize(fyne.NewSize(10, 0))
+	LRMargin.SetMinSize(fyne.NewSize(10, 0))
 
 	TDMargin := canvas.NewRectangle(color.Transparent)
-   	TDMargin.SetMinSize(fyne.NewSize(0, 5))
+	TDMargin.SetMinSize(fyne.NewSize(0, 5))
 
 	title := container.NewHBox(LRMargin, saveListTitle)
 
@@ -212,7 +211,7 @@ func saveListBox(file *[]string, repo *gitpath.GitRepository, window fyne.Window
 		}
 
 		_, err := gitaddremove.Remove(repo, selectedFiles, gitaddremove.RemoveOptions{
-			Delete:          false, 
+			Delete:          false,
 			SkipMissingFile: false,
 		})
 
@@ -245,7 +244,7 @@ func saveListBox(file *[]string, repo *gitpath.GitRepository, window fyne.Window
 		}
 	})
 	removeButton.Importance = widget.DangerImportance
-	
+
 	removeButtonRow := container.NewHBox(layout.NewSpacer(), removeButton, layout.NewSpacer())
 	removeBtn := container.NewVBox(removeButtonRow, TDMargin)
 
@@ -267,7 +266,7 @@ func saveListBox(file *[]string, repo *gitpath.GitRepository, window fyne.Window
 		fileList.Objects = nil
 		checkedFiles = map[string]bool{}
 
-		for _, files:= range *file {
+		for _, files := range *file {
 			checkedFiles[files] = false
 			checkbox := widget.NewCheck("", func(checked bool) {
 				checkedFiles[files] = checked
@@ -295,24 +294,24 @@ func commitBox(repoPath string, window fyne.Window, onFileChange func()) fyne.Ca
 	commitMessageEntry.Wrapping = fyne.TextWrapWord
 
 	placeholder := canvas.NewText("Version Message (required)", color.Gray{Y: 150})
-    placeholder.Alignment = fyne.TextAlignCenter
-    placeholder.TextSize = 14
+	placeholder.Alignment = fyne.TextAlignCenter
+	placeholder.TextSize = 14
 
-    // hide placeholder when user types
-    commitMessageEntry.OnChanged = func(text string) {
-        if text == "" {
-            placeholder.Show()
-        } else {
-            placeholder.Hide()
-        }
-        placeholder.Refresh()
-    }
+	// hide placeholder when user types
+	commitMessageEntry.OnChanged = func(text string) {
+		if text == "" {
+			placeholder.Show()
+		} else {
+			placeholder.Hide()
+		}
+		placeholder.Refresh()
+	}
 
 	heightMargin := canvas.NewRectangle(color.Transparent)
-    heightMargin.SetMinSize(fyne.NewSize(0, 5))
+	heightMargin.SetMinSize(fyne.NewSize(0, 5))
 
 	widthMargin := canvas.NewRectangle(color.Transparent)
-    widthMargin.SetMinSize(fyne.NewSize(5, 0))
+	widthMargin.SetMinSize(fyne.NewSize(5, 0))
 
 	placeholderContainer := container.NewBorder(container.NewPadded(placeholder), nil, nil, nil, nil)
 	placeholderPosition := container.NewVBox(heightMargin, placeholderContainer)
@@ -330,32 +329,32 @@ func commitBox(repoPath string, window fyne.Window, onFileChange func()) fyne.Ca
 			dialog.ShowError(fmt.Errorf("failed to create version: %w", err), window)
 			return
 		}
- 
+
 		// Update branch ref
 		branchName, err := gitsave.Update_Branch_Ref(*repo, commitSHA)
 		if err != nil {
 			dialog.ShowError(fmt.Errorf("failed to update branch: %w", err), window)
 			return
 		}
- 
+
 		// Refresh Index
 		err = gitsave.RefreshIndex(*repo, index)
 		if err != nil {
 			dialog.ShowError(fmt.Errorf("failed to refresh index: %w", err), window)
 			return
 		}
- 
+
 		// Clear message box after successful save
 		commitMessageEntry.SetText("")
 		placeholder.Show()
 		placeholder.Refresh()
- 
+
 		dialog.ShowInformation(
 			"Saved Successfully",
 			fmt.Sprintf("Version saved on '%s'\n%s", branchName, commitSHA[:7]),
 			window,
 		)
- 
+
 		if onFileChange != nil {
 			onFileChange()
 		}
@@ -364,15 +363,15 @@ func commitBox(repoPath string, window fyne.Window, onFileChange func()) fyne.Ca
 	setupConfigForm := func(repo *gitpath.GitRepository, index *gitobject.GitIndex, treeSHA string, parents []string, message string) {
 		nameEntry := widget.NewEntry()
 		nameEntry.SetPlaceHolder("Your Name")
- 
+
 		emailEntry := widget.NewEntry()
 		emailEntry.SetPlaceHolder("Your Email")
- 
+
 		formItems := []*widget.FormItem{
 			widget.NewFormItem("Name", nameEntry),
 			widget.NewFormItem("Email", emailEntry),
 		}
- 
+
 		dialog.ShowForm(
 			"Setup Required",
 			"Save", "Cancel",
@@ -381,29 +380,29 @@ func commitBox(repoPath string, window fyne.Window, onFileChange func()) fyne.Ca
 				if !submitted {
 					return
 				}
- 
+
 				name := strings.TrimSpace(nameEntry.Text)
 				email := strings.ToLower(strings.TrimSpace(emailEntry.Text))
- 
+
 				if name == "" || email == "" {
 					dialog.ShowInformation("Required", "Please enter both name and email.", window)
 					return
 				}
- 
+
 				// Validate email format
 				_, err := mail.ParseAddress(email)
 				if err != nil {
 					dialog.ShowInformation("Invalid Email", "Please enter a valid email address.", window)
 					return
 				}
- 
+
 				// Save to disk so next time it loads automatically
 				newConfig := &gitpath.EzGitConfig{Name: name, Email: email}
 				if err := gitpath.Save(newConfig); err != nil {
 					dialog.ShowError(fmt.Errorf("failed to save config: %w", err), window)
 					return
 				}
- 
+
 				doSave(repo, index, treeSHA, parents, newConfig.Format(), message)
 			},
 			window,
@@ -441,21 +440,21 @@ func commitBox(repoPath string, window fyne.Window, onFileChange func()) fyne.Ca
 			dialog.ShowInformation("Nothing to Save", "Your save list is already up to date.", window)
 			return
 		}
- 
+
 		// Build tree from index
 		treeSHA, err := gitobject.TreeFromIndex(*repo, *index)
 		if err != nil {
 			dialog.ShowError(fmt.Errorf("failed to build tree: %w", err), window)
 			return
 		}
- 
+
 		// Get parent commit SHA
 		var parents []string
 		parentSHA, err := gitobject.Ref_Resolve(*repo, "HEAD")
 		if err == nil && parentSHA != nil {
 			parents = []string{*parentSHA}
 		}
- 
+
 		// Get author from config
 		userConfig, err := gitpath.Load()
 		if err != nil {
@@ -478,7 +477,7 @@ func commitBox(repoPath string, window fyne.Window, onFileChange func()) fyne.Ca
 
 	innerContent := container.NewBorder(heightMargin, saveBtn, widthMargin, widthMargin, commitBox)
 
-    return container.NewStack(background, container.NewPadded(innerContent))
+	return container.NewStack(background, container.NewPadded(innerContent))
 }
 
 func readySaveList(file *[]string) (fyne.CanvasObject, func()) {
@@ -502,25 +501,25 @@ func readySaveList(file *[]string) (fyne.CanvasObject, func()) {
 	background.SetMinSize(fyne.NewSize(0, 120))
 
 	leftMargin := canvas.NewRectangle(color.Transparent)
-    leftMargin.SetMinSize(fyne.NewSize(10, 0))
+	leftMargin.SetMinSize(fyne.NewSize(10, 0))
 
 	topMargin := canvas.NewRectangle(color.Transparent)
-    topMargin.SetMinSize(fyne.NewSize(0, 5)) 
+	topMargin.SetMinSize(fyne.NewSize(0, 5))
 
 	downMargin := canvas.NewRectangle(color.Transparent)
-    downMargin.SetMinSize(fyne.NewSize(0, 3))
+	downMargin.SetMinSize(fyne.NewSize(0, 3))
 
 	content := container.NewVBox(topMargin, previewTitle, previewSubTitle, downMargin)
 	fullcontent := container.NewHBox(leftMargin, content)
 	box := container.NewStack(background, container.NewPadded(container.NewBorder(fullcontent, nil, nil, nil, scrollablePreviewList)))
 
 	// Update file
-	update := func ()  {
+	update := func() {
 		previewSubTitle.Text = fmt.Sprintf("%d file(s) ready to be saved.", len(*file))
-        previewSubTitle.Refresh()
+		previewSubTitle.Refresh()
 
 		previewList.Objects = nil
-		for _, files:= range *file {
+		for _, files := range *file {
 			bullet := canvas.NewText("    •  "+files, color.Gray{Y: 200})
 			bullet.TextSize = 12
 			previewList.Add(bullet)
