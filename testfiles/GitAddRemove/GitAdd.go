@@ -9,8 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
-	"time"
 )
 
 // option if user wants to add all
@@ -182,7 +180,6 @@ func Add(repo *gitpath.GitRepository, paths []string, opts Options) (*AddResult,
 
 func buildIndexEntry(relpath, sha string, stat os.FileInfo) (gitobj.GitIndexEntry, error) {
 	mod := stat.ModTime()
-	ctime := stat.Sys()
 
 	var ctimeSec, ctimeNsec, mtimeSec, mtimeNsec uint32
 	var dev, ino, uid, gid uint32
@@ -190,25 +187,12 @@ func buildIndexEntry(relpath, sha string, stat os.FileInfo) (gitobj.GitIndexEntr
 	mtimeSec = uint32(mod.Unix())
 	mtimeNsec = uint32(mod.Nanosecond())
 
-	// Read platform-specific fields from syscall.Stat_t
-	// This is mainly to handle cases with windows vs linux(unix)
-	// windows doesn't have ctime and bunch other stuff
-	if sysStat, ok := ctime.(*syscall.Stat_t); ok {
-		ctimeSec = uint32(sysStat.Ctim.Sec)
-		ctimeNsec = uint32(sysStat.Ctim.Nsec)
-		dev = uint32(sysStat.Dev)
-		ino = uint32(sysStat.Ino)
-		uid = sysStat.Uid
-		gid = sysStat.Gid
-	} else {
-		// values for windows lmao
-		ctimeSec = uint32(time.Now().Unix())
-		ctimeNsec = 0
-		dev = 0
-		ino = 0
-		uid = 0
-		gid = 0
-	}
+	ctimeSec = uint32(mod.Unix())
+	ctimeNsec = uint32(mod.Nanosecond())
+	dev = 0
+	ino = 0
+	uid = 0
+	gid = 0
 
 	mode := stat.Mode()
 	modeType := uint16(0b1000) // blob file

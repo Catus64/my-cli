@@ -152,9 +152,17 @@ func modifiedListBox(files *[]FileStatus, repo *gitpath.GitRepository, window fy
 		// Reload files after adding
 		index, err := gitobject.Index_Read2(*repo)
 		if err == nil && index != nil {
+			*files = []FileStatus{}
+
+			headStatus, headErr := gitCurrent.StatusHeadIndex(*repo, *index)
+			if headErr == nil {
+				for _, f := range headStatus.Deleted {
+					*files = append(*files, FileStatus{Name: f, Status: "DELETED"})
+				}
+			}
+
 			status_files, err := gitCurrent.StatusIndexWorktree(*repo, *index)
 			if err == nil {
-				*files = []FileStatus{}
 				for _, f := range status_files.Modified {
 					*files = append(*files, FileStatus{Name: f, Status: "MODIFIED"})
 				}

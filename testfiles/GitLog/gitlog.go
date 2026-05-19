@@ -23,20 +23,39 @@ import (
 // }
 
 func Format_Date_Author(text string) (string, string) {
-	temp_string := strings.SplitN(text, " ", -1)
-	temp_time := temp_string[2]
-	num, err := strconv.ParseInt(temp_time, 10, 64)
-	if err != nil {
-		panic(err)
+	// Git author format: "Name <email> timestamp timezone"
+	// Find the timestamp by looking for the last number before timezone
+
+	// Extract author name (before <email>)
+	authorName := ""
+	emailStart := strings.Index(text, "<")
+	emailEnd := strings.Index(text, ">")
+	if emailStart > 0 {
+		authorName = strings.TrimSpace(text[:emailStart])
 	}
+
+	// Extract timestamp (after > )
+	afterEmail := ""
+	if emailEnd > 0 && emailEnd+1 < len(text) {
+		afterEmail = strings.TrimSpace(text[emailEnd+1:])
+	}
+
+	// afterEmail is now "1234567890 +0800"
+	parts := strings.Fields(afterEmail)
+	if len(parts) == 0 {
+		return "Unknown date", authorName
+	}
+
+	num, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return "Unknown date", authorName
+	}
+
 	loc, _ := time.LoadLocation("Local")
 	t := time.Unix(num, 0).In(loc)
-
-	author := temp_string[0] + temp_string[1]
-
 	date := t.Format(time.RFC1123Z)
 
-	return date, author
+	return date, authorName
 }
 
 func Recurse_Log(repo *gitpath.GitRepository, commit gitobj.GitCommit, sha string) {

@@ -18,6 +18,6 @@ func Show(g *gui.MyApp, pathName string, window fyne.Window, onHome func(), onSa
 		func() { onHelp() },
 	)
 
-	fullContent := container.NewBorder(nil, nil, sidebar, nil, HistoryPageContent(pathName))
+	fullContent := container.NewBorder(nil, nil, sidebar, nil, HistoryPageContent(pathName, g.App))
 	window.SetContent(fullContent)
 }
