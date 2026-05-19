@@ -1,12 +1,11 @@
 package gitcheckignore
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
-	read "gocmd/testfiles/GitHashRead"
-	object "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 )
 
@@ -55,24 +54,36 @@ func ReadGitIgnore(repo gitpath.GitRepository) (*GitIgnore, error) {
 		ret.Absolute = append(ret.Absolute, Gitignore_Parse(lines)...)
 	}
 
-	// Scoped ignore rules from staged .gitignore files in the index
-	idx, err := object.Index_Read2(repo)
+	// Walk the Directory to search for .gitignores
+	err := filepath.WalkDir(repo.WorkTree, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			// error reading files will terminate walk
+			return err
+		}
+		if d.IsDir() && path == repo.GitDir {
+			// skip .git folder
+			return filepath.SkipDir
+		}
+		if !d.IsDir() && d.Name() == ".gitignore" {
+			// if file is gitignore
+			data, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			// find relative path to where the .gitignore is
+			rel, err := filepath.Rel(repo.WorkTree, filepath.Dir(path))
+			if err != nil {
+				return err
+			}
+			rel = filepath.ToSlash(rel) // OS compatibiility
+			lines := strings.Split(string(data), "\n")
+			// store the relative path (rel) alongside the parsed rules
+			ret.Scoped[rel] = append(ret.Scoped[rel], Gitignore_Parse(lines)...)
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	for _, entry := range idx.Entries {
-		if entry.Name == ".gitignore" || strings.HasSuffix(entry.Name, "/.gitignore") {
-			dirName := filepath.Dir(entry.Name)
-
-			obj, err := read.Object_Read(repo, entry.SHA)
-			if err != nil {
-				return nil, err
-			}
-
-			lines := strings.Split(string(obj.Deserialize()), "\n")
-			ret.Scoped[dirName] = Gitignore_Parse(lines)
-		}
 	}
 
 	return ret, nil

@@ -16,14 +16,6 @@ func check_ignore(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}
 
-	raw, include, ok := gitcheckignore.Gitignore_Parse1("#asdasdas")
-
-	logger.L().Debug("gitignore parsed",
-		"raw", raw,
-		"include", include,
-		"ok", ok,
-	)
-
 	rules, err := gitcheckignore.ReadGitIgnore(*repo)
 	if err != nil {
 		return err
@@ -34,13 +26,6 @@ func check_ignore(cmd *cobra.Command, args []string) error {
 	)
 
 	for _, arg := range args {
-		// arg := strings.Map(func(r rune) rune {
-		// 	if unicode.IsSpace(r) {
-		// 		return -1 // Drop the character
-		// 	}
-		// 	return r
-		// }, arg)
-
 		fmt.Println("Checking if", arg, "is ignored...")
 		fmt.Println(gitcheckignore.CheckIgnore(rules, arg))
 	}

@@ -2,20 +2,14 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
+	"strings"
 )
 
 func main() {
-	path := filepath.Join("home", "user", "document", "file.txt")
+	pattern := "/.venv"
+	// path := ".venv/something"
 
-	fmt.Println(path)
-
-	dir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("dir: ", dir)
-
-	//pkgtest.Send_pkg()
+	// state := strings.Contains(path, pattern[1:])
+	state := strings.HasPrefix(pattern, "/")
+	fmt.Println(state)
 }
