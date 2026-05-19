@@ -7,7 +7,7 @@ import (
 	gitpath "gocmd/testfiles/Gitrepostruct"
 	logger "gocmd/testfiles/Helper"
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 )
 
@@ -86,7 +86,7 @@ func TreeToMap(repo gitpath.GitRepository, ref string, prefix string, result map
 
 	for _, leaf := range leafs {
 
-		fullPath := filepath.Join(prefix, string(leaf.Path))
+		fullPath := path.Join(prefix, string(leaf.Path))
 
 		// mode starting with "04" means it's a subtree (directory)
 		if strings.HasPrefix(string(leaf.Mode), "04") {

@@ -13,7 +13,6 @@ import (
 	gitlog "gocmd/testfiles/GitLog"
 	gitobj "gocmd/testfiles/GitObject"
 	unpack "gocmd/testfiles/GitPacketExtractor"
-	gitsave "gocmd/testfiles/GitSave"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 	prettyprint "gocmd/testfiles/PrettyPrint"
 
@@ -66,6 +65,7 @@ func log(cmd *cobra.Command, args []string) error {
 		}
 
 		label := prettyprint.ResolveCommitLabel(*repo, sha, branch)
+		// fmt.Println("Label resolved: ", label)
 		if label != "" {
 			lc.HasVersion = true
 			if strings.HasPrefix(label, "tag:") {
@@ -81,15 +81,6 @@ func log(cmd *cobra.Command, args []string) error {
 				if len(parts) > 1 {
 					lc.VersionName = strings.Split(parts[1], " | ")[0]
 				}
-			}
-		}
-
-		if branch != "" {
-			entry, err := gitsave.ReadVersionRef(*repo, branch, sha)
-			if err == nil {
-				lc.HasVersion = true
-				lc.VersionNum = entry.Number
-				lc.VersionName = entry.Name
 			}
 		}
 

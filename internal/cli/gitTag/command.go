@@ -17,7 +17,9 @@ func show_ref(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}
 
-	_ = gitobj.Create_Ref(*repo, "newtag", "2b984f9b038e1e62ae67dc32bf6665c34d305eed")
+	sha, err := gitobj.Ref_Resolve(*repo, "HEAD")
+
+	_ = gitobj.Create_Ref(*repo, args[0], *sha)
 
 	return nil
 }
