@@ -2,7 +2,6 @@ package gitcheckignore
 
 import (
 	"errors"
-	"fmt"
 	logger "gocmd/testfiles/Helper"
 	"path/filepath"
 	"strings"
@@ -103,54 +102,24 @@ func Check_Ignore_1(patterns []string, path string) *bool {
 }
 
 func Check_Ignore_Scoped(rules map[string][]string, path string) *bool {
-	path = filepath.ToSlash(path)
-	path = filepath.ToSlash(strings.TrimSuffix(path, "/"))
-	parent := filepath.ToSlash(filepath.Dir(path))
-
-	fmt.Printf("[SCOPED] Checking path: %q, starting parent: %q\n", path, parent)
-	fmt.Printf("[SCOPED] Available rule scopes: %v\n", scopeKeys(rules))
+	parent := filepath.Dir(path)
 
 	for {
 		if ruleset, ok := rules[parent]; ok {
-			relativePath := path
-			if parent != "." && parent != "" {
-				relativePath = strings.TrimPrefix(path, parent+"/")
-			}
-			fmt.Printf("[SCOPED] Found ruleset at scope %q, relativePath: %q, patterns: %v\n", parent, relativePath, ruleset)
-
-			result := Check_Ignore_1(ruleset, relativePath)
-			fmt.Printf("[SCOPED] Result from Check_Ignore_1: %v\n", ptrVal(result))
+			result := Check_Ignore_1(ruleset, path)
 			if result != nil {
 				return result
 			}
-		} else {
-			fmt.Printf("[SCOPED] No ruleset at scope %q, skipping\n", parent)
 		}
 
 		if parent == "." || parent == "" {
-			fmt.Printf("[SCOPED] Reached root, no match found\n")
 			break
 		}
-		parent = filepath.ToSlash(filepath.Dir(parent))
-		fmt.Printf("[SCOPED] Moving up to parent: %q\n", parent)
+
+		parent = filepath.Dir(parent)
 	}
+
 	return nil
-}
-
-// helpers to make prints readable
-func scopeKeys(rules map[string][]string) []string {
-	keys := make([]string, 0, len(rules))
-	for k := range rules {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
-func ptrVal(b *bool) string {
-	if b == nil {
-		return "<nil>"
-	}
-	return fmt.Sprintf("%v", *b)
 }
 
 func Check_Ignore_Absolute(patterns []string, path string) bool {
