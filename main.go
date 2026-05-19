@@ -2,6 +2,7 @@ package main
 
 import (
 	"log/slog"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
@@ -18,7 +19,7 @@ func main() {
 	ezgit.Settings().SetTheme(&gui.MyDarkTheme{})
 
 	gui := &gui.MyApp{
-		App: ezgit,
+		App:    ezgit,
 		Window: ezgit.NewWindow("Ezgit (Single-User Version Control System)"),
 	}
 
