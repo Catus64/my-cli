@@ -22,6 +22,60 @@ func (whiteTextTheme) Font(style fyne.TextStyle) fyne.Resource { return theme.De
 func (whiteTextTheme) Icon(name fyne.ThemeIconName) fyne.Resource { return theme.DefaultTheme().Icon(name) }
 func (whiteTextTheme) Size(name fyne.ThemeSizeName) float32 { return theme.DefaultTheme().Size(name) }
 
+func sectionTitle(text string) fyne.CanvasObject {
+    t := canvas.NewText(text, color.White)
+    t.TextSize = 22
+    t.TextStyle = fyne.TextStyle{Bold: true}
+    return t
+}
+
+func bullet(text string) fyne.CanvasObject {
+	bullet := canvas.NewText("•", color.White)
+    bullet.TextSize = 20
+
+    content := widget.NewLabel(text)
+    content.Wrapping = fyne.TextWrapWord
+
+	// Change the default color of label text to white color
+	fullContent := container.NewThemeOverride(content, &whiteTextTheme{})
+
+	leftMargin := canvas.NewRectangle(color.Transparent)
+	leftMargin.SetMinSize(fyne.NewSize(20, 0))
+
+	return container.NewBorder(nil, nil, container.NewHBox(leftMargin, bullet), nil, container.NewPadded(fullContent))
+}
+
+func coloredBullet(parts []struct{ text string; color color.Color }) fyne.CanvasObject {
+    bulletDot := canvas.NewText("•", color.White)  
+    bulletDot.TextSize = 20
+
+    hbox := container.NewHBox()
+    for _, p := range parts {
+        t := canvas.NewText(p.text, p.color)
+        t.TextSize = 14
+        hbox.Add(t)
+    }
+
+    leftMargin := canvas.NewRectangle(color.Transparent)
+    leftMargin.SetMinSize(fyne.NewSize(20, 0))
+
+    return container.NewBorder(nil, nil, container.NewHBox(leftMargin, bulletDot), nil, container.NewPadded(hbox))
+}
+
+// without bullet dot
+func coloredNoBullet(parts []struct{ text string; color color.Color }) fyne.CanvasObject {
+    hbox := container.NewHBox()
+    for _, p := range parts {
+        t := canvas.NewText(p.text, p.color)
+        t.TextSize = 14
+        hbox.Add(t)
+    }
+
+    leftMargin := canvas.NewRectangle(color.Transparent)
+    leftMargin.SetMinSize(fyne.NewSize(35, 0)) 
+
+    return container.NewBorder(nil, nil, leftMargin, nil, container.NewPadded(hbox))
+}
 
 func HelpContent() fyne.CanvasObject {
 	title := canvas.NewText("Help", color.White)
@@ -46,11 +100,22 @@ func HelpContent() fyne.CanvasObject {
 	section2 := container.NewVBox(section2Title, modifiedBullet1, modifiedBullet2)
 
 	// 3. History
-	section3Title := sectionTitle("3. History")
+	section3Title := sectionTitle("3. History Page")
 	historyBullet1 := bullet("The page will display history and past changes by user to enable them to browse and compare changes across files.")
 	historyBullet2 := bullet("If user click any version button in the page, the interface will direct user to a new tab with column view format to search for history.")
 
-	section3 := container.NewVBox(section3Title, historyBullet1, historyBullet2)
+	green  := color.RGBA{R: 100, G: 220, B: 100, A: 255}
+	orange := color.RGBA{R: 255, G: 160, B: 60,  A: 255}
+	white  := color.White
+
+	historyBullet3 := coloredBullet([]struct{ text string; color color.Color }{
+		{" a) ", white}, {"Merge→xxxxx", green}, {" = Merge branch to main", white},
+	})
+	historyBullet4 := coloredNoBullet([]struct{ text string; color color.Color }{
+		{"b) ", white}, {"Merge→xxxxx", orange}, {" = Merge branch to branch", white},
+	})
+
+	section3 := container.NewVBox(section3Title, historyBullet1, historyBullet2, historyBullet3, historyBullet4)
 
 	// 4. Quit Button
 	section4Title := sectionTitle("4. Quit button allows user to quit to dashboard page.")
@@ -79,27 +144,4 @@ func HelpContent() fyne.CanvasObject {
 	scrollContent := container.NewScroll(fullcontent)
 
 	return container.NewBorder(nil, nil, widthMargin, widthMargin, container.NewPadded(scrollContent))
-}
-
-func sectionTitle(text string) fyne.CanvasObject {
-    t := canvas.NewText(text, color.White)
-    t.TextSize = 22
-    t.TextStyle = fyne.TextStyle{Bold: true}
-    return t
-}
-
-func bullet(text string) fyne.CanvasObject {
-	bullet := canvas.NewText("•", color.White)
-    bullet.TextSize = 20
-
-    content := widget.NewLabel(text)
-    content.Wrapping = fyne.TextWrapWord
-
-	// Change the default color of label text to white color
-	fullContent := container.NewThemeOverride(content, &whiteTextTheme{})
-
-	leftMargin := canvas.NewRectangle(color.Transparent)
-	leftMargin.SetMinSize(fyne.NewSize(20, 0))
-
-	return container.NewBorder(nil, nil, container.NewHBox(leftMargin, bullet), nil, container.NewPadded(fullContent))
 }

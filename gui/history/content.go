@@ -15,6 +15,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -51,11 +52,18 @@ var (
 	bubbleText   = color.White // text color for bubbles
 )
 
+type mergeInfo struct {
+    label string
+    isAlt bool // true = orange (branch to branch), false = green (branch to main)
+}
+
 type commitNode struct {
 	commit   Commit	// the commit data
 	cx, cy   float32 // position of the bubble
 	isAlternate bool // true = yellow, false = blue
 	selected bool // true = selected
+	isHead bool // true if this is the HEAD commit (latest)
+	mergeLabels []mergeInfo
 }
 
 // Bubble Graph
@@ -122,63 +130,63 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 
 	// draw connector lines and arrows first (behind bubbles)
 	for _, n := range hc.nodes {
-		for _, parentHash := range n.commit.Parents {
+		for parentIndex, parentHash := range n.commit.Parents {
+			if parentIndex == 1 {  
+				continue // skip merge parent line, show label instead
+			}
+
 			if pn, ok := byHash[parentHash]; ok {
 				
-				dy := float64(n.cy - pn.cy)
+				// dy := float64(n.cy - pn.cy)
 				
 				// Detect if this line skips a row (causing a collision)
-				isLongDrop := math.Abs(dy) > float64(rowGapY*1.2)
-
 				var arriveX, arriveY float64
 
-				if isLongDrop {
-					// Draw a C-Curve to gracefully route AROUND the bubble in the middle
-					segments := 20
-					
-					// Control point: push the curve out to the right by 90 pixels
-					cpX := (float64(pn.cx) + float64(n.cx))/2 + 90 
-					cpY := (float64(pn.cy) + float64(n.cy))/2
-					
-					prevX := float64(pn.cx)
-					prevY := float64(pn.cy)
-					
-					for i := 1; i <= segments; i++ {
-						t := float64(i) / float64(segments)
-						inv := 1.0 - t
-						
-						// Quadratic Bezier formula
-						currX := inv*inv*float64(pn.cx) + 2*inv*t*cpX + t*t*float64(n.cx)
-						currY := inv*inv*float64(pn.cy) + 2*inv*t*cpY + t*t*float64(n.cy)
-						
-						seg := canvas.NewLine(bubbleLine)
-						seg.StrokeWidth = lineWidth
-						seg.Position1 = fyne.NewPos(float32(prevX), float32(prevY))
-						seg.Position2 = fyne.NewPos(float32(currX), float32(currY))
-						objs = append(objs, seg)
-						
-						// Save the second-to-last point to calculate the perfect arrow angle
-						if i == segments-1 {
-							arriveX = prevX
-							arriveY = prevY
-						}
-						prevX = currX
-						prevY = currY
-					}
-				} else {
-					// Draw normal straight line for adjacent commits
+				if n.cy == pn.cy {
+					// Same Row: Draw a normal straight horizontal line
 					line := canvas.NewLine(bubbleLine)
 					line.StrokeWidth = lineWidth
-					line.Position1 = fyne.NewPos(n.cx, n.cy)
-					line.Position2 = fyne.NewPos(pn.cx, pn.cy)
+					line.Position1 = fyne.NewPos(pn.cx, pn.cy)
+					line.Position2 = fyne.NewPos(n.cx, n.cy)
 					objs = append(objs, line)
 					
 					arriveX = float64(pn.cx)
 					arriveY = float64(pn.cy)
-				}
+				} else {
+					// Different Row: Draw an L-shape
+					
+					if math.Abs(float64(pn.cx-n.cx)) < 1 {
+						// Same X, different Y — draw a pure vertical line
+						vLine := canvas.NewLine(bubbleLine)
+						vLine.StrokeWidth = lineWidth
+						vLine.Position1 = fyne.NewPos(pn.cx, pn.cy)
+						vLine.Position2 = fyne.NewPos(n.cx, n.cy)
+						objs = append(objs, vLine)
 
+						// Arrow comes from directly above — set arriveY slightly above bubble
+						arriveX = float64(pn.cx)
+						arriveY = float64(n.cy) - float64(bubbleRadius)
+
+					} else {
+						// Different X — draw normal L-shape
+						vLine := canvas.NewLine(bubbleLine)
+						vLine.StrokeWidth = lineWidth
+						vLine.Position1 = fyne.NewPos(pn.cx, pn.cy)
+						vLine.Position2 = fyne.NewPos(pn.cx, n.cy)
+						objs = append(objs, vLine)
+
+						hLine := canvas.NewLine(bubbleLine)
+						hLine.StrokeWidth = lineWidth
+						hLine.Position1 = fyne.NewPos(pn.cx, n.cy)
+						hLine.Position2 = fyne.NewPos(n.cx, n.cy)
+						objs = append(objs, hLine)
+
+						arriveX = float64(pn.cx)
+						arriveY = float64(n.cy)
+					}
+				}
 				// Calculate angles for the arrow head
-				// We use arriveX/arriveY so the arrow perfectly matches the end of the curve!
+				// Use arriveX/arriveY so the arrow perfectly matches the end of the curve!
 				arrowDx := float64(n.cx) - arriveX
 				arrowDy := float64(n.cy) - arriveY
 				angle := math.Atan2(arrowDy, arrowDx)
@@ -212,14 +220,14 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 	}
 
 	// draw bubbles and labels
-	for idx, n := range hc.nodes {
+	for _, n := range hc.nodes {
 		col := bubbleMain
 		if n.isAlternate {
 			col = bubbleAlt
 		}
 
 		// Add a label at top of current commit
-		if idx == 0 {
+		if n.isHead {
 			tag := canvas.NewText("Latest Save", color.RGBA{R: 100, G: 220, B: 100, A: 255})
 			tag.TextSize = 11
 			tag.TextStyle = fyne.TextStyle{Bold: true}
@@ -227,6 +235,24 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 			tag.Resize(fyne.NewSize(100, 15))
 			tag.Move(fyne.NewPos(n.cx-50, n.cy-bubbleRadius-20))
 			objs = append(objs, tag)
+		}
+
+		// Show merge label above branch bubble
+		if len(n.mergeLabels) > 0 {
+			total := len(n.mergeLabels)
+			for k, entry := range n.mergeLabels {
+				labelColor := color.RGBA{R: 100, G: 220, B: 100, A: 255} // green
+				if entry.isAlt {
+					labelColor = color.RGBA{R: 255, G: 160, B: 60, A: 255} // orange
+				}
+				ml := canvas.NewText(entry.label, labelColor)
+				ml.TextSize = 11
+				ml.TextStyle = fyne.TextStyle{Bold: true}
+				ml.Alignment = fyne.TextAlignCenter
+				ml.Resize(fyne.NewSize(120, 15))
+				ml.Move(fyne.NewPos(n.cx-60, n.cy-bubbleRadius-20-float32(total-1-k)*16))
+				objs = append(objs, ml)
+			}
 		}
 
 		// yellow ring when selected
@@ -243,10 +269,7 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 		objs = append(objs, circle)
 
 		// first 5 chars of SHA inside bubble
-		labelText := n.commit.SHA
-		if len(labelText) > 5 {
-			labelText = labelText[:5]
-		}
+		labelText := n.commit.ShortSHA
 		label := canvas.NewText(labelText, bubbleText)
 		label.TextSize = 11
 		label.TextStyle = fyne.TextStyle{Bold: true}
@@ -422,6 +445,11 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 		current = c.Parents[0]
 	}
 
+	// Reverse main chain to start from oldest commit
+	for i, j := 0, len(mainChain)-1; i < j; i, j = i+1, j-1 {
+		mainChain[i], mainChain[j] = mainChain[j], mainChain[i]
+	}
+
 	// collect all remaining commits not in main chain (mean branch commits)
 	var altChain []string
 	for _, c := range commits {
@@ -431,30 +459,21 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 		}
 	}
 
-	totalRows := (len(mainChain) + bubblesPerRow - 1) / bubblesPerRow
+	totalRows := 1
 
 	var nodes []commitNode
 
 	// place main chain nodes
 	for i, sha := range mainChain {
 		c := byHash[sha]
-		row := i / bubblesPerRow
-		col := i % bubblesPerRow
-
-		var cx float32
-        if row%2 == 0 {
-            // Even rows go left to right 
-            cx = float32(col+1) * bubbleGap
-        } else {
-            // Odd rows go right to left 
-            cx = float32(bubblesPerRow-col) * bubbleGap
-        }
-		cy := mainY + float32(row)*rowGapY
-		nodes = append(nodes, commitNode{commit: c, cx: cx, cy: cy})
+		cx := float32(i+1) * bubbleGap
+		cy := mainY
+		isLatest := i == len(mainChain)-1   // last node is latest commit
+		nodes = append(nodes, commitNode{commit: c, cx: cx, cy: cy, isHead: isLatest})
 	}
 
 	// place alt commits relative to their merge point
-	placedAlt := map[string]bool{}
+	// placedAlt := map[string]bool{}
 
 	// Calculate a safe Y starting point BELOW the entire main chain
 	lastMainRowY := mainY + float32(totalRows-1)*rowGapY
@@ -464,7 +483,7 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 	branchIndex := 0
 
 	originalLen := len(nodes)
-	for i := originalLen - 1; i >= 0; i-- {
+	for i := 0; i < originalLen; i++ {
 		node := nodes[i]
 		
 		if len(node.commit.Parents) < 2 {
@@ -473,54 +492,166 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 
 		altSHA := node.commit.Parents[1]
 		
-		// Assign this specific branch its own unique Y level
-		altY := baseAltY + float32(branchIndex)*100
-
-		altOffset := 0
-		drewBranch := false
+		// 1. Gather all commits in this branch line first to see where it ends up
+		var branchCommits []Commit
+		currSHA := altSHA
+		var hitNode *commitNode
 
 		for {
-			if altSHA == "" || placedAlt[altSHA] {
+			if currSHA == "" {
 				break
 			}
-			altC, ok := byHash[altSHA]
+
+			// Check if this commit is already placed anywhere (main or alt)
+			var found *commitNode
+			for j := range nodes {
+				if nodes[j].commit.SHA == currSHA {
+					found = &nodes[j]
+					break
+				}
+			}
+
+			// Stop tracing if we hit a bubble that has already been drawn
+			if found != nil {
+				hitNode = found
+				break 
+			}
+
+			altC, ok := byHash[currSHA]
 			if !ok {
 				break
 			}
-			placedAlt[altSHA] = true
-			drewBranch = true
 
-			// Place going RIGHT from merge point
-			nodes = append(nodes, commitNode{
-				commit: altC,
-				cx:     node.cx + float32(altOffset)*bubbleGap, // ← right not left
-				cy:     altY,
-				isAlternate:  true,
-			})
+			branchCommits = append(branchCommits, altC)
 
 			if len(altC.Parents) == 0 {
 				break
 			}
-			
-			// Stop if parent is already in main chain
-			if _, inMain := func() (*commitNode, bool) {
-				for i := range nodes {
-					if nodes[i].commit.SHA == altC.Parents[0] && !nodes[i].isAlternate {
-						return &nodes[i], true
-					}
-				}
-				return nil, false
-			}(); inMain {
-				break
-			}
+			currSHA = altC.Parents[0]
+		}
 
-			altSHA = altC.Parents[0]
-			altOffset++
+		if len(branchCommits) == 0 {
+			continue // Nothing new to draw
 		}
 		
-		// If we drew a branch, increment the index to push the NEXT branch lower
-		if drewBranch {
+		// 2. Determine if we can safely share the row with the hit node
+		needsNewRow := true
+		var altY float32
+		
+		if hitNode != nil && hitNode.isAlternate {
+			targetY := hitNode.cy
+			
+			// Calculate where our new bubbles will physically sit
+			rightmostX := node.cx + (bubbleGap / 2)
+			leftmostX := rightmostX - float32(len(branchCommits)-1)*bubbleGap
+			
+			// Calculate the entire X span from our new bubbles all the way back to the hitNode
+			spanMin := leftmostX
+			if hitNode.cx < spanMin { spanMin = hitNode.cx }
+			spanMax := rightmostX
+			if hitNode.cx > spanMax { spanMax = hitNode.cx }
+			
+			// LINE-OF-SIGHT CHECK: 
+			// If any existing bubble is sitting inside this horizontal space, our connecting 
+			// line would cut right through it! (Meaning this is a parallel branch fork).
+			collision := false
+			for _, n := range nodes {
+				// Only check bubbles on the target row, and ignore the hitNode itself
+				if n.cy == targetY && n.commit.SHA != hitNode.commit.SHA {
+					if n.cx >= spanMin && n.cx <= spanMax {
+						collision = true
+						break
+					}
+				}
+			}
+			
+			// If the visual path is totally clear, it's a direct continuation of the same branch!
+			if !collision {
+				altY = targetY
+				needsNewRow = false
+			}
+		}
+
+		// 3. If it collided (it's a parallel fork) OR pointed to Main, drop to a brand new row
+		if needsNewRow {
+			altY = baseAltY + float32(branchIndex)*100
 			branchIndex++
+		}
+
+		// 4. Find the X starting point (divergence point, not merge point)
+		var divergeX float32 = node.cx // fallback
+
+		if hitNode != nil && !needsNewRow {
+			// Continuing from an existing alt bubble - start from there
+			divergeX = hitNode.cx
+		} else {
+			// New row - anchor to where the branch diverged from main chain
+			oldest := branchCommits[len(branchCommits)-1]
+			if len(oldest.Parents) > 0 {
+				for k := range nodes {
+					if nodes[k].commit.SHA == oldest.Parents[0] {
+						divergeX = nodes[k].cx
+						break
+					}
+				}
+			}
+			if hitNode != nil && hitNode.isAlternate && needsNewRow {
+				// Align new row with rightmost bubble in the row above
+				for k := range nodes {
+					if nodes[k].cy == hitNode.cy && nodes[k].cx > divergeX {
+						divergeX = nodes[k].cx
+					}
+				}
+			}
+		}
+
+		// 5. Place bubbles oldest → newest going RIGHT from divergence point
+		for j := len(branchCommits) - 1; j >= 0; j-- {
+			altC := branchCommits[j]
+			posFromLeft := len(branchCommits) - 1 - j // 0=oldest, increases toward newest
+
+			var cx float32
+			if hitNode != nil && hitNode.isAlternate && needsNewRow {
+				// Align under the rightmost bubble of the row above
+				cx = divergeX + float32(posFromLeft)*bubbleGap
+			} else if !needsNewRow {
+				// Continuing from existing alt bubble — full gap
+				cx = divergeX + float32(posFromLeft+1)*bubbleGap
+			} else {
+				// New row from main chain divergence — shift left slightly
+				cx = divergeX + float32(posFromLeft+1)*bubbleGap - (bubbleGap / 2)
+			}
+
+			if j == 0 {
+				nodes = append(nodes, commitNode{
+					commit:      altC,
+					cx:          cx,
+					cy:          altY,
+					isAlternate: true,
+					mergeLabels: []mergeInfo{{"Merge→" + node.commit.ShortSHA, false}}, // green
+				})
+				continue
+			}
+
+			// if j not equal to 0 nodes, no label:
+			nodes = append(nodes, commitNode{commit: altC, cx: cx, cy: altY, isAlternate: true})
+		}
+	}
+
+	// Branch-to-branch merge labels
+	for i := 0; i < len(nodes); i++ {
+		node := nodes[i]
+
+		if !node.isAlternate || len(node.commit.Parents) < 2 {
+			continue
+		}
+		mergeParentSHA := node.commit.Parents[1]
+		for j := range nodes {
+			if nodes[j].commit.SHA == mergeParentSHA && nodes[j].isAlternate {
+				nodes[j].mergeLabels = append(nodes[j].mergeLabels,
+					mergeInfo{"Merge→" + node.commit.ShortSHA, true}) // orange
+				break
+			}
 		}
 	}
 
@@ -536,7 +667,7 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 	return nodes, canvasW, totalH
 }
 
-func HistoryPageContent(repoPath string, app fyne.App) fyne.CanvasObject {
+func HistoryPageContent(repoPath string, app fyne.App, window fyne.Window) fyne.CanvasObject {
 	title := canvas.NewText("Save History", color.White)
 	title.TextSize = 40
 	title.TextStyle = fyne.TextStyle{Bold: true}
@@ -577,18 +708,82 @@ func HistoryPageContent(repoPath string, app fyne.App) fyne.CanvasObject {
 
 	graphScroll := container.NewScroll(hCanvas)
 
+	// Latest Save label
+	latestSHA := ""
+	for _, n := range nodes {
+		if n.isHead {
+			latestSHA = n.commit.ShortSHA
+			break
+		}
+	}
+	latestLabel := canvas.NewText("Latest Save: "+latestSHA, color.White)
+	latestLabel.TextSize = 22
+	latestLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+	underline := canvas.NewRectangle(color.White)
+	underline.SetMinSize(fyne.NewSize(200, 2))
+
+	latestLabelBox := container.NewVBox(latestLabel, underline)
+
+	// Search bar
+	searchEntry := widget.NewEntry()
+	searchEntry.SetPlaceHolder("Search Bubble")
+	searchSized := container.NewGridWrap(fyne.NewSize(200, searchEntry.MinSize().Height), searchEntry)
+
+	searchBtn := widget.NewButton("Search", func() {
+		query := strings.TrimSpace(searchEntry.Text)
+		if query == "" {
+			dialog.ShowInformation("Empty Search", "Please enter a save key to search.", window)
+			return
+		}
+		// deselect all first
+		for j := range hCanvas.nodes {
+			hCanvas.nodes[j].selected = false
+		}
+
+		// find matching node
+		found := false
+		for j, n := range hCanvas.nodes {
+			if strings.HasPrefix(n.commit.SHA, query) || strings.HasPrefix(strings.ToLower(n.commit.SHA), strings.ToLower(query)) {
+				hCanvas.nodes[j].selected = true
+				// scroll to the bubble
+				graphScroll.ScrollToTop()
+				graphScroll.Offset = fyne.NewPos(n.cx-200, n.cy-100)
+				graphScroll.Refresh()
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			dialog.ShowInformation("Not Found", "No matching save found.", window)
+		}
+		hCanvas.Refresh()
+	})
+	searchBtn.Importance = widget.HighImportance
+
+	searchRow := container.NewHBox(searchSized, searchBtn)
+
 	widthMargin := canvas.NewRectangle(color.Transparent)
 	widthMargin.SetMinSize(fyne.NewSize(30, 0))
 
 	heightMargin := canvas.NewRectangle(color.Transparent)
 	heightMargin.SetMinSize(fyne.NewSize(0, 20))
 
+	graphMargin := canvas.NewRectangle(color.Transparent)
+	graphMargin.SetMinSize(fyne.NewSize(0, 40))
+
 	header := container.NewVBox(heightMargin, title, subtitle, heightMargin)
 	paddedHeader := container.NewBorder(nil, nil, widthMargin, widthMargin, header)
 
+	topBar := container.NewBorder(nil, nil, latestLabelBox, searchRow, nil)
+	paddedTopBar := container.NewBorder(nil, nil, widthMargin, widthMargin, topBar)
+
+	topGraph := container.NewVBox(paddedHeader, paddedTopBar, graphMargin)
+
 	// Use NewBorder to let graphScroll fill all remaining space
 	return container.NewBorder(
-		container.NewPadded(paddedHeader),
+		topGraph,
 		nil,
 		nil,
 		nil,
