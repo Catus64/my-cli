@@ -84,7 +84,7 @@ func ShowSaveHistoryWindow(app fyne.App, clicked Commit, files []string) {
 	filePanel := container.NewStack(fileBackground, container.NewPadded(fileInner))
 
 	// Commit Details
-	detailTitle := canvas.NewText("Commit Details", color.White)
+	detailTitle := canvas.NewText("Save Details", color.White)
 	detailTitle.TextSize = 20
 	detailTitle.TextStyle = fyne.TextStyle{Bold: true}
 

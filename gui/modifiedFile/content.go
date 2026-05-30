@@ -7,7 +7,9 @@ import (
 	gitobject "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 	"image/color"
+	"os"
 	"path/filepath"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -71,6 +73,32 @@ func getFileStatuses(repoPath string) ([]FileStatus, *gitpath.GitRepository) {
 	}
 
 	return result, repo
+}
+
+func reloadFiles(repo *gitpath.GitRepository, files *[]FileStatus) {
+    index, err := gitobject.Index_Read2(*repo)
+    if err != nil || index == nil {
+        return
+    }
+
+    *files = []FileStatus{}
+
+    headStatus, headErr := gitCurrent.StatusHeadIndex(*repo, *index)
+    if headErr == nil {
+        for _, f := range headStatus.Deleted {
+            *files = append(*files, FileStatus{Name: f, Status: "DELETED"})
+        }
+    }
+
+    status_files, err := gitCurrent.StatusIndexWorktree(*repo, *index)
+    if err == nil {
+        for _, f := range status_files.Modified {
+            *files = append(*files, FileStatus{Name: f, Status: "MODIFIED"})
+        }
+        for _, f := range status_files.Untracked {
+            *files = append(*files, FileStatus{Name: f, Status: "ADDED"})
+        }
+    }
 }
 
 func FileDirectory(repoPath string, window fyne.Window) fyne.CanvasObject {
@@ -149,29 +177,7 @@ func modifiedListBox(files *[]FileStatus, repo *gitpath.GitRepository, window fy
 			return
 		}
 
-		// Reload files after adding
-		index, err := gitobject.Index_Read2(*repo)
-		if err == nil && index != nil {
-			*files = []FileStatus{}
-
-			headStatus, headErr := gitCurrent.StatusHeadIndex(*repo, *index)
-			if headErr == nil {
-				for _, f := range headStatus.Deleted {
-					*files = append(*files, FileStatus{Name: f, Status: "DELETED"})
-				}
-			}
-
-			status_files, err := gitCurrent.StatusIndexWorktree(*repo, *index)
-			if err == nil {
-				for _, f := range status_files.Modified {
-					*files = append(*files, FileStatus{Name: f, Status: "MODIFIED"})
-				}
-				for _, f := range status_files.Untracked {
-					*files = append(*files, FileStatus{Name: f, Status: "ADDED"})
-				}
-			}
-		}
-
+		reloadFiles(repo, files)
 		if updateFunction != nil {
 			updateFunction() // refresh UI
 		}
@@ -184,7 +190,62 @@ func modifiedListBox(files *[]FileStatus, repo *gitpath.GitRepository, window fy
 	})
 	addButton.Importance = widget.HighImportance
 
-	ignoreButton := widget.NewButton("Ignore", func() {})
+	ignoreButton := widget.NewButton("Ignore", func() {
+		if repo == nil {
+			fmt.Println("No repo available")
+			return
+		}
+
+		var selectedFiles []string
+		var cannotIgnore []string
+
+		for name, checked := range checkedFiles {
+			if !checked {
+				continue
+			}
+			// find the file status
+			for _, file := range *files {
+				if file.Name == name {
+					if file.Status == "MODIFIED" {
+						cannotIgnore = append(cannotIgnore, name) 
+					} else {
+						selectedFiles = append(selectedFiles, name) 
+					}
+				}
+			}
+		}
+
+		gitignorePath := filepath.Join(repo.WorkTree, ".gitignore")
+		file, err := os.OpenFile(gitignorePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			dialog.ShowError(fmt.Errorf("failed to open .gitignore: %w", err), window)
+			return
+		}
+		defer file.Close()
+
+		for _, name := range selectedFiles {
+			fmt.Fprintln(file, name)  // write each file name as a new line
+		}
+
+		if len(cannotIgnore) > 0 {
+			dialog.ShowInformation("Ignore Failed",
+				fmt.Sprintf("Modified file(s) cannot be ignored:\n%s\n\nRemove them from save list first.",
+					strings.Join(cannotIgnore, "\n")),
+				window)
+		}
+
+		if len(selectedFiles) == 0 {
+			dialog.ShowInformation("No Files Selected", "Please select at least one file to ignore.", window)
+			return
+		}
+
+		reloadFiles(repo, files)
+		if updateFunction != nil {
+			updateFunction()
+		}
+
+		dialog.ShowInformation("Ignored", fmt.Sprintf("%d file(s) added as ignored file(s)!", len(selectedFiles)), window)
+	})
 	ignoreButton.Importance = widget.DangerImportance
 
 	buttonWidth := canvas.NewRectangle(color.Transparent)

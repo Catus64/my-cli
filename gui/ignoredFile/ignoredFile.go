@@ -2,6 +2,7 @@ package ignoredFile
 
 import (
 	"gocmd/gui"
+	// "gocmd/gui/ignoredFile"
 	"gocmd/gui/sidebar"
 
 	"fyne.io/fyne/v2"
@@ -18,6 +19,6 @@ func Show(gui *gui.MyApp, pathName string, window fyne.Window, onHome func(), on
 		func() { onHelp() },
 	)
 
-	fullContent := container.NewBorder(nil, nil, sidebar, nil, nil)
+	fullContent := container.NewBorder(nil, nil, sidebar, nil, ignoredFileContent(pathName, window))
 	window.SetContent(fullContent)
 }
