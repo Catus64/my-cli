@@ -287,7 +287,7 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 	return objs
 }
 
-// ── load real commits from repo ───────────────────────────────────────────────
+// Load commits from repo 
 
 func loadCommits(repoPath string) ([]Commit, *gitpath.GitRepository) {
 	repo, err := gitpath.Repo_find(repoPath, false)
@@ -605,7 +605,7 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 			}
 		}
 
-		// 5. Place bubbles oldest → newest going RIGHT from divergence point
+		// 5. Place bubbles oldest to newest going RIGHT from divergence point
 		for j := len(branchCommits) - 1; j >= 0; j-- {
 			altC := branchCommits[j]
 			posFromLeft := len(branchCommits) - 1 - j // 0=oldest, increases toward newest
@@ -701,7 +701,7 @@ func HistoryPageContent(repoPath string, app fyne.App, window fyne.Window) fyne.
 			// Get changed files
 			files := getChangedFiles(repo, c)
 			// Open new window
-			ShowSaveHistoryWindow(app, c, files)
+			ShowSaveHistoryWindow(app, c, files, repo)
 		},
 	}
 	hCanvas.ExtendBaseWidget(hCanvas)
