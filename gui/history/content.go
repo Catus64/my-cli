@@ -9,7 +9,6 @@ import (
 	githashread "gocmd/testfiles/GitHashRead"
 	gitlog "gocmd/testfiles/GitLog"
 	gitobj "gocmd/testfiles/GitObject"
-	gitsave "gocmd/testfiles/GitSave"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 
 	"fyne.io/fyne/v2"
@@ -27,9 +26,6 @@ type Commit struct {
 	Message     string    // Commit message
 	TreeSHA     string    // File tree snapshot
 	Parents     []string  // parent commit SHA (can be 2 if merge)
-	VersionNum  int		  // Version number 
-	VersionName string	  // Version name 
-	HasVersion  bool	  // Whether this commit is tagged as a version
 }
 
 const (
@@ -135,10 +131,7 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 				continue // skip merge parent line, show label instead
 			}
 
-			if pn, ok := byHash[parentHash]; ok {
-				
-				// dy := float64(n.cy - pn.cy)
-				
+			if pn, ok := byHash[parentHash]; ok {				
 				// Detect if this line skips a row (causing a collision)
 				var arriveX, arriveY float64
 
@@ -186,14 +179,14 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 					}
 				}
 				// Calculate angles for the arrow head
-				// Use arriveX/arriveY so the arrow perfectly matches the end of the curve!
+				// Use arriveX or arriveY so the arrow perfectly matches the end of the curve
 				arrowDx := float64(n.cx) - arriveX
 				arrowDy := float64(n.cy) - arriveY
 				angle := math.Atan2(arrowDy, arrowDx)
 
 				// Arrow properties
 				arrowLen := float64(14)      
-				arrowAngle := math.Pi / 6    
+				arrowAngle := math.Pi / 6 // 30 degree    
 
 				// Calculate where the tip should stop (edge of the CHILD bubble)
 				tipX := float64(n.cx) - float64(bubbleRadius)*math.Cos(angle)
@@ -290,17 +283,15 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 // Load commits from repo 
 
 func loadCommits(repoPath string) ([]Commit, *gitpath.GitRepository) {
-	repo, err := gitpath.Repo_find(repoPath, false)
+	repo, err := gitpath.Repo_find(repoPath, false) // find .git folder
 	if err != nil || repo == nil {
 		return nil, nil
 	}
 
-	headSHA, err := gitobj.Ref_Resolve(*repo, "HEAD")
+	headSHA, err := gitobj.Ref_Resolve(*repo, "HEAD") // get current commit SHA
 	if err != nil || headSHA == nil {
 		return nil, repo
 	}
-
-	branch, _ := gitCurrent.Get_Active_Branch(*repo)
 
 	var commits []Commit
 	seen := map[string]bool{}
@@ -308,13 +299,14 @@ func loadCommits(repoPath string) ([]Commit, *gitpath.GitRepository) {
 
 	for len(queue) > 0 {
 		sha := queue[0]
-		queue = queue[1:]
+		queue = queue[1:] // index 1 to the end
 
 		if seen[sha] || sha == "" {
 			continue
 		}
 		seen[sha] = true
 
+		// Read commit object 
 		obj, err := githashread.Object_Read(*repo, sha)
 		if err != nil {
 			continue
@@ -340,18 +332,9 @@ func loadCommits(repoPath string) ([]Commit, *gitpath.GitRepository) {
 			Parents:  parents,
 		}
 
-		if branch != "" {
-			entry, err := gitsave.ReadVersionRef(*repo, branch, sha)
-			if err == nil {
-				c.HasVersion = true
-				c.VersionNum = entry.Number
-				c.VersionName = entry.Name
-			}
-		}
-
 		commits = append(commits, c)
 
-		// enqueue ALL parents — not just first
+		// enqueue ALL parents, not just first
 		for _, p := range parents {
 			if !seen[p] {
 				queue = append(queue, p)
@@ -472,9 +455,6 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 		nodes = append(nodes, commitNode{commit: c, cx: cx, cy: cy, isHead: isLatest})
 	}
 
-	// place alt commits relative to their merge point
-	// placedAlt := map[string]bool{}
-
 	// Calculate a safe Y starting point BELOW the entire main chain
 	lastMainRowY := mainY + float32(totalRows-1)*rowGapY
 	baseAltY := lastMainRowY + rowGapY
@@ -492,7 +472,7 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 
 		altSHA := node.commit.Parents[1]
 		
-		// 1. Gather all commits in this branch line first to see where it ends up
+		// Gather all commits in this branch line first to see where it ends up
 		var branchCommits []Commit
 		currSHA := altSHA
 		var hitNode *commitNode
@@ -534,7 +514,7 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 			continue // Nothing new to draw
 		}
 		
-		// 2. Determine if we can safely share the row with the hit node
+		// Determine if we can safely share the row with the hit node
 		needsNewRow := true
 		var altY float32
 		
@@ -547,13 +527,13 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 			
 			// Calculate the entire X span from our new bubbles all the way back to the hitNode
 			spanMin := leftmostX
-			if hitNode.cx < spanMin { spanMin = hitNode.cx }
 			spanMax := rightmostX
+
+			if hitNode.cx < spanMin { spanMin = hitNode.cx }
 			if hitNode.cx > spanMax { spanMax = hitNode.cx }
 			
-			// LINE-OF-SIGHT CHECK: 
 			// If any existing bubble is sitting inside this horizontal space, our connecting 
-			// line would cut right through it! (Meaning this is a parallel branch fork).
+			// line would cut right through it — so we have to drop down to a new row
 			collision := false
 			for _, n := range nodes {
 				// Only check bubbles on the target row, and ignore the hitNode itself
@@ -572,13 +552,13 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 			}
 		}
 
-		// 3. If it collided (it's a parallel fork) OR pointed to Main, drop to a brand new row
+		// If it collided or pointed to Main, drop to a brand new row
 		if needsNewRow {
 			altY = baseAltY + float32(branchIndex)*100
 			branchIndex++
 		}
 
-		// 4. Find the X starting point (divergence point, not merge point)
+		// Find the X starting point (divergence point, not merge point)
 		var divergeX float32 = node.cx // fallback
 
 		if hitNode != nil && !needsNewRow {
@@ -605,7 +585,7 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 			}
 		}
 
-		// 5. Place bubbles oldest to newest going RIGHT from divergence point
+		// Place bubbles oldest to newest going RIGHT from divergence point
 		for j := len(branchCommits) - 1; j >= 0; j-- {
 			altC := branchCommits[j]
 			posFromLeft := len(branchCommits) - 1 - j // 0=oldest, increases toward newest
