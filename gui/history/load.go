@@ -25,7 +25,7 @@ func ShowSaveHistoryWindow(app fyne.App, clicked Commit, files []string, repo *g
 
 	topHash := clicked.ShortSHA
 
-	// ── Top: Commit Hash ──
+	// Commit Hash
 	hashTitle := canvas.NewText(topHash, color.White)
 	hashTitle.TextSize = 40
 	hashTitle.TextStyle = fyne.TextStyle{Bold: true}
@@ -201,7 +201,7 @@ func ShowSaveHistoryWindow(app fyne.App, clicked Commit, files []string, repo *g
 		// Join the shortened hashes together with a comma
 		parentStr = strings.Join(parts, ", ")
 	}
-	parentsLabel := canvas.NewText(fmt.Sprintf("Parents: %s", parentStr), color.RGBA{R: 180, G: 180, B: 180, A: 255})
+	parentsLabel := canvas.NewText(fmt.Sprintf("Parent(s): %s", parentStr), color.RGBA{R: 180, G: 180, B: 180, A: 255})
 	parentsLabel.TextSize = 13
 
 	authorLabel := canvas.NewText(fmt.Sprintf("Author: %s", clicked.Author), color.RGBA{R: 180, G: 180, B: 180, A: 255})
