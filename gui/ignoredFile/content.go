@@ -111,7 +111,7 @@ func ignoredFileContent(repoPath string, window fyne.Window) fyne.CanvasObject {
 		editEntry.Wrapping = fyne.TextWrapWord
 
 		scroll := container.NewScroll(editEntry)
-		scroll.SetMinSize(fyne.NewSize(400, 300))
+		scroll.SetMinSize(fyne.NewSize(400, 100))
 
 		dialog.ShowCustomConfirm("Ignored File Types", "Update", "Close", scroll, func(confirmed bool) {
 			if !confirmed {
