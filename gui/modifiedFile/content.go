@@ -264,7 +264,7 @@ func modifiedListBox(files *[]FileStatus, repo *gitpath.GitRepository, window fy
 	background.StrokeColor = color.RGBA{R: 208, G: 200, B: 200, A: 255}
 	background.StrokeWidth = 1
 	background.CornerRadius = 8
-	background.SetMinSize(fyne.NewSize(0, 420))
+	background.SetMinSize(fyne.NewSize(0, 500))
 
 	content := container.NewBorder(modifiedListHeader, button, nil, nil, scrollableFileList)
 	box := container.NewStack(background, container.NewPadded(content))

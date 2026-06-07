@@ -8,12 +8,13 @@ import (
 	"fyne.io/fyne/v2/container"
 )
 
-func Show(g *gui.MyApp, pathName string, window fyne.Window, onHome func(), onSave func(), onModified func(), onIgnored func(), onHistory func(), onHelp func()) {
+func Show(g *gui.MyApp, pathName string, window fyne.Window, onHome func(), onSave func(), onModified func(), onIgnored func(), onSaveFile func(), onHistory func(), onHelp func()) {
 	sidebar := sidebar.SideBar(g, window, pathName, "history",
 		func() { onHome() },
 		func() { onSave() },
 		func() { onModified() },
 		func() { onIgnored() },
+		func() { onSaveFile() },
 		func() { onHistory() },
 		func() { onHelp() },
 	)

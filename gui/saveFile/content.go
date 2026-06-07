@@ -21,65 +21,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func SaveFileContent(repoPath string, window fyne.Window) fyne.CanvasObject {
-	title := canvas.NewText("Save File", color.White)
-	title.TextSize = 40
-	title.TextStyle = fyne.TextStyle{Bold: true}
-
-	subtitle := canvas.NewText("Manage your save list", color.Gray{Y: 150})
-	subtitle.TextSize = 15
-
-	repo := gitpath.MakeRepo(repoPath, false)
-
-	// All index files for save list box
-	allFiles := getSaveListFiles(repoPath)
-
-	// Only staged files for staged box
-	stagedFiles := getStagedFiles(repoPath)
-
-	var updateStagedFiles func()
-
-	onFileChange := func() {
-		// Reload staged files from index and refresh the readySaveBox
-		stagedFiles = getStagedFiles(repoPath)
-		if updateStagedFiles != nil {
-			updateStagedFiles()
-		}
-	}
-
-	saveListBox, updateSaveList := saveListBox(&allFiles, repo, window, onFileChange)
-	readySaveBox, updateStagedFile := readySaveList(&stagedFiles)
-	updateStagedFiles = updateStagedFile
-
-	updateSaveList()
-	updateStagedFiles()
-
-	// Commit Box
-	commitBox := commitBox(repoPath, window, onFileChange)
-
-	columnGap := canvas.NewRectangle(color.Transparent)
-	columnGap.SetMinSize(fyne.NewSize(10, 0))
-
-	rowGap := canvas.NewRectangle(color.Transparent)
-	rowGap.SetMinSize(fyne.NewSize(0, 10))
-
-	rightColumn := container.NewBorder(nil, container.NewVBox(rowGap, readySaveBox), nil, nil, commitBox)
-
-	paddedRight := container.NewBorder(nil, nil, columnGap, nil, rightColumn)
-
-	content := container.NewGridWithColumns(2, saveListBox, paddedRight)
-
-	widthMargin := canvas.NewRectangle(color.Transparent)
-	widthMargin.SetMinSize(fyne.NewSize(30, 0))
-
-	heightMargin := canvas.NewRectangle(color.Transparent)
-	heightMargin.SetMinSize(fyne.NewSize(0, 20))
-
-	homeContent := container.NewVBox(heightMargin, title, subtitle, heightMargin, content)
-
-	return container.NewBorder(nil, nil, widthMargin, widthMargin, container.NewPadded(homeContent))
-}
-
 // Helper to get repo and index
 func getRepoAndIndex(repoPath string) (*gitpath.GitRepository, *gitobject.GitIndex) {
 	repo := gitpath.MakeRepo(repoPath, false)
@@ -252,7 +193,7 @@ func saveListBox(file *[]string, repo *gitpath.GitRepository, window fyne.Window
 	background.StrokeColor = color.RGBA{R: 208, G: 200, B: 200, A: 255}
 	background.StrokeWidth = 1
 	background.CornerRadius = 8
-	background.SetMinSize(fyne.NewSize(0, 350))
+	background.SetMinSize(fyne.NewSize(0, 425))
 
 	content := container.NewBorder(saveListHeader, removeBtn, nil, nil, scrollableFileList)
 
@@ -318,7 +259,7 @@ func commitBox(repoPath string, window fyne.Window, onFileChange func()) fyne.Ca
 
 	commitBackground := canvas.NewRectangle(color.Transparent)
 	commitBackground.CornerRadius = 8
-	commitBackground.SetMinSize(fyne.NewSize(0, 220))
+	commitBackground.SetMinSize(fyne.NewSize(0, 270))
 
 	commitBox := container.NewStack(commitBackground, container.NewPadded(commitMessageEntry), placeholderPosition)
 
@@ -498,7 +439,7 @@ func readySaveList(file *[]string) (fyne.CanvasObject, func()) {
 	background.StrokeColor = color.RGBA{R: 208, G: 200, B: 200, A: 255}
 	background.StrokeWidth = 1
 	background.CornerRadius = 8
-	background.SetMinSize(fyne.NewSize(0, 120))
+	background.SetMinSize(fyne.NewSize(0, 160))
 
 	leftMargin := canvas.NewRectangle(color.Transparent)
 	leftMargin.SetMinSize(fyne.NewSize(10, 0))
@@ -529,4 +470,63 @@ func readySaveList(file *[]string) (fyne.CanvasObject, func()) {
 	}
 
 	return box, update
+}
+
+func SaveFileContent(repoPath string, window fyne.Window) fyne.CanvasObject {
+	title := canvas.NewText("Save File", color.White)
+	title.TextSize = 40
+	title.TextStyle = fyne.TextStyle{Bold: true}
+
+	subtitle := canvas.NewText("Manage your save list", color.Gray{Y: 150})
+	subtitle.TextSize = 15
+
+	repo := gitpath.MakeRepo(repoPath, false)
+
+	// All index files for save list box
+	allFiles := getSaveListFiles(repoPath)
+
+	// Only staged files for staged box
+	stagedFiles := getStagedFiles(repoPath)
+
+	var updateStagedFiles func()
+
+	onFileChange := func() {
+		// Reload staged files from index and refresh the readySaveBox
+		stagedFiles = getStagedFiles(repoPath)
+		if updateStagedFiles != nil {
+			updateStagedFiles()
+		}
+	}
+
+	saveListBox, updateSaveList := saveListBox(&allFiles, repo, window, onFileChange)
+	readySaveBox, updateStagedFile := readySaveList(&stagedFiles)
+	updateStagedFiles = updateStagedFile
+
+	updateSaveList()
+	updateStagedFiles()
+
+	// Commit Box
+	commitBox := commitBox(repoPath, window, onFileChange)
+
+	columnGap := canvas.NewRectangle(color.Transparent)
+	columnGap.SetMinSize(fyne.NewSize(10, 0))
+
+	rowGap := canvas.NewRectangle(color.Transparent)
+	rowGap.SetMinSize(fyne.NewSize(0, 10))
+
+	rightColumn := container.NewBorder(nil, container.NewVBox(rowGap, readySaveBox), nil, nil, commitBox)
+
+	paddedRight := container.NewBorder(nil, nil, columnGap, nil, rightColumn)
+
+	content := container.NewGridWithColumns(2, saveListBox, paddedRight)
+
+	widthMargin := canvas.NewRectangle(color.Transparent)
+	widthMargin.SetMinSize(fyne.NewSize(30, 0))
+
+	heightMargin := canvas.NewRectangle(color.Transparent)
+	heightMargin.SetMinSize(fyne.NewSize(0, 20))
+
+	homeContent := container.NewVBox(heightMargin, title, subtitle, heightMargin, content)
+
+	return container.NewBorder(nil, nil, widthMargin, widthMargin, container.NewPadded(homeContent))
 }

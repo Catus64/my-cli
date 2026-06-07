@@ -15,6 +15,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -658,6 +659,13 @@ func HistoryPageContent(repoPath string, app fyne.App, window fyne.Window) fyne.
 	// load real commits
 	commits, repo := loadCommits(repoPath)
 
+	branch := ""
+	if repo != nil {
+		if b, err := gitCurrent.Get_Active_Branch(*repo); err == nil {
+			branch = b
+		}
+	}
+
 	if len(commits) == 0 {
 		empty := canvas.NewText("No commits found in this repository.", color.Gray{Y: 150})
 		empty.TextSize = 16
@@ -700,10 +708,13 @@ func HistoryPageContent(repoPath string, app fyne.App, window fyne.Window) fyne.
 	latestLabel.TextSize = 22
 	latestLabel.TextStyle = fyne.TextStyle{Bold: true}
 
+	branchLabel := canvas.NewText("Latest Save File: "+branch, color.RGBA{R: 100, G: 220, B: 100, A: 255})
+	branchLabel.TextSize = 15
+
 	underline := canvas.NewRectangle(color.White)
 	underline.SetMinSize(fyne.NewSize(200, 2))
 
-	latestLabelBox := container.NewVBox(latestLabel, underline)
+	latestLabelBox := container.NewVBox(latestLabel, underline, branchLabel)
 
 	// Search bar
 	searchEntry := widget.NewEntry()
@@ -742,7 +753,7 @@ func HistoryPageContent(repoPath string, app fyne.App, window fyne.Window) fyne.
 	})
 	searchBtn.Importance = widget.HighImportance
 
-	searchRow := container.NewHBox(searchSized, searchBtn)
+	searchRow := container.NewVBox(searchSized, container.NewHBox(searchBtn))
 
 	widthMargin := canvas.NewRectangle(color.Transparent)
 	widthMargin.SetMinSize(fyne.NewSize(30, 0))
@@ -751,15 +762,15 @@ func HistoryPageContent(repoPath string, app fyne.App, window fyne.Window) fyne.
 	heightMargin.SetMinSize(fyne.NewSize(0, 20))
 
 	graphMargin := canvas.NewRectangle(color.Transparent)
-	graphMargin.SetMinSize(fyne.NewSize(0, 40))
+	graphMargin.SetMinSize(fyne.NewSize(0, 80))
 
 	header := container.NewVBox(heightMargin, title, subtitle, heightMargin)
 	paddedHeader := container.NewBorder(nil, nil, widthMargin, widthMargin, header)
 
-	topBar := container.NewBorder(nil, nil, latestLabelBox, searchRow, nil)
+	topBar := container.NewHBox(latestLabelBox, layout.NewSpacer(), searchRow)
 	paddedTopBar := container.NewBorder(nil, nil, widthMargin, widthMargin, topBar)
 
-	topGraph := container.NewVBox(paddedHeader, paddedTopBar, graphMargin)
+	topGraph := container.NewVBox(paddedHeader, heightMargin, paddedTopBar, graphMargin)
 
 	// Use NewBorder to let graphScroll fill all remaining space
 	return container.NewBorder(

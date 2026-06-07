@@ -1,8 +1,7 @@
-package ignoredFile
+package branchPage
 
 import (
 	"gocmd/gui"
-	// "gocmd/gui/ignoredFile"
 	"gocmd/gui/sidebar"
 
 	"fyne.io/fyne/v2"
@@ -10,7 +9,7 @@ import (
 )
 
 func Show(gui *gui.MyApp, pathName string, window fyne.Window, onHome func(), onSave func(), onModified func(), onIgnored func(), onSaveFile func(), onHistory func(), onHelp func()) {
-	sidebar := sidebar.SideBar(gui, window, pathName, "ignored", 
+	sidebar := sidebar.SideBar(gui, window, pathName, "save-file", 
 		func() { onHome() }, 
 		func() { onSave() },
 		func() { onModified() }, 
@@ -20,6 +19,6 @@ func Show(gui *gui.MyApp, pathName string, window fyne.Window, onHome func(), on
 		func() { onHelp() },
 	)
 
-	fullContent := container.NewBorder(nil, nil, sidebar, nil, ignoredFileContent(pathName, window))
+	fullContent := container.NewBorder(nil, nil, sidebar, nil, branchContent())
 	window.SetContent(fullContent)
 }

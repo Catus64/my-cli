@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2/widget" // UI components (buttons, text boxes)
 
 	"gocmd/gui"
+	"gocmd/gui/branchPage"
 	"gocmd/gui/help"
 	"gocmd/gui/history"
 	"gocmd/gui/homepage"
@@ -89,28 +90,31 @@ func openButton(entry *widget.Entry, window fyne.Window, gui *gui.MyApp) *widget
 
 		// Window after Open
 		mainWindow := gui.App.NewWindow(gui.Window.Title())
-		mainWindow.Resize(fyne.NewSize(1000, 600))
+		mainWindow.Resize(fyne.NewSize(1000, 700))
 
 		// define all navigation function
-		var showHome, showSave, showFileDirectory, showIgnoredFile, showHistory, showHelp func()
+		var showHome, showSave, showFileDirectory, showIgnoredFile, showSaveFile, showHistory, showHelp func()
 
 		showHome = func() {
-			homepage.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showHistory, showHelp)
+			homepage.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showSaveFile, showHistory, showHelp)
 		}
 		showSave = func() {
-			saveFile.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showHistory, showHelp)
+			saveFile.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showSaveFile, showHistory, showHelp)
 		}
 		showFileDirectory = func() {
-			modifiedFile.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showHistory, showHelp)
+			modifiedFile.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showSaveFile, showHistory, showHelp)
 		}
 		showIgnoredFile = func() {
-			ignoredFile.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showHistory, showHelp)
+			ignoredFile.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showSaveFile, showHistory, showHelp)
+		}
+		showSaveFile = func() {
+			branchPage.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showSaveFile, showHistory, showHelp)
 		}
 		showHistory = func() {
-			history.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showHistory, showHelp)
+			history.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showSaveFile, showHistory, showHelp)
 		}
 		showHelp = func() {
-			help.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showHistory, showHelp)
+			help.Show(gui, path, mainWindow, showHome, showSave, showFileDirectory, showIgnoredFile, showSaveFile, showHistory, showHelp)
 		}
 
 		window.Hide()

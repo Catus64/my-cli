@@ -142,7 +142,7 @@ func ignoredFileContent(repoPath string, window fyne.Window) fyne.CanvasObject {
 	background.StrokeColor = color.RGBA{R: 208, G: 200, B: 200, A: 255}
 	background.StrokeWidth = 1
 	background.CornerRadius = 8
-	background.SetMinSize(fyne.NewSize(0, 420))
+	background.SetMinSize(fyne.NewSize(0, 500))
 
 	content := container.NewBorder(header, nil, nil, nil, scrollableFileList)
 	box := container.NewStack(background, container.NewPadded(content))

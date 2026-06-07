@@ -261,7 +261,7 @@ func HomePageContent(pathName string, window fyne.Window) fyne.CanvasObject {
 	background.StrokeColor = color.RGBA{R: 208, G: 200, B: 200, A: 255}
 	background.StrokeWidth = 1
 	background.CornerRadius = 8
-	background.SetMinSize(fyne.NewSize(0, 420))
+	background.SetMinSize(fyne.NewSize(0, 500))
 
 	bottomBackButton := container.NewHBox(backContainer) // Back Button
 	content := container.NewBorder(header, bottomBackButton, nil, nil, scrollableFileList)
