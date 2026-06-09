@@ -127,10 +127,10 @@ func resolveConflict(
 		fmt.Printf("├%s┤\n", border)
 		fmt.Printf("│  [1]  Keep from %-42s │\n", currentBranch+" (current)")
 		fmt.Printf("│  [2]  Keep from %-42s │\n", targetBranch+" (target)")
-		fmt.Printf("│  [3]  Write both as separate files           │\n")
-		fmt.Printf("│  [v1] View %-48s │\n", currentBranch+" version")
-		fmt.Printf("│  [v2] View %-48s │\n", targetBranch+" version")
-		fmt.Printf("│  [b]  View both                              │\n")
+		fmt.Printf("│  [3]  Write  both as separate files%-24s│\n", "") // Fixed padding
+		fmt.Printf("│  [v1] View %-47s │\n", currentBranch+" version")
+		fmt.Printf("│  [v2] View %-47s │\n", targetBranch+" version")
+		fmt.Printf("│  [b]  View both%-44s│\n", "") // Fixed padding
 		fmt.Printf("└%s┘\n", border)
 		fmt.Print("  choice > ")
 
@@ -276,7 +276,7 @@ func Combine(repo gitpath.GitRepository, targetBranch string) error {
 	// categorize files
 	var conflicts []conflict
 
-	// files only in target — auto add
+	// files only in target, auto add
 	for path, sha := range targetFiles {
 		if _, exists := currentFiles[path]; !exists {
 			// fmt.Printf("  adding:   %s\n", path)
