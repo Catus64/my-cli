@@ -14,7 +14,7 @@ func Git_init(cmd *cobra.Command, args []string) error {
 	prettyprint.PrintMessage(
 		"Repository Initialized Successfully",
 		gitrepo.GitDir,
-		"An empty repository has been created and\nis ready for use.\n If you have files you want to save\nuse ezg git -a then ezg save",
+		"An empty repository has been created and\nis ready for use.\n If you have files you want to save\nuse ezg add -a then ezg save",
 	)
 	return nil
 }

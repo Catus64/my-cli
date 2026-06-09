@@ -149,9 +149,9 @@ func PrintCommit(sha, author, date, tree, parent, header, message string) {
 	Row("Author : "+author, width)
 	Row("Date   : "+date, width)
 	EmptyRow(width)
-	Row("Tree   : "+tree, width)
+	Row("Tree SHA   : "+tree, width)
 	if parent != "" {
-		Row("Parent : "+parent, width)
+		Row("Parent SHA : "+parent, width)
 	}
 	Mid(width)
 	Header("Message", width)

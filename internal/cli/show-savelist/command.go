@@ -3,28 +3,32 @@ package showsavelist
 import (
 	gitobject "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
+	prettyprint "gocmd/testfiles/PrettyPrint"
 
 	"github.com/spf13/cobra"
 )
 
 func show_savelist(cmd *cobra.Command, args []string) error {
-
 	repo, err := gitpath.Repo_find(gitpath.Get_Os_Dir(), true)
 	if err != nil {
 		panic(err)
 	}
 
-	//_, err = gitobject.Index_Read(*repo)
 	index, err := gitobject.Index_Read2(*repo)
 	if err != nil {
 		panic(err)
 	}
 
+	var entries []prettyprint.SavelistEntry
 	for _, entry := range index.Entries {
-		println("File: ", entry.Name, " Mode: ", entry.ModePerms, " SHA: ", entry.SHA)
+		entries = append(entries, prettyprint.SavelistEntry{
+			File: entry.Name,
+			Type: prettyprint.ModeToType(entry.ModeType, entry.ModePerms),
+			SHA:  entry.SHA,
+		})
 	}
 
-	return nil
+	return prettyprint.RunSavelistViewer(entries, prettyprint.DefaultViewerConfig)
 }
 
 func NewCommand() *cobra.Command {

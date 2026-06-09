@@ -1,7 +1,6 @@
 package viewcommand
 
 import (
-	"bufio"
 	"fmt"
 	gitcurrent "gocmd/testfiles/GitCurrent"
 	githashread "gocmd/testfiles/GitHashRead"
@@ -12,6 +11,8 @@ import (
 	prettyprint "gocmd/testfiles/PrettyPrint"
 	"os"
 	"strings"
+
+	"golang.org/x/term"
 )
 
 func viewCommit(repo gitpath.GitRepository, sha string) error {
@@ -64,10 +65,22 @@ func viewCommit(repo gitpath.GitRepository, sha string) error {
 	)
 
 	fmt.Print("\npress v to view tree, any other key to exit: ")
-	reader := bufio.NewReader(os.Stdin)
-	input, _ := reader.ReadByte()
-	if input == 'v' {
-		return viewTree(repo, treeSHA, header)
+
+	// switch to raw mode for single keypress
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err == nil {
+		b := make([]byte, 1)
+		os.Stdin.Read(b)
+		term.Restore(int(os.Stdin.Fd()), oldState)
+
+		switch b[0] {
+		case 'v':
+			return viewTree(repo, treeSHA, header)
+		case 'q', 3: // q or ctrl+c
+			return nil
+		default:
+			return nil
+		}
 	}
 	return nil
 }

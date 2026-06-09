@@ -30,7 +30,7 @@ type logViewerState struct {
 
 func drawLogCommit(state *logViewerState) {
 	if state.config.ClearOnRedraw {
-		clearScreen()
+		// clearScreen()
 	}
 
 	const width = 72
@@ -49,13 +49,13 @@ func drawLogCommit(state *logViewerState) {
 	Row(fmt.Sprintf("Author   : %s", commit.Author), width)
 	Row(fmt.Sprintf("Date     : %s", commit.Date), width)
 	EmptyRow(width)
-	Row(fmt.Sprintf("Tree     : %s", shortSHA(commit.TreeSHA)), width)
+	Row(fmt.Sprintf("Tree   SHA: %s", shortSHA(commit.TreeSHA)), width)
 
 	// parents section
 	if len(commit.Parents) == 0 {
 		Row("Parent   : none (first commit)", width)
 	} else if len(commit.Parents) == 1 {
-		Row(fmt.Sprintf("Parent   : %s", shortSHA(commit.Parents[0])), width)
+		Row(fmt.Sprintf("Parent SHA: %s", shortSHA(commit.Parents[0])), width)
 	} else {
 		// merge commit — show both with cursor
 		Mid(width)
@@ -98,7 +98,7 @@ func drawLogCommit(state *logViewerState) {
 
 func drawEndOfHistory(config ViewerConfig) {
 	if config.ClearOnRedraw {
-		clearScreen()
+		// clearScreen()
 	}
 	const width = 72
 	Top(width)
@@ -159,7 +159,7 @@ func RunLogViewer(
 		case b == 'q' || b == 3:
 			term.Restore(int(os.Stdin.Fd()), oldState)
 			SetRawMode(false)
-			clearScreen()
+			// clearScreen()
 			return nil
 
 		case b == '\x1b':
@@ -175,8 +175,10 @@ func RunLogViewer(
 				}
 				parents := state.current.Parents
 				if len(parents) == 0 {
-					// first commit — show end of history
+					// first commit next page will show end of history
 					atEnd = true
+					// still add the first commit to stack
+					state.history = append(state.history, state.current)
 					drawEndOfHistory(state.config)
 					break
 				}
