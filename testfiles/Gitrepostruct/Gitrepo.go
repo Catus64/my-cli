@@ -21,17 +21,18 @@ type GitRepository struct {
 func MakeRepo(path string, force bool) *GitRepository {
 	repo := GitRepository{
 		WorkTree: path,
-		GitDir:   filepath.Join(path, ".git")}
+		GitDir:   filepath.Join(path, ".git"),
+	}
+	repo.Read_Conf(true)
 
-	repo.Read_Conf(force)
-
-	if !force {
+	if !force && repo.cfg != nil {
 		vers := repo.cfg.Section("core").Key("repositoryformatversion").String()
 		versnum, err := strconv.Atoi(vers)
 		if err != nil || versnum != 0 {
-			panic("Unsurported repositoryformatversion")
+			panic("Unsupported repositoryformatversion")
 		}
 	}
+
 	return &repo
 }
 
@@ -40,13 +41,14 @@ func (repo *GitRepository) Read_Conf(force bool) {
 	if err != nil {
 		if !force {
 			panic("Configuration file missing")
-		} else {
-			repo.cfg = nil
-			return
 		}
+		// create minimal default config instead of nil
+		repo.cfg = ini.Empty()
+		repo.cfg.Section("core").Key("repositoryformatversion").SetValue("0")
+		return
 	}
-	repo.cfg = read
 
+	repo.cfg = read
 }
 
 func Repo_Path(repo GitRepository, path ...string) string {

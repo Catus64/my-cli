@@ -9,6 +9,8 @@ import (
 	gitpath "gocmd/testfiles/Gitrepostruct"
 	helper "gocmd/testfiles/Helper"
 	"log/slog"
+	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -29,6 +31,26 @@ func main() {
 
 		if err := extractor.Extract(*repo); err != nil {
 			slog.Error("failed to extract packfiles", "error", err)
+		}
+	}
+
+	if repo == nil {
+		var path string
+		configDir, err := os.UserConfigDir()
+		if err != nil {
+			// fallback if os.UserConfigDir() fails
+			home, err := os.UserHomeDir()
+			if err != nil {
+
+			}
+			path = filepath.Join(home, ".ezgit", "ezgit.log")
+		} else {
+			path = filepath.Join(configDir, "ezgit", "config")
+
+		}
+		err = helper.Init(path, slog.LevelDebug)
+		if err != nil {
+			panic(err)
 		}
 	}
 
