@@ -1,7 +1,6 @@
 package alternateversions
 
 import (
-	"bufio"
 	"fmt"
 	add "gocmd/testfiles/GitAddRemove"
 	gitcheckignore "gocmd/testfiles/GitCheckIgnore"
@@ -13,7 +12,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 func SwitchAltVer(repo gitpath.GitRepository, name string) error {
@@ -40,21 +38,21 @@ func SwitchAltVer(repo gitpath.GitRepository, name string) error {
 	}
 
 	// Dirty check is to warn user for unsaved changes
-	index, err := gitobj.Index_Read2(repo)
-	if err != nil {
-		return fmt.Errorf("failed to read Savelist: %w", err)
-	}
-	if isDirty(repo, *index) {
-		fmt.Println("WARNING : You have unsaved changes that will be lost if you switch.")
-		fmt.Print("    Continue anyway? (y/n): ")
-		reader := bufio.NewReader(os.Stdin)
-		input, _ := reader.ReadString('\n')
-		input = strings.TrimSpace(strings.ToLower(input))
-		if input != "y" {
-			fmt.Println("Switch cancelled.")
-			return nil
-		}
-	}
+	// index, err := gitobj.Index_Read2(repo)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to read Savelist: %w", err)
+	// }
+	// if isDirty(repo, *index) {
+	// 	fmt.Println("WARNING : You have unsaved changes that will be lost if you switch.")
+	// 	fmt.Print("    Continue anyway? (y/n): ")
+	// 	reader := bufio.NewReader(os.Stdin)
+	// 	input, _ := reader.ReadString('\n')
+	// 	input = strings.TrimSpace(strings.ToLower(input))
+	// 	if input != "y" {
+	// 		fmt.Println("Switch cancelled.")
+	// 		return nil
+	// 	}
+	// }
 
 	// Get rules so we dont delete gitignored stuff
 	// solution is not perfect but will do for now
@@ -154,6 +152,39 @@ func isDirty(repo gitpath.GitRepository, index gitobj.GitIndex) bool {
 		}
 	}
 	return false
+}
+
+// IsDirty exposes the dirty check for the GUI to call before switching
+func IsDirty(repo gitpath.GitRepository) (bool, error) {
+	index, err := gitobj.Index_Read2(repo)
+	if err != nil {
+		return false, err
+	}
+
+	// check modified tracked files (mtime-based)
+	if isDirty(repo, *index) {
+		return true, nil
+	}
+
+	// check untracked / unstaged modified / deleted files in worktree
+	worktreeStatus, err := gitCurrent.StatusIndexWorktree(repo, *index)
+	if err != nil {
+		return false, err
+	}
+	if len(worktreeStatus.Untracked) > 0 || len(worktreeStatus.Modified) > 0 || len(worktreeStatus.Deleted) > 0 {
+		return true, nil
+	}
+
+	// check staged but not committed changes
+	headStatus, err := gitCurrent.StatusHeadIndex(repo, *index)
+	if err != nil {
+		return false, err
+	}
+	if headStatus.HasChanges() {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // delete all files/dirs in worktree except .git
