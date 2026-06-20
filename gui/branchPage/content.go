@@ -151,7 +151,7 @@ func branchContent(repoPath string, window fyne.Window, app fyne.App) fyne.Canva
 		}
 
 		if len(commits) == 0 {
-			dialog.ShowInformation("No History", "No commits found for: "+branchName, window)
+			dialog.ShowInformation("No History", "No saves found for: "+branchName, window)
 			return
 		}
 
@@ -340,7 +340,70 @@ func branchContent(repoPath string, window fyne.Window, app fyne.App) fyne.Canva
 	switchButton.Importance = widget.HighImportance
 
 	mergeButton := widget.NewButton("Merge", func() {
+		if selectedBranch == "" {
+			dialog.ShowInformation("No Selection", "Please select a save file to merge.", window)
+			return
+		}
+		if repo == nil {
+			dialog.ShowInformation("Error", "No repository found.", window)
+			return
+		}
 
+		activeBranch, _ := gitCurrent.Get_Active_Branch(*repo)
+
+		result, err := alternateversions.MergeBranch(*repo, selectedBranch)
+		if err != nil {
+			dialog.ShowError(err, window)
+			return
+		}
+
+		if len(result.Conflicts) == 0 && len(result.AutoMerged) == 0 {
+			dialog.ShowInformation("Already Up to Date", "'"+selectedBranch+"' has no new changes to merge.", window)
+			return
+		}
+
+		if len(result.Conflicts) == 0 {
+			// Prompt for merge commit message
+			messageEntry := widget.NewMultiLineEntry()
+			messageEntry.SetPlaceHolder("Merge save message")
+			messageEntry.SetText("Merge branch '" + selectedBranch + "'")
+			messageEntry.Wrapping = fyne.TextWrapWord
+
+			sizedMsgEntry := container.NewGridWrap(fyne.NewSize(150, 100), messageEntry)
+
+			formItems := []*widget.FormItem{
+				widget.NewFormItem("Message", sizedMsgEntry),
+			}
+			dialog.ShowForm("Merge Save Message", "Save", "Cancel", formItems, func(submitted bool) {
+				if !submitted || strings.TrimSpace(messageEntry.Text) == "" {
+					return
+				}
+				if err := alternateversions.ApplyAutoMergedFiles(*repo, selectedBranch); err != nil {
+					dialog.ShowError(err, window)
+					return
+				}
+				err := alternateversions.CompleteMerge(*repo, selectedBranch, strings.TrimSpace(messageEntry.Text), window)
+				if err != nil {
+					dialog.ShowError(err, window)
+					return
+				}
+				dialog.ShowInformation("Merge Complete", "Merged successfully with no conflicts.", window)
+				selectedBranch = ""
+				newRows, newRepo := loadBranches(repoPath)
+				rows = newRows
+				repo = newRepo
+				rebuildTable(rows, repo)
+			}, window)
+			return
+		}
+
+		showMergeConflictWindow(app, result.Conflicts, repo, activeBranch, selectedBranch, func() {
+			selectedBranch = ""
+			newRows, newRepo := loadBranches(repoPath)
+			rows = newRows
+			repo = newRepo
+			rebuildTable(rows, repo)
+		})
 	})
 	mergeButton.Importance = widget.HighImportance
 

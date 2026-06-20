@@ -104,7 +104,7 @@ func getStagedFiles(repoPath string) []string {
 		}
 	}
 
-	fmt.Println("Files ready to commit:", len(result))
+	fmt.Println("Files ready to save:", len(result))
 	return result
 }
 

@@ -20,7 +20,7 @@ import (
 )
 
 func ShowSaveHistoryWindow(app fyne.App, clicked Commit, files []string, repo *gitpath.GitRepository) {	
-	window := app.NewWindow(fmt.Sprintf("Commit: %s", clicked.SHA))
+	window := app.NewWindow(fmt.Sprintf("Save Key: %s", clicked.SHA))
 	window.Resize(fyne.NewSize(900, 600))
 
 	topHash := clicked.ShortSHA
@@ -53,7 +53,7 @@ func ShowSaveHistoryWindow(app fyne.App, clicked Commit, files []string, repo *g
 
 	currentChangeButton := widget.NewButton("Current Change", func() {
 		if len(files) == 0 {
-			dialog.ShowInformation("No Changes", "No changed files in this commit.", window)
+			dialog.ShowInformation("No Changes", "No changed files in this save.", window)
 			return
 		}
 
