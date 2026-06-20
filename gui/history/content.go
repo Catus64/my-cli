@@ -1,6 +1,7 @@
 package history
 
 import (
+	"fmt"
 	"image/color"
 	"math"
 	"strings"
@@ -281,8 +282,136 @@ func (r *historyRenderer) build() []fyne.CanvasObject {
 	return objs
 }
 
-// Load commits from repo 
+// Save File Page Purpose
+func buildMainChainNodes(commits []Commit) ([]commitNode, float32, float32) {
+	if len(commits) == 0 {
+		return nil, 200, canvasHeight
+	}
 
+	byHash := map[string]Commit{}
+	for _, c := range commits {
+		byHash[c.SHA] = c
+	}
+
+	var mainChain []string
+	seen := map[string]bool{}
+	current := commits[0].SHA
+	for {
+		c, ok := byHash[current]
+		if !ok || seen[current] {
+			break
+		}
+		seen[current] = true
+		mainChain = append(mainChain, current)
+		if len(c.Parents) == 0 {
+			break
+		}
+		current = c.Parents[0]
+	}
+
+	for i, j := 0, len(mainChain)-1; i < j; i, j = i+1, j-1 {
+		mainChain[i], mainChain[j] = mainChain[j], mainChain[i]
+	}
+
+	var nodes []commitNode
+	for i, sha := range mainChain {
+		c := byHash[sha]
+		cx := float32(i+1) * bubbleGap
+		cy := mainY
+		isLatest := i == len(mainChain)-1
+		nodes = append(nodes, commitNode{commit: c, cx: cx, cy: cy, isHead: isLatest})
+	}
+
+	var maxX float32
+	for _, n := range nodes {
+		if n.cx > maxX {
+			maxX = n.cx
+		}
+	}
+	canvasW := maxX + bubbleRadius + 60
+	totalH := mainY + bubbleRadius + 60
+
+	return nodes, canvasW, totalH
+}
+
+// Save File Page Purpose
+func NewMainChainCanvas(commits []Commit, onSelect func(Commit)) *HistoryCanvas {
+	nodes, canvasW, canvasH := buildMainChainNodes(commits)
+	hc := &HistoryCanvas{
+		nodes:      nodes,
+		canvasSize: fyne.NewSize(canvasW, canvasH),
+		onSelect:   onSelect,
+	}
+	hc.ExtendBaseWidget(hc)
+	return hc
+}
+
+// Save File Page Purpose
+func ShowCommitDetailWindow(app fyne.App, c Commit) {
+	window := app.NewWindow(fmt.Sprintf("Save Detail: %s", c.ShortSHA))
+	window.Resize(fyne.NewSize(420, 280))
+
+	titleText := canvas.NewText(c.ShortSHA, color.White)
+	titleText.TextSize = 26
+	titleText.TextStyle = fyne.TextStyle{Bold: true}
+
+	hashLabel := canvas.NewText("Hash: "+c.SHA, color.RGBA{R: 120, G: 200, B: 255, A: 255})
+	hashLabel.TextSize = 13
+	hashLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+	parentStr := "none"
+	if len(c.Parents) > 0 {
+		parts := []string{}
+		for _, p := range c.Parents {
+			short := p
+			if len(p) > 5 {
+				short = p[:5]
+			}
+			parts = append(parts, short)
+		}
+		parentStr = strings.Join(parts, ", ")
+	}
+	parentsLabel := canvas.NewText("Parent(s): "+parentStr, color.RGBA{R: 180, G: 180, B: 180, A: 255})
+	parentsLabel.TextSize = 13
+
+	authorLabel := canvas.NewText("Author: "+c.Author, color.RGBA{R: 180, G: 180, B: 180, A: 255})
+	authorLabel.TextSize = 13
+
+	dateLabel := canvas.NewText("Date: "+c.Date, color.RGBA{R: 180, G: 180, B: 180, A: 255})
+	dateLabel.TextSize = 13
+
+	heightMargin := canvas.NewRectangle(color.Transparent)
+	heightMargin.SetMinSize(fyne.NewSize(0, 15))
+
+	msgLabel := widget.NewLabel(c.Message)
+	msgLabel.TextStyle = fyne.TextStyle{Bold: true}
+	msgLabel.Alignment = fyne.TextAlignCenter
+	msgLabel.Wrapping = fyne.TextWrapWord
+
+	closeBtn := widget.NewButton("Close", func() {
+		window.Close()
+	})
+	closeBtn.Importance = widget.HighImportance
+	closeBtnRow := container.NewHBox(layout.NewSpacer(), closeBtn, layout.NewSpacer())
+
+	content := container.NewVBox(
+		titleText,
+		heightMargin,
+		hashLabel,
+		parentsLabel,
+		authorLabel,
+		dateLabel,
+		heightMargin,
+		container.NewPadded(msgLabel),
+		heightMargin,
+		closeBtnRow,
+	)
+
+	window.SetContent(container.NewPadded(content))
+	window.Show()
+}
+
+// Load commits from repo 
 func loadCommits(repoPath string) ([]Commit, *gitpath.GitRepository) {
 	repo, err := gitpath.Repo_find(repoPath, false) // find .git folder
 	if err != nil || repo == nil {

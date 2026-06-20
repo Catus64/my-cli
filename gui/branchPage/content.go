@@ -2,13 +2,17 @@ package branchPage
 
 import (
 	"fmt"
+	"strings"
 	gitCurrent "gocmd/testfiles/GitCurrent"
 	gitobj "gocmd/testfiles/GitObject"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 	alternateversions "gocmd/testfiles/alternateVersions"
+	githashread "gocmd/testfiles/GitHashRead"
+	gitlog "gocmd/testfiles/GitLog"
 	"image/color"
 	"io/fs"
 	"path/filepath"
+	"gocmd/gui/history"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -61,7 +65,7 @@ func loadBranches(repoPath string) ([]branchRow, *gitpath.GitRepository) {
 	return rows, repo
 }	
 
-func branchContent(repoPath string, window fyne.Window) fyne.CanvasObject {
+func branchContent(repoPath string, window fyne.Window, app fyne.App) fyne.CanvasObject {
 	title := canvas.NewText("Save File", color.White)
 	title.TextSize = 40
 	title.TextStyle = fyne.TextStyle{Bold: true}
@@ -91,6 +95,91 @@ func branchContent(repoPath string, window fyne.Window) fyne.CanvasObject {
 	selectedBranch := ""
 
 	rows, repo := loadBranches(repoPath)
+
+	showBranchHistory := func(branchName string, branchRepo *gitpath.GitRepository) {
+		if branchRepo == nil {
+			return
+		}
+
+		branchSHA, err := gitobj.Ref_Resolve(*branchRepo, "refs/heads/"+branchName)
+		if err != nil || branchSHA == nil {
+			return
+		}
+
+		var commits []history.Commit
+		seen := map[string]bool{}
+		queue := []string{*branchSHA}
+
+		for len(queue) > 0 {
+			sha := queue[0]
+			queue = queue[1:]
+			if seen[sha] || sha == "" {
+				continue
+			}
+			seen[sha] = true
+
+			obj, err := githashread.Object_Read(*branchRepo, sha)
+			if err != nil {
+				continue
+			}
+			gitCommit, ok := obj.(*gitobj.GitCommit)
+			if !ok {
+				continue
+			}
+			gitCommit.Deserialize()
+
+			date, author := gitlog.Format_Date_Author(string(gitCommit.KvlmDict.Dict["author"]))
+			treeSHA := strings.TrimSpace(string(gitCommit.KvlmDict.Dict["tree"]))
+			parents := gitobj.GetKvlmValues(gitCommit.KvlmDict.Dict, "parent")
+			message := strings.TrimSpace(string(gitCommit.KvlmDict.Dict["data"]))
+
+			commits = append(commits, history.Commit{
+				SHA:      sha,
+				ShortSHA: sha[:5],
+				Author:   author,
+				Date:     date,
+				Message:  message,
+				TreeSHA:  treeSHA,
+				Parents:  parents,
+			})
+
+			for _, p := range parents {
+				if !seen[p] {
+					queue = append(queue, p)
+				}
+			}
+		}
+
+		if len(commits) == 0 {
+			dialog.ShowInformation("No History", "No commits found for: "+branchName, window)
+			return
+		}
+
+		historyWindow := app.NewWindow("History")
+		historyWindow.Resize(fyne.NewSize(900, 300))
+
+		hCanvas := history.NewMainChainCanvas(commits, func(c history.Commit) {
+			history.ShowCommitDetailWindow(app, c)
+		})
+
+		titleText := canvas.NewText("History: "+branchName, color.White)
+		titleText.TextSize = 22
+		titleText.TextStyle = fyne.TextStyle{Bold: true}
+
+		graphScroll := container.NewHScroll(hCanvas)
+
+		margin := canvas.NewRectangle(color.Transparent)
+		margin.SetMinSize(fyne.NewSize(0, 20))
+
+		content := container.NewBorder(
+			container.NewVBox(margin, container.NewPadded(titleText), margin),
+			nil, nil, nil,
+			container.NewPadded(graphScroll),
+		)
+
+		historyWindow.SetContent(content)
+		historyWindow.Show()
+	}
 
 	tableRows := container.NewVBox()
 	var rowObjects []fyne.CanvasObject
@@ -152,6 +241,7 @@ func branchContent(repoPath string, window fyne.Window) fyne.CanvasObject {
 					}
 					bg.Refresh()
 				}
+				showBranchHistory(row.name, repo)
 			})
 			selectedTarget.Importance = widget.LowImportance
 

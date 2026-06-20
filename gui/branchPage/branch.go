@@ -19,6 +19,6 @@ func Show(gui *gui.MyApp, pathName string, window fyne.Window, onHome func(), on
 		func() { onHelp() },
 	)
 
-	fullContent := container.NewBorder(nil, nil, sidebar, nil, branchContent(pathName, window))
+	fullContent := container.NewBorder(nil, nil, sidebar, nil, branchContent(pathName, window, gui.App))
 	window.SetContent(fullContent)
 }
