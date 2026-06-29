@@ -778,7 +778,7 @@ func buildNodes(commits []Commit) ([]commitNode, float32, float32) {
 }
 
 func HistoryPageContent(repoPath string, app fyne.App, window fyne.Window) fyne.CanvasObject {
-	title := canvas.NewText("Save History", color.White)
+	title := canvas.NewText("Version History", color.White)
 	title.TextSize = 40
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -796,7 +796,7 @@ func HistoryPageContent(repoPath string, app fyne.App, window fyne.Window) fyne.
 	}
 
 	if len(commits) == 0 {
-		empty := canvas.NewText("No commits found in this repository.", color.Gray{Y: 150})
+		empty := canvas.NewText("No saved changes found in this repository.", color.Gray{Y: 150})
 		empty.TextSize = 16
 		return container.NewVBox(
 			canvas.NewRectangle(color.Transparent),
@@ -837,7 +837,7 @@ func HistoryPageContent(repoPath string, app fyne.App, window fyne.Window) fyne.
 	latestLabel.TextSize = 22
 	latestLabel.TextStyle = fyne.TextStyle{Bold: true}
 
-	branchLabel := canvas.NewText("Latest Save File: "+branch, color.RGBA{R: 100, G: 220, B: 100, A: 255})
+	branchLabel := canvas.NewText("Current Branch: "+branch, color.RGBA{R: 100, G: 220, B: 100, A: 255})
 	branchLabel.TextSize = 15
 
 	underline := canvas.NewRectangle(color.White)

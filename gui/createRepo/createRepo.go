@@ -24,7 +24,7 @@ import (
 func RepoInit(path string) error {
 	_, err := gitpath.Repo_create(path)
 	if err != nil {
-		return fmt.Errorf("Path does not exist or already exist!")
+		return fmt.Errorf("This directory already has a repository")
 	}
     return nil
 }

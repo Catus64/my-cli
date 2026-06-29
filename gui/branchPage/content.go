@@ -66,11 +66,11 @@ func loadBranches(repoPath string) ([]branchRow, *gitpath.GitRepository) {
 }	
 
 func branchContent(repoPath string, window fyne.Window, app fyne.App) fyne.CanvasObject {
-	title := canvas.NewText("Save File", color.White)
+	title := canvas.NewText("Branch Management", color.White)
 	title.TextSize = 40
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
-	subtitle := canvas.NewText("Manage your save file", color.Gray{Y: 150})
+	subtitle := canvas.NewText("Manage your branches", color.Gray{Y: 150})
 	subtitle.TextSize = 15
 
 	// Table
@@ -274,12 +274,12 @@ func branchContent(repoPath string, window fyne.Window, app fyne.App) fyne.Canva
 			return
 		}
 		nameEntry := widget.NewEntry()
-		nameEntry.SetPlaceHolder("New save file name")
+		nameEntry.SetPlaceHolder("New branch name")
 		sizedEntry := container.NewGridWrap(fyne.NewSize(300, nameEntry.MinSize().Height), nameEntry)
 		formItems := []*widget.FormItem{
 			widget.NewFormItem("Name", sizedEntry),
 		}
-		dialog.ShowForm("Add Save File", "Add", "Cancel", formItems, func(submitted bool) {
+		dialog.ShowForm("Add Branch", "Add", "Cancel", formItems, func(submitted bool) {
 			if !submitted || nameEntry.Text == "" {
 				return
 			}
@@ -288,7 +288,7 @@ func branchContent(repoPath string, window fyne.Window, app fyne.App) fyne.Canva
 				dialog.ShowError(err, window)
 				return
 			}
-			dialog.ShowInformation("Success", fmt.Sprintf("Save file '%s' created.", nameEntry.Text), window)
+			dialog.ShowInformation("Success", fmt.Sprintf("Branch '%s' created.", nameEntry.Text), window)
 			newRows, newRepo := loadBranches(repoPath)
 			rows = newRows
 			repo = newRepo
@@ -314,7 +314,7 @@ func branchContent(repoPath string, window fyne.Window, app fyne.App) fyne.Canva
 
 	switchButton := widget.NewButton("Switch", func() {
 		if selectedBranch == "" {
-			dialog.ShowInformation("No Selection", "Please select a save file to switch.", window)
+			dialog.ShowInformation("No Selection", "Please select a branch to switch.", window)
 			return
 		}
 		if repo == nil {
@@ -341,7 +341,7 @@ func branchContent(repoPath string, window fyne.Window, app fyne.App) fyne.Canva
 
 	mergeButton := widget.NewButton("Merge", func() {
 		if selectedBranch == "" {
-			dialog.ShowInformation("No Selection", "Please select a save file to merge.", window)
+			dialog.ShowInformation("No Selection", "Please select a branch to merge.", window)
 			return
 		}
 		if repo == nil {

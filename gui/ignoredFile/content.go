@@ -93,21 +93,37 @@ func ignoredFileContent(repoPath string, window fyne.Window) fyne.CanvasObject {
 
 	updateIgnoredList(repoPath, fileList, fileListTitle, LRMargin) 
 
-	viewButton := widget.NewButton("View File Type", func() {
-		// Read .gitignore content
+	var openEditor func()
+	openEditor = func() {
 		gitignorePath := filepath.Join(repoPath, ".gitignore")
-		data, err := os.ReadFile(gitignorePath)
-		content := ""
 
+		data, err := os.ReadFile(gitignorePath)
 		if err != nil {
-			dialog.ShowInformation("No Ignored File", "No ignored file found in this repository.", window)
+			dialog.ShowConfirm(
+				"No Ignored File",
+				"No ignored file found in this repository. Would you like to create one?",
+				func(confirmed bool) {
+					if !confirmed {
+						return
+					}
+					err := os.WriteFile(gitignorePath, []byte(""), 0644)
+					if err != nil {
+						dialog.ShowError(fmt.Errorf("failed to create .gitignore: %w", err), window)
+						return
+					}
+					infoDialog := dialog.NewInformation("Created", "Ignore file created successfully.", window)
+					infoDialog.SetOnClosed(func() {
+						openEditor()
+					})
+					infoDialog.Show()
+				},
+				window,
+			)
 			return
-		} else {
-			content = string(data)
 		}
 
 		editEntry := widget.NewMultiLineEntry()
-		editEntry.SetText(content)
+		editEntry.SetText(string(data))
 		editEntry.Wrapping = fyne.TextWrapWord
 
 		scroll := container.NewScroll(editEntry)
@@ -117,16 +133,18 @@ func ignoredFileContent(repoPath string, window fyne.Window) fyne.CanvasObject {
 			if !confirmed {
 				return
 			}
-
 			err := os.WriteFile(gitignorePath, []byte(editEntry.Text), 0644)
 			if err != nil {
-				dialog.ShowError(fmt.Errorf("Failed to save ignored files: %w", err), window)
+				dialog.ShowError(fmt.Errorf("failed to save .gitignore: %w", err), window)
 				return
 			}
-
 			updateIgnoredList(repoPath, fileList, fileListTitle, LRMargin)
 			dialog.ShowInformation("Updated", "Ignored files updated successfully.", window)
 		}, window)
+	}
+
+	viewButton := widget.NewButton("View File Type", func() {
+		openEditor()
 	})
 	viewButton.Importance = widget.HighImportance
 

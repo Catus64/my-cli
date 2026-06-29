@@ -56,10 +56,8 @@ func getSaveListFiles(repoPath string) []string {
 	// Show ALL index entries
 	for _, entry := range index.Entries {
 		result = append(result, entry.Name)
-		println("File: ", entry.Name, " Mode: ", entry.ModePerms, " SHA: ", entry.SHA)
 	}
 
-	fmt.Println("Staged files:", len(result))
 	return result
 }
 
@@ -104,12 +102,11 @@ func getStagedFiles(repoPath string) []string {
 		}
 	}
 
-	fmt.Println("Files ready to save:", len(result))
 	return result
 }
 
 func saveListBox(file *[]string, repo *gitpath.GitRepository, window fyne.Window, onFileChange func()) (fyne.CanvasObject, func()) {
-	saveListTitle := canvas.NewText(fmt.Sprintf("Save List (%d)", len(*file)), color.RGBA{R: 208, G: 200, B: 200, A: 255})
+	saveListTitle := canvas.NewText(fmt.Sprintf("File to be Saved (%d)", len(*file)), color.RGBA{R: 208, G: 200, B: 200, A: 255})
 	saveListTitle.TextSize = 20
 	saveListTitle.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -163,7 +160,7 @@ func saveListBox(file *[]string, repo *gitpath.GitRepository, window fyne.Window
 
 		dialog.ShowInformation(
 			"Success",
-			fmt.Sprintf("%d file(s) removed from save list!", len(selectedFiles)),
+			fmt.Sprintf("%d file(s) removed from File to be Saved box!", len(selectedFiles)),
 			window,
 		)
 
@@ -201,7 +198,7 @@ func saveListBox(file *[]string, repo *gitpath.GitRepository, window fyne.Window
 
 	// Update file
 	update := func() {
-		saveListTitle.Text = fmt.Sprintf("Save List (%d)", len(*file))
+		saveListTitle.Text = fmt.Sprintf("File to be Saved (%d)", len(*file))
 		saveListTitle.Refresh()
 
 		fileList.Objects = nil
@@ -378,7 +375,7 @@ func commitBox(repoPath string, window fyne.Window, onFileChange func()) fyne.Ca
 			return
 		}
 		if !headResult.HasChanges() {
-			dialog.ShowInformation("Nothing to Save", "Your save list is already up to date.", window)
+			dialog.ShowInformation("Nothing to Save", "Your File to be Save box is already up to date.", window)
 			return
 		}
 
@@ -422,11 +419,11 @@ func commitBox(repoPath string, window fyne.Window, onFileChange func()) fyne.Ca
 }
 
 func readySaveList(file *[]string) (fyne.CanvasObject, func()) {
-	previewTitle := canvas.NewText("File to Save", color.White)
+	previewTitle := canvas.NewText("File to be Save", color.White)
 	previewTitle.TextSize = 16
 	previewTitle.TextStyle = fyne.TextStyle{Bold: true}
 
-	previewSubTitle := canvas.NewText(fmt.Sprintf("%d file(s) ready to be saved.", len(*file)), color.Gray{Y: 150})
+	previewSubTitle := canvas.NewText(fmt.Sprintf("%d file(s) ready to be save.", len(*file)), color.Gray{Y: 150})
 	previewSubTitle.TextSize = 13
 
 	previewList := container.NewVBox()
@@ -456,7 +453,7 @@ func readySaveList(file *[]string) (fyne.CanvasObject, func()) {
 
 	// Update file
 	update := func() {
-		previewSubTitle.Text = fmt.Sprintf("%d file(s) ready to be saved.", len(*file))
+		previewSubTitle.Text = fmt.Sprintf("%d file(s) ready to be save.", len(*file))
 		previewSubTitle.Refresh()
 
 		previewList.Objects = nil
@@ -473,16 +470,16 @@ func readySaveList(file *[]string) (fyne.CanvasObject, func()) {
 }
 
 func SaveFileContent(repoPath string, window fyne.Window) fyne.CanvasObject {
-	title := canvas.NewText("Save File", color.White)
+	title := canvas.NewText("File to be Saved", color.White)
 	title.TextSize = 40
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
-	subtitle := canvas.NewText("Manage your save list", color.Gray{Y: 150})
+	subtitle := canvas.NewText("Files to be save for the next version", color.Gray{Y: 150})
 	subtitle.TextSize = 15
 
 	repo := gitpath.MakeRepo(repoPath, false)
 
-	// All index files for save list box
+	// All index files for File to be Saved box
 	allFiles := getSaveListFiles(repoPath)
 
 	// Only staged files for staged box

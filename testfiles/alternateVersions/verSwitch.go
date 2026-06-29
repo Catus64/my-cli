@@ -37,23 +37,6 @@ func SwitchAltVer(repo gitpath.GitRepository, name string) error {
 		return fmt.Errorf("failed to resolve Savefile %q: %w", name, err)
 	}
 
-	// Dirty check is to warn user for unsaved changes
-	// index, err := gitobj.Index_Read2(repo)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to read Savelist: %w", err)
-	// }
-	// if isDirty(repo, *index) {
-	// 	fmt.Println("WARNING : You have unsaved changes that will be lost if you switch.")
-	// 	fmt.Print("    Continue anyway? (y/n): ")
-	// 	reader := bufio.NewReader(os.Stdin)
-	// 	input, _ := reader.ReadString('\n')
-	// 	input = strings.TrimSpace(strings.ToLower(input))
-	// 	if input != "y" {
-	// 		fmt.Println("Switch cancelled.")
-	// 		return nil
-	// 	}
-	// }
-
 	// Get rules so we dont delete gitignored stuff
 	// solution is not perfect but will do for now
 	rules, err := gitcheckignore.ReadGitIgnore(repo)

@@ -102,11 +102,11 @@ func reloadFiles(repo *gitpath.GitRepository, files *[]FileStatus) {
 }
 
 func FileDirectory(repoPath string, window fyne.Window) fyne.CanvasObject {
-	title := canvas.NewText("File Directory", color.White)
+	title := canvas.NewText("Working Directory", color.White)
 	title.TextSize = 40
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
-	subtitle := canvas.NewText("Manage your file in your directory", color.Gray{Y: 150})
+	subtitle := canvas.NewText("Manage your file(s) in your directory", color.Gray{Y: 150})
 	subtitle.TextSize = 15
 
 	// Load files from git
@@ -184,7 +184,7 @@ func modifiedListBox(files *[]FileStatus, repo *gitpath.GitRepository, window fy
 
 		dialog.ShowInformation(
         "Success",
-        fmt.Sprintf("%d file(s) added to save list!", len(selectedFiles)),
+        fmt.Sprintf("%d file(s) added to File to be Saved box!", len(selectedFiles)),
         window,
     )
 	})
@@ -229,7 +229,7 @@ func modifiedListBox(files *[]FileStatus, repo *gitpath.GitRepository, window fy
 
 		if len(cannotIgnore) > 0 {
 			dialog.ShowInformation("Ignore Failed",
-				fmt.Sprintf("Modified file(s) cannot be ignored:\n%s\n\nRemove them from save list first.",
+				fmt.Sprintf("Modified file(s) cannot be ignored:\n%s\n\nRemove them from File to be Saved box first.",
 					strings.Join(cannotIgnore, "\n")),
 				window)
 		}

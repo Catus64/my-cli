@@ -9,7 +9,7 @@ import (
 )
 
 func Show(gui *gui.MyApp, pathName string, window fyne.Window, onHome func(), onSave func(), onModified func(), onIgnored func(), onSaveFile func(), onHistory func(), onHelp func()) {
-	sidebar := sidebar.SideBar(gui, window, pathName, "save-file", 
+	sidebar := sidebar.SideBar(gui, window, pathName, "branch", 
 		func() { onHome() }, 
 		func() { onSave() },
 		func() { onModified() }, 

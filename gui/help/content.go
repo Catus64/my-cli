@@ -88,26 +88,26 @@ func HelpContent() fyne.CanvasObject {
 	// 1. Repository Page
 	section1Title := sectionTitle("1. Repository Page")
 	repoBullet1 := bullet("The file(s) showed in the file list box are the file(s) that saved by user for current version in the repository.")
-	repoBullet2 := bullet("Current Version - When user click this button, user can view the detail of the current version in the repository.")
+	repoBullet2 := bullet("Current Details - When user click this button, user can view the detail of the current version in the repository.")
 	repoBullet3 := bullet("User can click the file in the file list box to view the content of the file in the text area.")
 
 	section1 := container.NewVBox(section1Title, repoBullet1, repoBullet2, repoBullet3)
 
-	// 2. Save List Page
-	section2Title := sectionTitle("2. Save List Page")
-	saveListBullet1 := bullet("The file(s) showed in the save list box are the file(s) that user want to save to repository.")
-	saveListBullet2 := bullet("The file(s) showed in the \"File to Save\" box are the file(s) that ready to be saved to repository.")
-	saveListBullet3 := bullet("Remove Button - When user click this button, the file in save list will be removed to file list in File Directory Page.")
-	saveListBullet4 := bullet("Save Button - When user click this button after fill in messages, the file in save list will save with the message.")
+	// 2. File to be Saved Page
+	section2Title := sectionTitle("2. File to be Saved Page")
+	fileToBeSavedBullet1 := bullet("The file(s) showed in the Files to be Saved box are the file(s) that user want to save to repository.")
+	fileToBeSavedBullet2 := bullet("The file(s) showed in the \"File to be Save\" box are the file(s) that ready to be save to repository.")
+	fileToBeSavedBullet3 := bullet("Remove Button - When user click this button, the file in File(s) to be Saved box will be removed to file list in File Directory Page.")
+	fileToBeSavedBullet4 := bullet("Save Button - When user click this button after fill in messages, the file in File to be Save box will save with the message.")
 
-	section2 := container.NewVBox(section2Title, saveListBullet1, saveListBullet2, saveListBullet3, saveListBullet4)
+	section2 := container.NewVBox(section2Title, fileToBeSavedBullet1, fileToBeSavedBullet2, fileToBeSavedBullet3, fileToBeSavedBullet4)
 
-	// 3. File Directory Page
-	section3Title := sectionTitle("3. File Directory Page")
-	fileDirectoryBullet1 := bullet("The file(s) showed in the file list box are the file(s) that added or modified by user but haven't save to repository.")
-	fileDirectoryBullet2 := bullet("Add Button - When user click this button, the file(s) in file list will add to save list in Save List Page.")
+	// 3. Working Directory Page
+	section3Title := sectionTitle("3. Working Directory Page")
+	workingDirectoryBullet1 := bullet("The file(s) showed in the file list box are the file(s) that added or modified by user but haven't save to repository.")
+	workingDirectoryBullet2 := bullet("Add Button - When user click this button, the file(s) in file list will add to File(s) to be Saved box in File to be Saved Page.")
 
-	section3 := container.NewVBox(section3Title, fileDirectoryBullet1, fileDirectoryBullet2)
+	section3 := container.NewVBox(section3Title, workingDirectoryBullet1, workingDirectoryBullet2)
 
 	// 4. Ignored File Page
 	section4Title := sectionTitle("4. Ignored File Page")
@@ -116,33 +116,33 @@ func HelpContent() fyne.CanvasObject {
 
 	section4 := container.NewVBox(section4Title, ignoredFileBullet1, ignoredFileBullet2)
 
-	// 5. Save File Page
-	section5Title := sectionTitle("5. Save File Page")
-	saveFileBullet1 := bullet("The file(s) showed in the save file list box are the Save States of the project.")
-	saveFileBullet2 := bullet("Add Button - When user click this button, user are able to add the save state in the project.")
-	saveFileBullet3 := bullet("Switch Button - Before user click this button, user need to select the save state in the row box to switch.")
-	saveFileBullet4 := bullet("Merge Button - Before user click this button, user need to select the save state in the row box to merge.")
+	// 5. Branch Management Page
+	section5Title := sectionTitle("5. Branch Management Page")
+	branchBullet1 := bullet("The file(s) showed in the table are the Save States of the repository.")
+	branchBullet2 := bullet("Add Button - When user click this button, user are able to add the branch into the repository.")
+	branchBullet3 := bullet("Switch Button - Before user click this button, user need to select a branch in the table to switch.")
+	branchBullet4 := bullet("Merge Button - Before user click this button, user need to select a branch in the table to merge.")
 
-	section5 := container.NewVBox(section5Title, saveFileBullet1, saveFileBullet2, saveFileBullet3, saveFileBullet4)
+	section5 := container.NewVBox(section5Title, branchBullet1, branchBullet2, branchBullet3, branchBullet4)
 
-	// 6. Save History Page
-	section6Title := sectionTitle("6. Save History Page")
-	saveHistoryBullet1 := bullet("The page will display history and past changes by user to enable them to browse and compare changes across files.")
-	saveHistoryBullet2 := bullet("User can search the history bubbles in the search bar with history bubbles's hash key to find the specific history bubble.")
-	saveHistoryBullet3 := bullet("User can click the history bubble to view the detail.")
+	// 6. Version History Page
+	section6Title := sectionTitle("6. Version History Page")
+	versionHistoryBullet1 := bullet("The page will display history and past changes by user to enable them to browse and compare changes across files.")
+	versionHistoryBullet2 := bullet("User can search the history bubbles in the search bar with history bubbles's hash key to find the specific history bubble.")
+	versionHistoryBullet3 := bullet("User can click the history bubble to view the detail.")
 
 	green  := color.RGBA{R: 100, G: 220, B: 100, A: 255}
 	orange := color.RGBA{R: 255, G: 160, B: 60,  A: 255}
 	white  := color.White
 
-	saveHistoryBullet4 := coloredBullet([]struct{ text string; color color.Color }{
+	versionHistoryBullet4 := coloredBullet([]struct{ text string; color color.Color }{
 		{" a) ", white}, {"Merge→xxxxx", green}, {" = Merge branch to main", white},
 	})
-	saveHistoryBullet5 := coloredNoBullet([]struct{ text string; color color.Color }{
+	versionHistoryBullet5 := coloredNoBullet([]struct{ text string; color color.Color }{
 		{"b) ", white}, {"Merge→xxxxx", orange}, {" = Merge branch to branch", white},
 	})
 
-	section6 := container.NewVBox(section6Title, saveHistoryBullet1, saveHistoryBullet2, saveHistoryBullet3, saveHistoryBullet4, saveHistoryBullet5)
+	section6 := container.NewVBox(section6Title, versionHistoryBullet1, versionHistoryBullet2, versionHistoryBullet3, versionHistoryBullet4, versionHistoryBullet5)
 
 	// 7. Quit Button
 	section7 := sectionTitle("7. Quit button allows user to quit to dashboard page.")

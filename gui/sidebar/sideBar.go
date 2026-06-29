@@ -44,11 +44,11 @@ func NavButton(label string, isActive bool, action func()) fyne.CanvasObject {
 
 func SideBar(gui *gui.MyApp, window fyne.Window, pathName string, activePage string, Home func(), Save func(), fileDirectory func(), Ignored func(), SaveFile func(), History func(), Help func()) fyne.CanvasObject {
 	homeButton := NavButton("Repository", activePage == "home", Home)
-	saveFileButton := NavButton("Save List", activePage == "save", Save)
-	modifiedFileButton := NavButton("File Directory", activePage == "file-directory", fileDirectory)  
+	saveFileButton := NavButton("File to be Saved", activePage == "save", Save)
+	modifiedFileButton := NavButton("Working Directory", activePage == "file-directory", fileDirectory)  
 	ignoredFileButton := NavButton("Ignored File", activePage == "ignored", Ignored)
-	branchButton := NavButton("Save File", activePage == "save-file", SaveFile)
-	historyButton := NavButton("Save History", activePage == "history", History)
+	branchButton := NavButton("Branch Management", activePage == "branch", SaveFile)
+	historyButton := NavButton("Version History", activePage == "history", History)
 	helpButton := NavButton("Help", activePage == "help", Help)
 
 	// Current repository box

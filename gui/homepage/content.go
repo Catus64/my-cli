@@ -215,9 +215,9 @@ func HomePageContent(pathName string, window fyne.Window) fyne.CanvasObject {
 	showDirectory(rootTreeSHA)
 
 	// Current Version button
-	currentVersionBtn := widget.NewButton("Current Version", func() {
+	currentVersionBtn := widget.NewButton("Current Details", func() {
 		if commitSHA == "" {
-			dialog.ShowInformation("No Version", "No saved files found in this repository.", window)
+			dialog.ShowInformation("No Details", "No saved files found in this repository.", window)
 			return
 		}
 
@@ -241,7 +241,7 @@ func HomePageContent(pathName string, window fyne.Window) fyne.CanvasObject {
 			makeLabel("Saved Message: "+commitMessage),
 		)
 
-		dialog.ShowCustom("Current Version", "Close", container.NewPadded(popupContent), window)
+		dialog.ShowCustom("Current Details", "Close", container.NewPadded(popupContent), window)
 	})
 	currentVersionBtn.Importance = widget.HighImportance
 
