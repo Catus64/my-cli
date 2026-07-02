@@ -23,14 +23,14 @@ func SwitchAltVer(repo gitpath.GitRepository, name string) error {
 		return fmt.Errorf("failed to get active branch: %w", err)
 	}
 	if activeBranch == name {
-		fmt.Printf("Already on Savefile: %q\n", name)
+		fmt.Printf("Already on Branch: %q\n", name)
 		return nil
 	}
 
 	// check Savefile exists
 	refPath := gitpath.Repo_Path(repo, "refs", "heads", name)
 	if _, err := os.Stat(refPath); os.IsNotExist(err) {
-		return fmt.Errorf("Savefile %q does not exist", name)
+		return fmt.Errorf("Branch %q does not exist", name)
 	}
 
 	// Resolve Savefile SHA
@@ -42,7 +42,7 @@ func SwitchAltVer(repo gitpath.GitRepository, name string) error {
 	// Dirty check is to warn user for unsaved changes
 	index, err := gitobj.Index_Read2(repo)
 	if err != nil {
-		return fmt.Errorf("failed to read Savelist: %w", err)
+		return fmt.Errorf("failed to read Index: %w", err)
 	}
 	if isDirty(repo, *index) {
 		fmt.Println("WARNING : You have unsaved changes that will be lost if you switch.")
@@ -137,7 +137,7 @@ func SwitchAltVer(repo gitpath.GitRepository, name string) error {
 	// Delete backup on success
 	os.RemoveAll(backupPath)
 
-	fmt.Printf("Switched to Savefile: %q\n", name)
+	fmt.Printf("Switched to Branch: %q\n", name)
 	return nil
 }
 

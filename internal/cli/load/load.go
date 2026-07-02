@@ -42,10 +42,11 @@ func load(cmd *cobra.Command, args []string) error {
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "load [commit-object] [name]",
-		Short: "Load Version",
-		Args:  cobra.MaximumNArgs(2),
-		RunE:  load,
+		Use:     "load [commit-object] [name]",
+		Aliases: []string{"checkout"},
+		Short:   "Load Version",
+		Args:    cobra.MaximumNArgs(2),
+		RunE:    load,
 	}
 
 	return cmd

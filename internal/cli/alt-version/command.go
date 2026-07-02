@@ -4,6 +4,7 @@ import (
 	"fmt"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 
+	prettyprint "gocmd/testfiles/PrettyPrint"
 	altver "gocmd/testfiles/alternateVersions"
 
 	"github.com/spf13/cobra"
@@ -11,8 +12,8 @@ import (
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "savefile",
-		Aliases: []string{"sfile", "sf"},
+		Use:     "branch",
+		Aliases: []string{"br"},
 		Short:   "Manage Savefiles for alternate versions",
 	}
 	cmd.AddCommand(newCreateCommand())
@@ -26,13 +27,13 @@ func create_alt_ver(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}
 
-	fmt.Printf("creating savefile with name: %s\n", args[0])
+	// fmt.Printf("creating branch with name: %s\n", args[0])
 
-	err = altver.CreateAltVer(*repo, args[0])
+	name, err := altver.CreateAltVer(*repo, args[0])
 	if err != nil {
 		panic(err)
 	}
-
+	prettyprint.PrintMessage(fmt.Sprintf("Created branch %q from current version", name), "-", "Use |ezg switch <name>| to switch to this branch")
 	return nil
 }
 

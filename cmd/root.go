@@ -18,10 +18,10 @@ import (
 	"gocmd/internal/cli/quicksave"
 	"gocmd/internal/cli/remove"
 	setconfig "gocmd/internal/cli/set-config"
-	showref "gocmd/internal/cli/show-ref"
+
+	// showref "gocmd/internal/cli/show-ref"
 	showsavelist "gocmd/internal/cli/show-savelist"
-	"gocmd/internal/cli/showObject"
-	"gocmd/internal/cli/showTree"
+	// "gocmd/internal/cli/showTree"
 	switchver "gocmd/internal/cli/switch-ver"
 	view "gocmd/internal/cli/view_command"
 	"os"
@@ -67,12 +67,12 @@ func init() {
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	rootCmd.AddCommand(gitinit.NewCommand())
-	rootCmd.AddCommand(showObject.NewCommand())
+	// rootCmd.AddCommand(showObject.NewCommand())
 	rootCmd.AddCommand(hashObject.NewCommand())
 	rootCmd.AddCommand(gitLog.NewCommand())
-	rootCmd.AddCommand(showTree.NewCommand())
+	// rootCmd.AddCommand(showTree.NewCommand())
 	rootCmd.AddCommand(load.NewCommand())
-	rootCmd.AddCommand(showref.NewCommand())
+	// rootCmd.AddCommand(showref.NewCommand())
 	rootCmd.AddCommand(gittag.NewCommand())
 	rootCmd.AddCommand(showsavelist.NewCommand())
 	rootCmd.AddCommand(checkignore.NewCommand())

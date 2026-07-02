@@ -25,7 +25,7 @@ func (leaf GitTreeLeaf) Serialize() *[]byte {
 }
 
 func (leaf GitTreeLeaf) Deserialize() []byte {
-	return leaf.data
+	return leaf.Data
 }
 
 func (leaf GitTreeLeaf) Get_Format() string {

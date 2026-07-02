@@ -19,7 +19,7 @@ func (tree GitTree) Serialize() *[]byte {
 }
 
 func (tree GitTree) Deserialize() []byte {
-	return tree.data
+	return tree.Data
 }
 
 func (tree *GitTree) DeserializeData(data []byte) error {

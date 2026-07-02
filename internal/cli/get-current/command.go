@@ -67,7 +67,7 @@ func get_current(cmd *cobra.Command, args []string) error {
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "current",
-		Aliases: []string{"cur"},
+		Aliases: []string{"cur", "status"},
 		Short:   "Get the current active branch name and modified files in the working directory",
 		RunE:    get_current,
 	}

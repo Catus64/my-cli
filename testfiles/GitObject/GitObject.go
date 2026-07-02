@@ -12,7 +12,7 @@ import (
 )
 
 type GitObjectData struct {
-	data []byte
+	Data []byte
 }
 
 type GitObject interface {
@@ -23,7 +23,7 @@ type GitObject interface {
 
 type GitBlob struct {
 	GitObjectData
-	format []byte
+	Format []byte
 }
 
 func (blob GitBlob) Serialize() *[]byte {
@@ -31,11 +31,11 @@ func (blob GitBlob) Serialize() *[]byte {
 }
 
 func (blob GitBlob) Deserialize() []byte {
-	return blob.data
+	return blob.Data
 }
 
 func (blob GitBlob) Get_Format() string {
-	return string(blob.format)
+	return string(blob.Format)
 }
 
 // factory class to make git object from binary blob
@@ -50,7 +50,7 @@ func MakeGitObj(Byte_data []byte) GitObject {
 	switch string(temp_fmt) {
 	case "blob":
 		logging.L().Debug("returning blob")
-		obj = GitBlob{GitObjectData: GitObjectData{parts[1]}, format: []byte("blob")}
+		obj = GitBlob{GitObjectData: GitObjectData{parts[1]}, Format: []byte("blob")}
 	case "commit":
 		logging.L().Debug("returning commit")
 		obj = &GitCommit{GitObjectData: GitObjectData{parts[1]}, format: []byte("commit")}
@@ -85,7 +85,7 @@ func MakeGitObjWithFormat(Byte_data []byte, Obj_format string) GitObject {
 	switch string(Obj_format) {
 	case "blob":
 		// fmt.Println("returning blob")
-		obj = GitBlob{GitObjectData: GitObjectData{Byte_data}, format: []byte("blob")}
+		obj = GitBlob{GitObjectData: GitObjectData{Byte_data}, Format: []byte("blob")}
 	case "commit":
 		fmt.Println("returning commit")
 	case "tag":

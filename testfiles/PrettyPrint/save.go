@@ -74,3 +74,37 @@ func PrintSaveResult(r SaveResult) {
 	Row(Center("use 'ezgit set-name' to track a specific version", width), width)
 	Bottom(width)
 }
+
+func PrintMergeResult(r SaveResult) {
+	const width = 72
+	Top(width)
+	Row(Center("Version Merged Successfully", width), width)
+	Mid(width)
+	Row(fmt.Sprintf("Savefile : %s", r.Branch), width)
+	EmptyRow(width)
+	Row(fmt.Sprintf("Version  : v%d · %s", r.VersionNum, r.VersionName), width)
+	EmptyRow(width)
+	Row(fmt.Sprintf("SHA      : %s", r.CommitSHA), width)
+	Row(fmt.Sprintf("Tree     : %s", r.TreeSHA), width)
+	Row(fmt.Sprintf("Parents  : %s", r.ParentSHA), width)
+	EmptyRow(width)
+	Row(fmt.Sprintf("Author   : %s", r.Author), width)
+	Row(fmt.Sprintf("Time     : %s", r.Timestamp.Format("Mon, 02 Jan 2006 15:04:05 -0700")), width)
+	EmptyRow(width)
+	Mid(width)
+	Row("Merge Message", width)
+	Mid(width)
+	EmptyRow(width)
+	for _, line := range SplitLines(r.Message) {
+		if line != "" {
+			Row("  "+line, width)
+		}
+	}
+	EmptyRow(width)
+	Mid(width)
+	Row(Center("use 'ezgit view version' to browse all latest versions", width), width)
+	Bottom(width)
+	Mid(width)
+	Row(Center("use 'ezgit set-name' to track a specific version", width), width)
+	Bottom(width)
+}

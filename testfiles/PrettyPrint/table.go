@@ -27,7 +27,7 @@ func PrintAddTable(rows []TableRow, ignored []string, isAll bool) {
 	}
 
 	Top(width)
-	Row(Center("Files Added to Savelist", width), width)
+	Row(Center("Files Added to Entry List/Index", width), width)
 	Mid(width)
 	Row(fmt.Sprintf("Total: %d new, %d modified", newCount, modCount), width)
 	Mid(width)

@@ -10,29 +10,29 @@ import (
 	"path/filepath"
 )
 
-func CreateAltVer(repo gitpath.GitRepository, name string) error {
+func CreateAltVer(repo gitpath.GitRepository, name string) (string, error) {
 	headSHA, err := gitobj.Ref_Resolve(repo, "HEAD")
 	if err != nil || headSHA == nil {
-		return fmt.Errorf("no commits yet — save a version first before creating an alternate")
+		return "", fmt.Errorf("no commits yet, save a version first before creating an alternate")
 	}
 
 	refPath := gitpath.Repo_Path(repo, "refs", "heads", name)
 
 	// handle nested dirs like feature/commit
 	if err := os.MkdirAll(filepath.Dir(refPath), 0755); err != nil {
-		return fmt.Errorf("failed to create ref directory: %w", err)
+		return "", fmt.Errorf("failed to create ref directory: %w", err)
 	}
 
 	if _, err := os.Stat(refPath); err == nil {
-		return fmt.Errorf("savefile %q already exists", name)
+		return "", fmt.Errorf("Branch %q already exists", name)
 	}
 
 	if err := os.WriteFile(refPath, []byte(*headSHA+"\n"), 0644); err != nil {
-		return fmt.Errorf("failed to create savefile: %w", err)
+		return "", fmt.Errorf("failed to create branch: %w", err)
 	}
 
-	fmt.Printf("Created savefile %q from current version (%s)\n", name, (*headSHA)[:7])
-	return nil
+	// fmt.Printf("Created branch %q from current version (%s)\n", name, (*headSHA)[:7])
+	return name, nil
 }
 
 func ListAltVer(repo gitpath.GitRepository) error {
@@ -40,7 +40,7 @@ func ListAltVer(repo gitpath.GitRepository) error {
 
 	headsDir := gitpath.Repo_Path(repo, "refs", "heads")
 
-	fmt.Println("All Savefiles:")
+	fmt.Println("All Branches:")
 	// WalkDir handles nested branches like feature/commit
 	err := filepath.WalkDir(headsDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -79,7 +79,7 @@ func ListAltVer(repo gitpath.GitRepository) error {
 		return nil
 	})
 	fmt.Println("")
-	fmt.Println(`If you feel like any Branches/Savefiles are missing 
+	fmt.Println(`If you feel like any Branches are missing 
 try pulling from remote first with "git pull"(if you are using git along with this tool)`)
 
 	return err

@@ -76,7 +76,7 @@ func Update_Branch_Ref(repo gitpath.GitRepository, verSHA string) (string, error
 		return "", err
 	}
 	if branchName == "" {
-		return "", fmt.Errorf("detached HEAD, ezgit does not support detached HEAD: type `git checkout <branch>` to switch to a branch")
+		return "", fmt.Errorf("detached HEAD, ezgit does not support detached HEAD: type `git checkout <branch>` or `ezg switch <branch>` to switch to a branch")
 	}
 
 	// Update the branch ref to point to the new commit SHA
@@ -89,10 +89,10 @@ func Update_Branch_Ref(repo gitpath.GitRepository, verSHA string) (string, error
 
 	err = os.WriteFile(ref_path, []byte(verSHA+"\n"), 0644)
 	if err != nil {
-		return "", fmt.Errorf("failed to update Savefile ref :%w", err)
+		return "", fmt.Errorf("failed to update Branch ref :%w", err)
 	}
 
-	logger.L().Info("Savefile reference updated", "Savefile", branchName, "new_sha", verSHA)
+	logger.L().Info("Branch reference updated", "Branch", branchName, "new_sha", verSHA)
 
 	return branchName, nil
 }

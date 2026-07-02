@@ -21,15 +21,15 @@ func (c *GitCommit) Serialize() *[]byte {
 }
 
 func (commit *GitCommit) Deserialize() []byte {
-	if commit.data == nil {
+	if commit.Data == nil {
 		return Kvlm_Serialize(commit.KvlmDict)
 	}
 	// clear dict before re-parsing to prevent doubling
 	temp := make(map[string][]byte)
 	kvlm := KvlmDict{Dict: temp}
 	start := 0
-	commit.KvlmDict = Kvlm_Parse(commit.data, start, kvlm)
-	return commit.data
+	commit.KvlmDict = Kvlm_Parse(commit.Data, start, kvlm)
+	return commit.Data
 }
 
 func (c *GitCommit) Get_Format() string {

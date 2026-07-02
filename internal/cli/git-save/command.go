@@ -62,7 +62,7 @@ func save(cmd *cobra.Command, args []string) error {
 	if err == nil && parentSHA != nil {
 		logger.L().Debug(*parentSHA)
 		parents = []string{*parentSHA}
-		parentSHAStr = *parentSHA
+
 	} else {
 		fmt.Println("No parent this is the first commit")
 	}
@@ -90,9 +90,9 @@ func save(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("New commit SHA:", commitSHA)
+	fmt.Println("New version SHA:", commitSHA)
 
-	logger.L().Info("Updating branch ref to new commit", "branch", "HEAD", "commitSHA", commitSHA)
+	logger.L().Info("Updating branch ref to new version", "branch", "HEAD", "versionSHA", commitSHA)
 
 	branchName, err := gitsave.Update_Branch_Ref(*repo, commitSHA)
 	if err != nil {
@@ -100,8 +100,9 @@ func save(cmd *cobra.Command, args []string) error {
 	}
 	logger.L().Debug("Saved on branch ", branchName, commitSHA)
 
-	logger.L().Info("Save completed successfully", "branch", branchName, "commitSHA", commitSHA)
+	logger.L().Info("Save completed successfully", "branch", branchName, "versionSHA", commitSHA)
 
+	//refresh index
 	err = gitsave.RefreshIndex(*repo, index)
 	if err != nil {
 		panic(err)

@@ -42,9 +42,10 @@ func remove(cmd *cobra.Command, args []string) error {
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "remove [object-hash]",
-		Short: "Remove the specified object from the save list",
-		RunE:  remove,
+		Use:     "remove [object-hash]",
+		Aliases: []string{"rm"},
+		Short:   "Remove the specified object from the save list",
+		RunE:    remove,
 	}
 
 	return cmd

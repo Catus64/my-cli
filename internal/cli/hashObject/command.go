@@ -26,8 +26,8 @@ func hash(cmd *cobra.Command, args []string) error {
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "hash-file [object-hash]",
-		Aliases: []string{"hash"},
-		Short:   "Print a friendly greeting",
+		Aliases: []string{"hash", "store"},
+		Short:   "Hash a file and store it in the repository",
 		Args:    cobra.MaximumNArgs(1),
 		RunE:    hash,
 	}

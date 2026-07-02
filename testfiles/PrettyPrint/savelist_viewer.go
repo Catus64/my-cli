@@ -59,7 +59,7 @@ func drawSavelist(state *savelistState) {
 	pageEntries := state.entries[start:end]
 
 	Top(width)
-	Row(Center("Savelist", width), width)
+	Row(Center("Entry List", width), width)
 	Mid(width)
 	Row(fmt.Sprintf("Page %d / %d   (%d files total)",
 		state.currentPage+1, state.totalPages, len(state.entries)), width)
@@ -97,7 +97,7 @@ func RunSavelistViewer(entries []SavelistEntry, config ViewerConfig) error {
 	if len(entries) == 0 {
 		const width = 72
 		Top(width)
-		Row(Center("Savelist is empty", width), width)
+		Row(Center("Entry List is empty", width), width)
 		Row("No files have been added yet. Run ezgit add to stage files.", width)
 		Bottom(width)
 		return nil

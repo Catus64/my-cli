@@ -133,7 +133,7 @@ func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "history [object-hash]",
 		Aliases: []string{"his"},
-		Short:   "Print a friendly greeting",
+		Short:   "Browse the version history of the repository",
 		Args:    cobra.MaximumNArgs(0),
 		RunE:    log,
 	}
