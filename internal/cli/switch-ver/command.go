@@ -23,10 +23,11 @@ func switch_alt_ver(cmd *cobra.Command, args []string) error {
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "switch [version-name]",
-		Short: "Switch to the specified alternate savefile",
-		RunE:  switch_alt_ver,
-		Args:  cobra.ExactArgs(1),
+		Use:     "switch [branch-name]",
+		Aliases: []string{"sw"},
+		Short:   "Switch to the specified branch",
+		RunE:    switch_alt_ver,
+		Args:    cobra.ExactArgs(1),
 	}
 
 	return cmd

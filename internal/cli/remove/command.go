@@ -44,7 +44,7 @@ func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "remove [object-hash]",
 		Aliases: []string{"rm"},
-		Short:   "Remove the specified object from the save list",
+		Short:   "Remove the specified object from the Index/Entry List",
 		RunE:    remove,
 	}
 

@@ -14,7 +14,7 @@ func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "branch",
 		Aliases: []string{"br"},
-		Short:   "Manage Savefiles for alternate versions",
+		Short:   "Manage branches",
 	}
 	cmd.AddCommand(newCreateCommand())
 	cmd.AddCommand(newListCommand())
@@ -56,7 +56,7 @@ func list_alt_ver(cmd *cobra.Command, args []string) error {
 func newCreateCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "new <name>",
-		Short: "Create a new alternate version from current HEAD",
+		Short: "Create a new branch from current HEAD",
 		Args:  cobra.ExactArgs(1),
 		RunE:  create_alt_ver,
 	}
@@ -65,7 +65,7 @@ func newCreateCommand() *cobra.Command {
 func newListCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
-		Short: "List all alternate versions",
+		Short: "List all branches",
 		Args:  cobra.NoArgs,
 		RunE:  list_alt_ver,
 	}
