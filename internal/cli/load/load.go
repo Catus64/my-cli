@@ -1,6 +1,7 @@
 package load
 
 import (
+	"fmt"
 	loading "gocmd/testfiles/GitCheckout"
 	gitpath "gocmd/testfiles/Gitrepostruct"
 	prettyprint "gocmd/testfiles/PrettyPrint"
@@ -17,7 +18,7 @@ func load(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}
 	if len(args) < 1 {
-		panic("missing required argument <commit-object> sha")
+		return fmt.Errorf("missing required argument <commit-object> sha")
 	}
 	name := ""
 	if len(args) == 2 {

@@ -15,17 +15,17 @@ func hash(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		panic(err)
 	}
+	if len(args) == 0 {
+		return fmt.Errorf("specify files to hash")
+	}
 	sha, _ := githashread.Hash_Object(args[0], "blob", *repo)
-	// fmt.Printf("file: {%s} has been compressed and stored in the objects folder\n", args[0])
-	// fmt.Printf("SHA: %x \n", sha)
-	// fmt.Println("To search for the file in the repository please use this hash to find it later")
 	prettyprint.PrintObjectStored("blob", args[0], fmt.Sprintf("%x", sha))
 	return nil
 }
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "hash-file [object-hash]",
+		Use:     "hash-file [file]",
 		Aliases: []string{"hash", "store"},
 		Short:   "Hash a file and store it in the repository",
 		Args:    cobra.MaximumNArgs(1),

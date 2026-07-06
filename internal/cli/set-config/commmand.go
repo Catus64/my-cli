@@ -105,6 +105,6 @@ func GetOrPromptConfig() (*gitpath.EzGitConfig, error) {
 		return nil, fmt.Errorf("failed to save config: %w", err)
 	}
 
-	fmt.Printf("Config saved — name: %s, email: %s\n\n", cfg.Name, cfg.Email)
+	fmt.Printf("Config saved! name: %s, email: %s\n\n", cfg.Name, cfg.Email)
 	return cfg, nil
 }

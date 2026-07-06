@@ -10,6 +10,11 @@ type TableRow struct {
 	Status string
 }
 
+type RemoveRow struct {
+	File string
+	SHA  string
+}
+
 func PrintAddTable(rows []TableRow, ignored []string, isAll bool) {
 	const width = 72
 	fileW := 35
@@ -79,5 +84,44 @@ func PrintIgnoredFiles(ignored []string) {
 	}
 	Mid(width)
 	Row(fmt.Sprintf("Total: %d ignored", len(ignored)), width)
+	Bottom(width)
+}
+
+func PrintRemoveTable(rows []RemoveRow, skipped []string) {
+	const width = 72
+	fileW := 45
+	shaW := 15
+
+	Top(width)
+	Row(Center("Files Removed from Entry List/Index", width), width)
+	Mid(width)
+	Row(fmt.Sprintf("Total: %d removed, %d skipped", len(rows), len(skipped)), width)
+	Mid(width)
+
+	if len(rows) == 0 {
+		Row("  No files removed.", width)
+	} else {
+		Row(fmt.Sprintf("%-*s  %-*s", fileW, "File", shaW, "SHA"), width)
+		Mid(width)
+		for _, r := range rows {
+			shortSHA := r.SHA
+			if len(shortSHA) > shaW {
+				shortSHA = shortSHA[:shaW]
+			}
+			fileName := r.File
+			if len(fileName) > fileW {
+				fileName = "..." + fileName[len(fileName)-fileW+3:]
+			}
+			Row(fmt.Sprintf("%-*s  %-*s", fileW, fileName, shaW, shortSHA), width)
+		}
+	}
+
+	if len(skipped) > 0 {
+		Mid(width)
+		Row(fmt.Sprintf("Skipped: %d files (not tracked or missing)", len(skipped)), width)
+		for _, s := range skipped {
+			Row("  "+s, width)
+		}
+	}
 	Bottom(width)
 }

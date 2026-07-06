@@ -30,3 +30,8 @@ func ResolveCommitLabel(repo gitpath.GitRepository, sha string, branch string) s
 	// Priority 3 - nothing(not tagged and non ezgit made version/commit)
 	return ""
 }
+
+//8ba6c00223f5cc9d20ac5bec0f47aa9a678f36f3
+//f4b260b6d5d81ca9111ce994181f46654e412bbc
+//434e36349e2b18bd9aa1d28e31f47173e82f857c
+//bd9654ba920809a88b1ab1d31744977032040341

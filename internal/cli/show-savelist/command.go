@@ -34,7 +34,7 @@ func show_savelist(cmd *cobra.Command, args []string) error {
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list-entries",
-		Aliases: []string{"ls", "entries", "ls-e", "index"},
+		Aliases: []string{"ls", "entries", "ls-e", "index", "list"},
 		Short:   "Show all files that is about to be saved in the next version",
 		Args:    cobra.MaximumNArgs(1),
 		RunE:    show_savelist,

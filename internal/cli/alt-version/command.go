@@ -64,9 +64,10 @@ func newCreateCommand() *cobra.Command {
 
 func newListCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "list",
-		Short: "List all branches",
-		Args:  cobra.NoArgs,
-		RunE:  list_alt_ver,
+		Use:     "list",
+		Aliases: []string{"ls", "l"},
+		Short:   "List all branches",
+		Args:    cobra.NoArgs,
+		RunE:    list_alt_ver,
 	}
 }

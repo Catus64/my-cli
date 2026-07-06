@@ -26,6 +26,12 @@ func add(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("specify files to add or use --all")
 	}
 
+	//copy git add . style behaviour
+	if len(args) == 1 && args[0] == "." {
+		all = true
+		args = nil
+	}
+
 	result, err := Add.Add(repo, args, Add.Options{All: all})
 	if err != nil {
 		return err
@@ -57,8 +63,9 @@ func add(cmd *cobra.Command, args []string) error {
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add [file]",
-		Short: "Add file contents to the Savelist",
-		Long: `Add file contents to the Savelist (other common names include: Staging Area, Index)
+		Short: "Add file contents to the Index / Entry List",
+		Long: `Add file contents to the Index / Entry List (other common names include: Staging Area)
+		This command adds files into the index which is a list of files that will be saved in the next version.
 
 Examples:
   ezgit add main.go                  add a single file

@@ -13,6 +13,21 @@ type EzGitConfig struct {
 	Email string
 }
 
+const defaultIgnoreTemplate = `# EzGit default ignore template
+.git/
+*.log
+*.tmp
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
+dist/
+build/
+*.o
+*.exe
+.env
+`
+
 // ConfigPath returns the platform-correct path for the config file
 // Linux:   ~/.config/ezgit/config
 // Windows: %APPDATA%\ezgit\config
@@ -82,7 +97,7 @@ func Load() (*EzGitConfig, error) {
 	}
 
 	if cfg.Name == "" || cfg.Email == "" {
-		return nil, fmt.Errorf("config incomplete — set user.name and user.email")
+		return nil, fmt.Errorf("config incomplete - set user.name and user.email")
 	}
 
 	return cfg, scanner.Err()
@@ -107,4 +122,53 @@ func Save(cfg *EzGitConfig) error {
 // Format returns git-compatible author string
 func (c *EzGitConfig) Format() string {
 	return fmt.Sprintf("%s <%s>", c.Name, c.Email)
+}
+
+func IgnoreDefaultsPath() (string, error) {
+	path, err := ConfigPath()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(filepath.Dir(path), "ignore_defaults"), nil
+}
+
+// EnsureIgnoreDefaults creates the default ignore template config on first run.
+func EnsureIgnoreDefaults() (string, error) {
+	path, err := IgnoreDefaultsPath()
+	if err != nil {
+		return "", err
+	}
+	if _, err := os.Stat(path); err == nil {
+		return path, nil // already exists
+	} else if !os.IsNotExist(err) {
+		return "", fmt.Errorf("failed to check ignore defaults: %w", err)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return "", fmt.Errorf("failed to create config dir: %w", err)
+	}
+	if err := os.WriteFile(path, []byte(defaultIgnoreTemplate), 0644); err != nil {
+		return "", fmt.Errorf("failed to write ignore defaults: %w", err)
+	}
+	return path, nil
+}
+
+func LoadIgnoreDefaults() ([]string, error) {
+	path, err := EnsureIgnoreDefaults()
+	if err != nil {
+		return nil, err
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var rules []string
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		rules = append(rules, line)
+	}
+	return rules, nil
 }

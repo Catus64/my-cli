@@ -4,6 +4,7 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
 	"gocmd/internal/cli/add"
 	altversion "gocmd/internal/cli/alt-version"
 	checkignore "gocmd/internal/cli/check-ignore"
@@ -12,12 +13,14 @@ import (
 	gitsave "gocmd/internal/cli/git-save"
 	"gocmd/internal/cli/gitLog"
 	gittag "gocmd/internal/cli/gitTag"
+	gitignoreeditor "gocmd/internal/cli/gitignore-editor"
 	"gocmd/internal/cli/gitinit"
 	"gocmd/internal/cli/hashObject"
 	"gocmd/internal/cli/load"
 	"gocmd/internal/cli/quicksave"
 	"gocmd/internal/cli/remove"
 	setconfig "gocmd/internal/cli/set-config"
+	prettyprint "gocmd/testfiles/PrettyPrint"
 
 	// showref "gocmd/internal/cli/show-ref"
 	showsavelist "gocmd/internal/cli/show-savelist"
@@ -31,7 +34,7 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "ezgit",
+	Use:   "ezg",
 	Short: "Lightweight Versioning Engine",
 	Long: `This is a lightweight versioning engine similar to git.
 	It has a smaller call set and is intended for Single User use.
@@ -40,8 +43,13 @@ var rootCmd = &cobra.Command{
 	This tool is designed to be simple and easy to use, making it ideal for personal projects and small teams.
 	The command line interface is intuitive, allowing users to quickly learn and utilize its features effectively
 	while also being transparent about what happens under the hood.
+
+	If you are unsure what to do just type 'ezg quicksave' and 'ezg history'
 	
 	`,
+	Run: func(cmd *cobra.Command, args []string) {
+		printQuickHelp()
+	},
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -56,34 +64,96 @@ func Execute() {
 	}
 }
 
+const ezgLogo = `
+__/\\\\\\\\\\\\\\\__/\\\\\\\\\\\\\\\_____/\\\\\\\\\\\\__/\\\\\\\\\\\__/\\\\\\\\\\\\\\\_        
+ _\/\\\///////////__\////////////\\\____/\\\//////////__\/////\\\///__\///////\\\/////__       
+  _\/\\\_______________________/\\\/____/\\\_________________\/\\\___________\/\\\_______      
+   _\/\\\\\\\\\\\_____________/\\\/_____\/\\\____/\\\\\\\_____\/\\\___________\/\\\_______     
+    _\/\\\///////____________/\\\/_______\/\\\___\/////\\\_____\/\\\___________\/\\\_______    
+     _\/\\\_________________/\\\/_________\/\\\_______\/\\\_____\/\\\___________\/\\\_______   
+      _\/\\\_______________/\\\/___________\/\\\_______\/\\\_____\/\\\___________\/\\\_______  
+       _\/\\\\\\\\\\\\\\\__/\\\\\\\\\\\\\\\_\//\\\\\\\\\\\\/___/\\\\\\\\\\\_______\/\\\_______ 
+        _\///////////////__\///////////////___\////////////____\///////////________\///________
+`
+
+func printQuickHelp() {
+	fmt.Print(ezgLogo)
+	const width = 100
+
+	prettyprint.Top(width)
+	prettyprint.Row(prettyprint.Center("EzGit: Simplified Versioning Engine", width), width)
+	prettyprint.Mid(width)
+	prettyprint.Row("Start with:", width)
+	prettyprint.EmptyRow(width)
+	prettyprint.Row("  ezg create-repo       create a new repository", width)
+	prettyprint.Row("  ezg quicksave         quickly save your current changes", width)
+	prettyprint.Row("  ezg history           view past versions", width)
+	prettyprint.Mid(width)
+	prettyprint.Row("Common commands:", width)
+	prettyprint.EmptyRow(width)
+	prettyprint.Row("  ezg add <file>        stage a file(use -a for all files)", width)
+	prettyprint.Row("  ezg save              save a version with a message", width)
+	prettyprint.Row("  ezg name/tag          name/tag a version", width)
+	prettyprint.Row("  ezg view refs         view all named/tagged versions", width)
+	prettyprint.Row("  ezg list              view files that are about to be saved (after ezg add)", width)
+	prettyprint.Mid(width)
+	prettyprint.Row(prettyprint.Center("Run 'ezg -h' to see all available commands", width), width)
+	prettyprint.Bottom(width)
+}
+
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.gocmd.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	rootCmd.AddCommand(gitinit.NewCommand())
+
+	rootCmd.AddGroup(
+		&cobra.Group{ID: "setup", Title: "Setup and Config Commands:"},
+		&cobra.Group{ID: "save", Title: "Saving related commands:"},
+		&cobra.Group{ID: "branch", Title: "Branching and Merging Commands:"},
+		&cobra.Group{ID: "view", Title: "View objects and history:"},
+		&cobra.Group{ID: "hash", Title: "Low-Level commands"},
+	)
+
+	addToGroup("setup",
+		gitinit.NewCommand(),
+		setconfig.NewCommand(),
+		gitignoreeditor.NewCommand(),
+		checkignore.NewCommand(),
+	)
+
+	addToGroup("save",
+		add.NewCommand(),
+		remove.NewCommand(),
+		gitsave.NewCommand(),
+		quicksave.NewCommand(),
+		gittag.NewCommand(),
+		load.NewCommand(),
+	)
+
+	addToGroup("branch",
+		altversion.NewCommand(),
+		switchver.NewCommand(),
+		combine.NewCommand(),
+		getcurrent.NewCommand(),
+	)
+	addToGroup("view",
+		gitLog.NewCommand(),
+		showsavelist.NewCommand(),
+		view.NewCommand(),
+	)
+
+	addToGroup("hash",
+		hashObject.NewCommand(),
+	)
+
+	// Commands commented .
 	// rootCmd.AddCommand(showObject.NewCommand())
-	rootCmd.AddCommand(hashObject.NewCommand())
-	rootCmd.AddCommand(gitLog.NewCommand())
 	// rootCmd.AddCommand(showTree.NewCommand())
-	rootCmd.AddCommand(load.NewCommand())
 	// rootCmd.AddCommand(showref.NewCommand())
-	rootCmd.AddCommand(gittag.NewCommand())
-	rootCmd.AddCommand(showsavelist.NewCommand())
-	rootCmd.AddCommand(checkignore.NewCommand())
-	rootCmd.AddCommand(getcurrent.NewCommand())
-	rootCmd.AddCommand(remove.NewCommand())
-	rootCmd.AddCommand(add.NewCommand())
-	rootCmd.AddCommand(setconfig.NewCommand())
-	rootCmd.AddCommand(gitsave.NewCommand())
-	rootCmd.AddCommand(altversion.NewCommand())
-	rootCmd.AddCommand(switchver.NewCommand())
-	rootCmd.AddCommand(combine.NewCommand())
-	rootCmd.AddCommand(view.NewCommand())
-	rootCmd.AddCommand(quicksave.NewCommand())
+}
+
+// addToGroup assigns a GroupID to each command and registers it on rootCmd.
+func addToGroup(groupID string, cmds ...*cobra.Command) {
+	for _, c := range cmds {
+		c.GroupID = groupID
+		rootCmd.AddCommand(c)
+	}
 }
