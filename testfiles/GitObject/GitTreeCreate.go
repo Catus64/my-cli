@@ -33,7 +33,7 @@ func TreeFromIndex(repo gitpath.GitRepository, index GitIndex) (string, error) {
 		}
 
 		// add the entry to its direct parent
-		mode := fmt.Sprintf("%02o%04o", entry.ModeType, entry.ModePerms)
+		mode := gitModeString(entry)
 		logger.L().Info("Adding index entry", "Name", entry.Name, "Dir", dir, "Mode", mode)
 		contents[dir] = append(contents[dir], treeEntry{
 			Mode: mode,
@@ -105,7 +105,7 @@ func TreeFromIndex(repo gitpath.GitRepository, index GitIndex) (string, error) {
 			}
 			base := filepath.Base(path)
 			contents[parent] = append(contents[parent], treeEntry{
-				Mode:   "40000", // directory mode — no leading zero
+				Mode:   "40000",
 				Name:   base,
 				SHA:    sha,
 				isTree: true,
@@ -180,4 +180,23 @@ func writeObject(repo gitpath.GitRepository, hexSHA string, raw []byte) error {
 
 	_, err = w.Write(raw)
 	return err
+}
+
+func gitModeString(entry GitIndexEntry) string {
+	const (
+		modeRegular    = "100644"
+		modeExecutable = "100755"
+		modeSymlink    = "120000"
+	)
+
+	// ModeType convention varies by your indexer's implementation —
+	// adjust these checks to whatever values ModeType actually holds.
+	switch {
+	case entry.ModeType == 0120000 || entry.ModeType == 0xA000: // symlink — adjust to your actual constant
+		return modeSymlink
+	case entry.ModePerms&0111 != 0: // any execute bit set
+		return modeExecutable
+	default:
+		return modeRegular
+	}
 }
