@@ -59,7 +59,7 @@ func drawLogCommit(state *logViewerState) {
 	} else {
 		// merge commit — show both with cursor
 		Mid(width)
-		Row("Merge parents — use up/down to select, left to follow:", width)
+		Row("Merge parents - use up/down to select, left to follow:", width)
 		Mid(width)
 		for i, p := range commit.Parents {
 			cursor := "  "
@@ -79,7 +79,7 @@ func drawLogCommit(state *logViewerState) {
 	EmptyRow(width)
 	for _, line := range SplitLines(commit.Message) {
 		if line != "" {
-			Row("  "+line, width)
+			printWrappedMessageRow("  "+line, width)
 		}
 	}
 	EmptyRow(width)
@@ -89,11 +89,29 @@ func drawLogCommit(state *logViewerState) {
 	if len(commit.Parents) > 1 {
 		Row("← older (selected parent)   → newer   v view tree   q quit", width)
 	} else if len(commit.Parents) == 1 {
-		Row("← older   → newer   v view tree   q quit", width)
+		Row("← older   → newer   v view tree   q quit   c show changes", width)
 	} else {
 		Row("→ newer   v view tree   q quit", width)
 	}
 	Bottom(width)
+}
+
+func printWrappedMessageRow(s string, width int) {
+	const borderOverhead = 4 // adjust to match however much Row()'s own "│ " + " │" eats up
+
+	innerWidth := width - borderOverhead
+	if innerWidth <= 0 {
+		Row(s, width) // fallback, box too narrow to wrap meaningfully
+		return
+	}
+
+	runes := []rune(s)
+	for len(runes) > innerWidth {
+		chunk := string(runes[:innerWidth])
+		Row(chunk, width)
+		runes = runes[innerWidth:]
+	}
+	Row(string(runes), width)
 }
 
 func drawEndOfHistory(config ViewerConfig) {
@@ -127,6 +145,7 @@ func RunLogViewer(
 	fetchCommit func(sha string) (LogCommit, error),
 	fetchTreeItems func(sha string) ([]TreeItem, error),
 	fetchBlob func(sha string) ([]byte, error),
+	fetchChanges func(currentTreeSHA, parentTreeSHA string) ([]FileChange, error),
 	config ViewerConfig,
 ) error {
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
@@ -251,8 +270,54 @@ func RunLogViewer(
 			} else {
 				drawLogCommit(state)
 			}
+		case b == 'c': // view changed files vs parent
+			var parentTreeSHA string
+			noParent := len(state.current.Parents) == 0
+
+			if !noParent {
+				targetParentSHA := state.current.Parents[0]
+				if len(state.current.Parents) > 1 {
+					targetParentSHA = state.current.Parents[state.parentCursor]
+				}
+				parentCommit, err := fetchCommit(targetParentSHA)
+				if err == nil {
+					parentTreeSHA = parentCommit.TreeSHA
+				} else {
+					noParent = true // treat resolution failure as "nothing to compare"
+				}
+			}
+
+			term.Restore(int(os.Stdin.Fd()), oldState)
+			SetRawMode(false)
+			clearScreen()
+
+			if noParent {
+				fmt.Println("\n  Nothing to show. (root commit has no parent)")
+				fmt.Println("\n  press any key to go back...")
+				reader.ReadByte()
+			} else {
+				changes, err := fetchChanges(state.current.TreeSHA, parentTreeSHA)
+				if err != nil {
+					fmt.Printf("error computing changes: %v\n", err)
+					fmt.Println("\npress any key to go back...")
+					reader.ReadByte()
+				} else {
+					header := ""
+					if state.current.HasVersion {
+						header = fmt.Sprintf("v%d · %s", state.current.VersionNum, state.current.VersionName)
+					}
+					RunObjectsViewer(changes, fetchBlob, config, header)
+				}
+			}
+
+			oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
+			SetRawMode(true)
+			if atEnd {
+				drawEndOfHistory(state.config)
+			} else {
+				drawLogCommit(state)
+			}
 		}
 	}
-
 	return nil
 }

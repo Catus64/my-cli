@@ -275,6 +275,7 @@ func RunRefsViewer(
 	config ViewerConfig,
 	header string,
 ) error {
+
 	logger.L().Debug("running refs viewer")
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {

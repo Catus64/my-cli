@@ -46,7 +46,7 @@ func getCommitTreeSHA(repo gitpath.GitRepository, commitSHA string) (string, err
 	return strings.TrimSpace(string(commit.KvlmDict.Dict["tree"])), nil
 }
 
-// buildFileMap builds a flat path→sha map from a commit SHA
+// buildFileMap builds a flat path -> sha map from a commit SHA
 func buildFileMap(repo gitpath.GitRepository, commitSHA string) (map[string]string, error) {
 	treeSHA, err := getCommitTreeSHA(repo, commitSHA)
 	if err != nil {

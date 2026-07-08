@@ -2,7 +2,9 @@ package prettyprint
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 // default value *can mess around with this
@@ -14,6 +16,13 @@ var rawMode bool
 // rawMode related funcs so that format will not be messed up
 func SetRawMode(enabled bool) {
 	rawMode = enabled
+}
+
+var ansiEscapeRegex = regexp.MustCompile(`\x1b\[[0-9;]*m`)
+
+func visibleLength(s string) int {
+	stripped := ansiEscapeRegex.ReplaceAllString(s, "")
+	return utf8.RuneCountInString(stripped)
 }
 
 func println(s string) {
@@ -45,12 +54,14 @@ func Top(width int)    { println(border("┌", "─", "┐", width)) }
 func Mid(width int)    { println(border("├", "─", "┤", width)) }
 func Bottom(width int) { println(border("└", "─", "┘", width)) }
 
-func Row(text string, width int) {
-	inner := width - 4
-	for _, line := range wrapText(text, inner) {
-		printf("│ %-*s   │\r\n", inner, line)
+func Row(s string, width int) {
+	padding := width - visibleLength(s) - 2
+	if padding < 0 {
+		padding = 0
 	}
+	fmt.Printf("│ %s%s │\r\n", s, strings.Repeat(" ", padding))
 }
+
 func EmptyRow(width int) {
 	Row("", width)
 }
