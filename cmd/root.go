@@ -9,6 +9,7 @@ import (
 	altversion "gocmd/internal/cli/alt-version"
 	checkignore "gocmd/internal/cli/check-ignore"
 	"gocmd/internal/cli/combine"
+	"gocmd/internal/cli/extract"
 	getcurrent "gocmd/internal/cli/get-current"
 	gitsave "gocmd/internal/cli/git-save"
 	"gocmd/internal/cli/gitLog"
@@ -109,7 +110,7 @@ func init() {
 		&cobra.Group{ID: "save", Title: "Saving related commands:"},
 		&cobra.Group{ID: "branch", Title: "Branching and Merging Commands:"},
 		&cobra.Group{ID: "view", Title: "View objects and history:"},
-		&cobra.Group{ID: "hash", Title: "Low-Level commands"},
+		&cobra.Group{ID: "others", Title: "Other Commands"},
 	)
 
 	addToGroup("setup",
@@ -140,8 +141,9 @@ func init() {
 		view.NewCommand(),
 	)
 
-	addToGroup("hash",
+	addToGroup("others",
 		hashObject.NewCommand(),
+		extract.NewCommand(),
 	)
 
 	// Commands commented .

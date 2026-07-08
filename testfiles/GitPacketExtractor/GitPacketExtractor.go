@@ -90,6 +90,14 @@ func Extract(repo gitpath.GitRepository) error {
 	return nil
 }
 
+func ForceExtract(repo gitpath.GitRepository) error {
+	sentinelPath := filepath.Join(gitpath.Repo_Path(repo, ""), "ezgit_extracted") // adjust to match your actual sentinel filename/path
+	if err := os.Remove(sentinelPath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to clear sentinel: %w", err)
+	}
+	return Extract(repo)
+}
+
 func unpackFile(packPath string) error {
 	f, err := os.Open(packPath)
 	if err != nil {
