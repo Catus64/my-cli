@@ -94,7 +94,7 @@ func drawTree(state *treeViewerState) {
 	}
 
 	Mid(width)
-	Row("arrows/j/k: navigate   number+enter: jump   enter: select   b: back   q: quit", width)
+	Row("arrows/j/k: navigate   enter: select   b: back   q: quit", width)
 	Bottom(width)
 }
 
